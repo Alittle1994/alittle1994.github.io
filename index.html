@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>桂平市金田镇第三初级中学安全隐患排查整改管理系统</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f8fafc;font-family:"Microsoft Yahei","Noto Sans SC",Arial,sans-serif;}
+.header-bar{background:linear-gradient(120deg,#0a3d91,#0f52ba);color:white;text-align:center;padding:18px 12px;box-shadow:0 4px 14px rgba(15,82,186,0.18);}
+.header-bar h1{font-size:18px;font-weight:600;letter-spacing:1px;}
+.header-bar .subtext{font-size:13;opacity:0.92;margin-top:4px;}
+.container{max-width:1200px;margin:16px auto;padding:0 12px;}
+.tabs{display:flex;background:#fff;border-radius:10px 10px 0 0;box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+.tab{flex:1;padding:12px 6px;border:none;font-size:14px;font-weight:500;color:#475569;cursor:pointer;transition:0.25s ease;}
+.tab.active{background:#0f52ba;color:white;}
+.tab.admin{color:#b91c1c;}
+.tab.admin.active{background:#b91c1c;color:white;}
+.card{background:#fff;padding:20px;border-radius:0 0 10px 10px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:16px;}
+h2{font-size:17px;color:#0a3d91;text-align:center;margin-bottom:16px;font-weight:600;}
+.item{margin-bottom:14px;}
+label{display:block;font-size:14px;font-weight:500;color:#1e293b;margin-bottom:6px;}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;}
+textarea{min-height:70px;resize:none;}
+.btn{width:100%;padding:12px;background:#0f52ba;color:white;border:none;border-radius:6px;font-size:15px;font-weight:500;cursor:pointer;transition:0.25s ease;}
+.btn:hover{background:#0a3d91;}
+.btn-green{background:#047857;}
+.btn-refresh{background:#16a34a;margin-bottom:10px;width:120px;}
+.btn-gray{background:#475569;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;min-width:950px;border-collapse:collapse;margin-top:12px;}
+th{background:#f1f5f9;color:#0a3d91;font-weight:600;padding:10px;font-size:13px;white-space:nowrap;}
+td{padding:10px;font-size:13px;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+.page{display:none;}
+.page.show{display:block;}
+.oper-btn{padding:5px 8px;border:none;border-radius:4px;font-size:12px;color:white;cursor:pointer;}
+.btn-blue{background:#0f52ba;}
+.footer-note{text-align:right;font-size:12px;color:#64748b;margin-top:12px;padding-top:8px;border-top:1px dashed #e2e8f0;}
+.level-red{color:#b91c1c;font-weight:600;}
+.level-green{color:#047857;font-weight:600;}
+.level-blue{color:#0f52ba;font-weight:600;}
+.small-img{width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #eee;}
+.loading{text-align:center;padding:20px;color:#64748b;}
+.img-preview{max-width:120px;margin-top:8px;border-radius:6px;border:1px solid #ddd;}
+.import-btn{background:#7c3aed;margin-bottom:10px;width:auto;}
+</style>
+</head>
+<body>
+<div class="header-bar">
+    <h1>桂平市金田镇第三初级中学安全隐患排查整改管理系统</h1>
+    <div class="subtext">金田三中安全管理办公室 · 监制</div>
+</div>
+<div class="container">
+    <div class="tabs">
+        <button class="tab active" onclick="goto(1)">隐患填报</button>
+        <button class="tab" onclick="goto(2)">隐患汇总</button>
+        <button class="tab" onclick="goto(3)">隐患整改</button>
+        <button class="tab" onclick="goto(4)">已整改</button>
+    </div>
+
+    <div class="page show" id="p1">
+        <div class="card">
+            <h2>隐患信息上报（可上传现场照片）</h2>
+            <form onsubmit="return submitForm()">
+                <div class="item">
+                    <label>上报人</label>
+                    <input type="text" id="user" placeholder="填写姓名/部门" required>
+                </div>
+                <div class="item">
+                    <label>所属楼栋</label>
+                    <select id="building" required>
+                        <option value="">请选择楼栋</option>
+                        <option>教学楼</option>
+                        <option>女生公寓楼一</option>
+                        <option>男生公寓楼二</option>
+                        <option>女生公寓楼三</option>
+                        <option>功能楼</option>
+                        <option>旧饭堂</option>
+                        <option>学校食堂</option>
+                    </select>
+                </div>
+                <div class="item">
+                    <label>楼层</label>
+                    <select id="floor" required>
+                        <option value="">请选择楼层</option>
+                        <option>一楼</option>
+                        <option>二楼</option>
+                        <option>三楼</option>
+                        <option>四楼</option>
+                        <option>五楼</option>
+                        <option>六楼</option>
+                        <option>无楼层</option>
+                    </select>
+                </div>
+                <div class="item">
+                    <label>具体位置</label>
+                    <select id="room" required>
+                        <option value="">请选择区域</option>
+                        <optgroup label="七年级">
+                            <option>七年级251班</option>
+                            <option>七年级252班</option>
+                            <option>七年级253班</option>
+                            <option>七年级254班</option>
+                            <option>七年级255班</option>
+                            <option>七年级256班</option>
+                            <option>七年级257班</option>
+                            <option>七年级258班</option>
+                        </optgroup>
+                        <optgroup label="八年级">
+                            <option>八年级241班</option>
+                            <option>八年级242班</option>
+                            <option>八年级243班</option>
+                            <option>八年级244班</option>
+                            <option>八年级245班</option>
+                            <option>八年级246班</option>
+                            <option>八年级247班</option>
+                            <option>八年级248班</option>
+                        </optgroup>
+                        <optgroup label="九年级">
+                            <option>九年级231班</option>
+                            <option>九年级232班</option>
+                            <option>九年级233班</option>
+                            <option>九年级234班</option>
+                            <option>九年级235班</option>
+                            <option>九年级236班</option>
+                        </optgroup>
+                        <optgroup label="公共区域">
+                            <option>宿舍</option>
+                            <option>走廊</option>
+                            <option>楼梯间</option>
+                            <option>卫生间</option>
+                            <option>办公室</option>
+                            <option>操场区域</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="item">
+                    <label>紧急程度</label>
+                    <select id="urgencyLevel" required>
+                        <option value="">请选择紧急程度</option>
+                        <option value="红色（紧急）">红色（紧急）</option>
+                        <option value="绿色（一般）">绿色（一般）</option>
+                        <option value="蓝色（轻微）">蓝色（轻微）</option>
+                    </select>
+                </div>
+                <div class="item">
+                    <label>隐患情况说明</label>
+                    <textarea id="desc" placeholder="简单描述存在的安全隐患" required></textarea>
+                </div>
+                <div class="item">
+                    <label>现场隐患照片（可选）</label>
+                    <input type="file" id="problemImg" accept="image/*" onchange="previewProblemImg()">
+                    <img id="problemPreview" class="img-preview">
+                </div>
+                <button type="submit" class="btn">提交上报</button>
+            </form>
+            <div class="footer-note">填报单位：金田三中安全管理办公室</div>
+        </div>
+    </div>
+
+    <div class="page" id="p2">
+        <div class="card">
+            <h2>隐患汇总</h2>
+            <button class="btn import-btn" style="width:auto" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+            <input type="file" id="importFile" accept=".xlsx" onchange="importExcel()" style="display:none">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>序号</th><th>上报人</th><th>隐患位置</th><th>紧急程度</th><th>隐患情况</th><th>现场照片</th><th>整改状态</th><th>上报时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryList"><tr><td colspan="8" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+            <button class="btn btn-green mt-4" onclick="exportWord()">导出Word</button>
+            <button class="btn btn-gray mt-2" onclick="exportExcel()">导出Excel</button>
+        </div>
+    </div>
+
+    <div class="page" id="p3">
+        <div class="card">
+            <h2>隐患整改</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>序号</th><th>隐患位置</th><th>紧急程度</th><th>隐患情况</th><th>整改负责人</th><th>整改方式</th><th>整改备注</th><th>整改后照片</th><th>整改状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repairList"><tr><td colspan="9" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="p4">
+        <div class="card">
+            <h2>已整改</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>序号</th><th>隐患位置</th><th>紧急程度</th><th>隐患情况</th><th>整改负责人</th><th>整改方式</th><th>整改备注</th><th>整改后照片</th><th>完成时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doneList"><tr><td colspan="9" class="loading">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 本地存储
+const STORAGE_KEY = "hazard_data";
+
+function getData() {
+  const d = localStorage.getItem(STORAGE_KEY);
+  return d ? JSON.parse(d) : [];
+}
+
+function saveData(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+function goto(n) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("show"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("p"+n).classList.add("show");
+  document.querySelector(".tab:nth-child("+n+")").classList.add("active");
+  if(n===2) renderSummary();
+  if(n===3) renderRepair();
+  if(n===4) renderDone();
+}
+
+function previewProblemImg() {
+  const f=document.getElementById("problemImg").files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>document.getElementById("problemPreview").src=e.target.result;
+  r.readAsDataURL(f);
+}
+
+async function submitForm() {
+  const user=document.getElementById("user").value.trim();
+  const building=document.getElementById("building").value;
+  const floor=document.getElementById("floor").value;
+  const room=document.getElementById("room").value;
+  const level=document.getElementById("urgencyLevel").value;
+  const desc=document.getElementById("desc").value.trim();
+  const img=document.getElementById("problemPreview").src||"";
+
+  const place=`${building}-${floor}-${room}`;
+  const list=getData();
+  list.push({
+    seq:list.length+1,
+    user,place,level,desc,
+    problemImg:img,fixImg:"",
+    repairMan:"",repairType:"",repairNote:"",
+    status:"待整改",
+    time:new Date().toLocaleString(),
+    doneTime:""
+  });
+  saveData(list);
+  alert("上报成功");
+  document.querySelector("form").reset();
+  document.getElementById("problemPreview").src="";
+  goto(2);
+  return false;
+}
+
+function renderSummary() {
+  const list=getData();
+  const tb=document.getElementById("summaryList");
+  tb.innerHTML="";
+  if(!list.length){tb.innerHTML="<tr><td colspan=8>暂无数据</td></tr>";return;}
+  list.forEach(it=>{
+    const c=it.level?.includes("红色")?"level-red":it.level?.includes("绿色")?"level-green":"level-blue";
+    tb.innerHTML+=`<tr>
+      <td>${it.seq}</td>
+      <td>${it.user}</td>
+      <td>${it.place}</td>
+      <td class="${c}">${it.level}</td>
+      <td>${it.desc}</td>
+      <td>${it.problemImg?`<img src="${it.problemImg}" class="small-img">`:"无"}</td>
+      <td>${it.status}</td>
+      <td>${it.time}</td>
+    </tr>`;
+  });
+}
+
+function renderRepair() {
+  const list=getData();
+  const todo=list.filter(x=>x.status==="待整改");
+  const tb=document.getElementById("repairList");
+  tb.innerHTML="";
+  if(!todo.length){tb.innerHTML="<tr><td colspan=9>暂无待整改</td></tr>";return;}
+  todo.forEach((it,i)=>{
+    const c=it.level?.includes("红色")?"level-red":it.level?.includes("绿色")?"level-green":"level-blue";
+    tb.innerHTML+=`<tr>
+      <td>${it.seq}</td>
+      <td>${it.place}</td>
+      <td class="${c}">${it.level}</td>
+      <td>${it.desc}</td>
+      <td><select onchange="setMan(${i},this.value)">
+        <option>${it.repairMan||"负责人"}</option>
+        <option>仇启仁</option>
+        <option>学校安排专人处理</option>
+      </select></td>
+      <td><select onchange="setType(${i},this.value)">
+        <option>${it.repairType||"方式"}</option>
+        <option>更换</option>
+        <option>维修</option>
+        <option>加固</option>
+        <option>清洁</option>
+        <option>其他</option>
+      </select></td>
+      <td><input onchange="setNote(${i},this.value)" value="${it.repairNote}"></td>
+      <td><input type=file accept=image/* onchange="previewFix(${i},this.files[0])">${it.fixImg?`<img src="${it.fixImg}" class="small-img">`:""}</td>
+      <td><select onchange="setDone(${i})"><option>待整改</option><option>已整改</option></select></td>
+    </tr>`;
+  });
+}
+
+function setMan(i,v){const l=getData();const t=l.filter(x=>x.status==="待整改");t[i].repairMan=v;saveData(l);}
+function setType(i,v){const l=getData();const t=l.filter(x=>x.status==="待整改");t[i].repairType=v;saveData(l);}
+function setNote(i,v){const l=getData();const t=l.filter(x=>x.status==="待整改");t[i].repairNote=v;saveData(l);}
+
+function previewFix(i,f){
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const l=getData();
+    const t=l.filter(x=>x.status==="待整改");
+    t[i].fixImg=e.target.result;
+    saveData(l);
+    renderRepair();
+  };
+  r.readAsDataURL(f);
+}
+
+function setDone(i){
+  const l=getData();
+  const t=l.filter(x=>x.status==="待整改");
+  t[i].status="已整改";
+  t[i].doneTime=new Date().toLocaleString();
+  saveData(l);
+  renderRepair();
+}
+
+function renderDone() {
+  const list=getData();
+  const done=list.filter(x=>x.status==="已整改");
+  const tb=document.getElementById("doneList");
+  tb.innerHTML="";
+  if(!done.length){tb.innerHTML="<tr><td colspan=9>暂无已整改</td></tr>";return;}
+  done.forEach(it=>{
+    const c=it.level?.includes("红色")?"level-red":it.level?.includes("绿色")?"level-green":"level-blue";
+    tb.innerHTML+=`<tr>
+      <td>${it.seq}</td>
+      <td>${it.place}</td>
+      <td class="${c}">${it.level}</td>
+      <td>${it.desc}</td>
+      <td>${it.repairMan||"无"}</td>
+      <td>${it.repairType||"无"}</td>
+      <td>${it.repairNote||"无"}</td>
+      <td>${it.fixImg?`<img src="${it.fixImg}" class="small-img">`:"无"}</td>
+      <td>${it.doneTime}</td>
+    </tr>`;
+  });
+}
+
+function exportWord() {
+  const list=getData();
+  if(!list.length){alert("暂无数据");return;}
+  let html=`<html><head><meta charset=utf-8></head><body><h2 align=center>桂平市金田镇第三初级中学隐患整改记录表</h2><p align=center>导出时间：${new Date().toLocaleString()}</p><table border=1><tr><th>序号</th><th>隐患内容</th><th>整改前图片</th><th>整改后图片</th></tr>`;
+  list.forEach(it=>{
+    html+=`<tr><td>${it.seq}</td><td>${it.desc}</td><td>${it.problemImg?`<img src="${it.problemImg}" width=150>`:"无"}</td><td>${it.fixImg?`<img src="${it.fixImg}" width=150>`:"无"}</td></tr>`;
+  });
+  html+="</table></body></html>";
+  const blob=new Blob([html],{type:"application/msword"});
+  saveAs(blob,"隐患整改记录表.doc");
+  alert("导出成功");
+}
+
+function exportExcel() {
+  const list=getData();
+  if(!list.length){alert("暂无数据");return;}
+  const headers=["序号","上报人","位置","紧急程度","说明","现场图","负责人","方式","备注","整改图","状态","时间"];
+  const data=[headers];
+  list.forEach(it=>{
+    data.push([
+      it.seq,
+      it.user,
+      it.place,
+      it.level,
+      it.desc,
+      it.problemImg?"已上传":"无",
+      it.repairMan||"无",
+      it.repairType||"无",
+      it.repairNote||"无",
+      it.fixImg?"已上传":"无",
+      it.status,
+      it.time
+    ]);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  XLSX.writeFile(wb,"隐患记录.xlsx");
+  alert("导出成功");
+}
+
+function importExcel(e) {
+  const f=e.target.files[0];
+  const r=new FileReader();
+  r.onload=e=>{
+    const d=new Uint8Array(e.target.result);
+    const wb=XLSX.read(d,{type:"array"});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const j=XLSX.utils.sheet_to_json(ws);
+    const arr=j.map((x,i)=>({
+      seq:i+1,
+      user:x["上报人"]||"",
+      place:x["位置"]||"",
+      level:x["紧急程度"]||"",
+      desc:x["说明"]||"",
+      problemImg:"",
+      fixImg:"",
+      repairMan:x["负责人"]||"",
+      repairType:x["方式"]||"",
+      repairNote:x["备注"]||"",
+      status:x["状态"]||"待整改",
+      time:x["时间"]||new Date().toLocaleString(),
+      doneTime:""
+    }));
+    saveData(arr);
+    alert("导入成功");
+    renderSummary();
+  };
+  r.readAsArrayBuffer(f);
+}
+
+window.onload=()=>goto(1);
+</script>
+</body>
+</html>
