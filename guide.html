@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>操作指引 — 金田三中安全隐患排查</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    max-width: 520px;
+    width: 100%;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.03), 0 12px 32px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb, #06b6d4, #3b82f6);
+  }
+  .header {
+    padding: 28px 28px 0;
+    text-align: center;
+  }
+  .icon {
+    width: 44px; height: 44px;
+    background: #eff6ff;
+    border-radius: 12px;
+    margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon svg { width: 22px; height: 22px; stroke: #2563eb; fill: none; stroke-width: 2; }
+  .header h2 {
+    font-size: 20px; color: #1e293b; font-weight: 700; letter-spacing: 1px;
+  }
+  .header .sub {
+    font-size: 13px; color: #64748b; margin-top: 4px; letter-spacing: 1px;
+  }
+
+  .steps { padding: 24px 28px 28px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-num {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body h4 {
+    font-size: 15px; color: #1e293b; font-weight: 600; margin-bottom: 4px;
+  }
+  .step-body p {
+    font-size: 13px; color: #64748b; line-height: 1.6;
+  }
+  .step-body .note {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #2563eb;
+    background: #eff6ff;
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .step-body .warn {
+    color: #dc2626;
+    background: #fef2f2;
+  }
+
+  .footer {
+    padding: 0 28px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .card { box-shadow: none; border: 1px solid #e5e7eb; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <h2>扫码填报操作指引</h2>
+    <div class="sub">桂平市金田镇第三初级中学</div>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>扫码进入系统</h4>
+        <p>微信扫描二维码，打开安全隐患排查管理系统</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>先进入「后台管理」连接云端</h4>
+        <p>点击左侧菜单中的<strong>"后台管理"</strong>，系统将自动连接 Supabase 云端数据库，同步最新数据。</p>
+        <div class="note">⚠ 重要：每次填报前务必先同步，确保数据一致</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>等待同步完成</h4>
+        <p>后台管理界面左上角会显示<strong>"云端已连接"</strong>的绿色状态标识，即表示同步成功。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>返回「隐患上报」填报</h4>
+        <p>点击左侧菜单中的<strong>"隐患上报"</strong>，选择区域地点、隐患类型、危险等级，上传照片后提交即可。</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    系统版本 v5.7 &nbsp;·&nbsp; 数据存储 Supabase 云端
+  </div>
+</div>
+</body>
+</html>
