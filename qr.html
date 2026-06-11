@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>扫码填报 — 金田三中安全隐患排查整改系统</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js">
+</script>
+<style>
+  :root {
+    --primary: #1a5276;
+    --accent: #e74c3c;
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    --muted: #7f8c8d;
+    --border: #dee2e6;
+    --green: #27ae60;
+    --blue: #2980b9;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei","PingFang SC","Helvetica Neue",sans-serif;
+    background: linear-gradient(135deg, #e8f0fe 0%, #f0f4f8 50%, #e3edf7 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .container {
+    max-width: 680px;
+    width: 100%;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a3c5e 0%, #1a5276 50%, #1f6f8b 100%);
+    padding: 28px 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #e74c3c, #f39c12, #27ae60, #2980b9);
+  }
+  .header .icon-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .header .shield-icon {
+    width: 36px; height: 42px;
+    background: #e74c3c;
+    clip-path: polygon(50% 0%, 100% 12%, 100% 50%, 75% 100%, 50% 78%, 25% 100%, 0% 50%, 0% 12%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header .shield-icon::after {
+    content: '!';
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+  }
+  .header h2 {
+    font-size: 19px;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    margin-top: 4px;
+  }
+
+  /* Main */
+  .main {
+    padding: 28px 24px 20px;
+  }
+
+  /* QR Section */
+  .qr-section {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .qr-box {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 2px dashed #1a5276;
+    display: inline-block;
+  }
+  .qr-box canvas, .qr-box img {
+    display: block;
+  }
+  .qr-info {
+    flex: 1;
+    min-width: 200px;
+  }
+  .qr-info .scan-tip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .qr-info .scan-tip .dot {
+    width: 8px; height: 8px;
+    background: #27ae60;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .qr-info h3 {
+    font-size: 18px;
+    color: #1a5276;
+    margin-bottom: 6px;
+  }
+  .qr-info .url {
+    font-size: 13px;
+    color: var(--muted);
+    word-break: break-all;
+    background: #f0f4f8;
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  /* Steps */
+  .steps {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 500px) {
+    .steps { grid-template-columns: 1fr; }
+    .qr-section { flex-direction: column; text-align: center; }
+  }
+  .step-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    background: #fafbfc;
+    border-left: 4px solid var(--blue);
+    transition: transform 0.2s;
+  }
+  .step-card:nth-child(2) { border-left-color: var(--green); }
+  .step-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .step-card .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--blue);
+    margin-bottom: 8px;
+  }
+  .step-card:nth-child(2) .step-num { background: var(--green); }
+  .step-card h4 {
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .step-card ul {
+    list-style: none;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.8;
+  }
+  .step-card ul li::before {
+    content: '•';
+    color: var(--blue);
+    font-weight: bold;
+    margin-right: 6px;
+  }
+  .step-card:nth-child(2) ul li::before { color: var(--green); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 12px 24px 20px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin: 0 24px;
+  }
+  .footer .ver {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a5276;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .container { box-shadow: none; border-radius: 0; max-width: 100%; }
+    .step-card:hover { transform: none; box-shadow: none; }
+    .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="icon-row">
+      <div class="shield-icon"></div>
+      <h2>桂平市金田镇第三初级中学</h2>
+    </div>
+    <div class="subtitle">安全隐患排查整改管理系统 · 手机扫码填报</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="qr-section">
+      <!-- QR Code -->
+      <div class="qr-box">
+        <div id="qrcode"></div>
+      </div>
+      <!-- Info -->
+      <div class="qr-info">
+        <div class="scan-tip"><span class="dot"></span> 微信 / 浏览器扫码</div>
+        <h3>📱 直接填报隐患</h3>
+        <p style="font-size:13px;color:#555;margin:6px 0 10px;">
+          无需安装APP，扫码即用<br>支持拍照上传、实时跟踪整改
+        </p>
+        <div class="url">alittle1994.github.io</div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h4>📝 隐患填报入口</h4>
+        <ul>
+          <li>微信扫码进入系统</li>
+          <li>选择隐患地点与类型</li>
+          <li>上传现场照片（最多4张）</li>
+          <li>选择危险等级并提交</li>
+          <li>可实时查看整改进度</li>
+        </ul>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h4>🔧 审核 / 维修入口</h4>
+        <ul>
+          <li>审核人后台审核指派</li>
+          <li>维修人员接收整改任务</li>
+          <li>上传整改后照片反馈</li>
+          <li>填写维修说明并完成</li>
+          <li>主管负责人验收归档</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    桂平市金田镇第三初级中学 &nbsp;|&nbsp; 版本 <span class="ver">v5.7</span> &nbsp;|&nbsp;
+    数据安全 · Supabase 云端存储
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var ua = navigator.userAgent.toLowerCase();
+  var isWechat = ua.indexOf('micromessenger') !== -1;
+  new QRCode(document.getElementById("qrcode"), {
+    text: "https://alittle1994.github.io",
+    width: 200,
+    height: 200,
+    colorDark: "#1a3c5e",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // WeChat hint
+  if (isWechat) {
+    var tip = document.querySelector('.scan-tip');
+    tip.innerHTML = '<span class="dot"></span> 长按识别二维码打开';
+    tip.style.background = '#fff3e0';
+    tip.style.color = '#e65100';
+  }
+})();
+</script>
+</body>
+</html>
