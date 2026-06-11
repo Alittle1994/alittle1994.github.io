@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>金田三中 — 安全隐患扫码填报</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f4f8;
+    padding: 20px;
+  }
+
+  /* Tech grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating tech orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: float 12s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 320px; height: 320px;
+    background: rgba(37,99,235,0.08);
+    top: -100px; right: -80px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 260px; height: 260px;
+    background: rgba(6,182,212,0.06);
+    bottom: -80px; left: -60px;
+    animation-delay: -6s;
+  }
+  @keyframes float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-30px) scale(1.05); }
+    66% { transform: translate(-20px,20px) scale(0.95); }
+  }
+
+  /* ===== Card ===== */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow:
+      0 4px 6px rgba(0,0,0,0.03),
+      0 12px 32px rgba(0,0,0,0.06),
+      0 0 0 1px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  /* Top tech accent bar */
+  .card::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #06b6d4, #3b82f6);
+  }
+
+  /* ===== QR Section (top half) ===== */
+  .qr-section {
+    padding: 40px 36px 0;
+    text-align: center;
+  }
+
+  /* Icon — modern shield */
+  .icon-wrap {
+    width: 56px; height: 56px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .icon-wrap svg {
+    width: 28px; height: 28px;
+    fill: none;
+    stroke: #2563eb;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .school {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    font-size: 12px;
+    color: #64748b;
+    letter-spacing: 2px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+
+  .divider {
+    width: 40px; height: 2px;
+    background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+    margin: 0 auto 28px;
+  }
+
+  /* QR wrapper */
+  .qr-wrapper {
+    display: inline-block;
+    padding: 16px;
+    background: #fff;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    position: relative;
+    box-shadow: 0 0 0 6px rgba(37,99,235,0.03);
+    transition: box-shadow 0.3s;
+  }
+
+  /* Scan corner marks */
+  .qr-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 18px;
+    pointer-events: none;
+    background:
+      linear-gradient(135deg, transparent calc(50% - 1px), #2563eb calc(50% - 1px), #2563eb calc(50% + 1px), transparent calc(50% + 1px)) 0 0 / 12px 12px no-repeat,
+      linear-gradient(225deg, transparent calc(50% - 1px), #2563eb calc(50% - 1px), #2563eb calc(50% + 1px), transparent calc(50% + 1px)) 100% 0 / 12px 12px no-repeat,
+      linear-gradient(315deg, transparent calc(50% - 1px), #2563eb calc(50% - 1px), #2563eb calc(50% + 1px), transparent calc(50% + 1px)) 100% 100% / 12px 12px no-repeat,
+      linear-gradient(45deg,  transparent calc(50% - 1px), #2563eb calc(50% - 1px), #2563eb calc(50% + 1px), transparent calc(50% + 1px)) 0 100% / 12px 12px no-repeat;
+    opacity: 0.25;
+    animation: cornerPulse 3s ease-in-out infinite;
+  }
+  @keyframes cornerPulse {
+    0%,100% { opacity: 0.25; }
+    50% { opacity: 0.55; }
+  }
+
+  .qr-wrapper canvas,
+  .qr-wrapper img { display: block; border-radius: 4px; }
+
+  /* WeChat hint */
+  .wx-hint {
+    margin-top: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2563eb;
+    letter-spacing: 1px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    padding-bottom: 8px;
+  }
+  .wx-hint.show { opacity: 1; }
+
+  /* ===== Divider between sections ===== */
+  .section-divider {
+    margin: 24px 36px 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+  }
+
+  /* ===== Guide Section (bottom half, collapsible) ===== */
+  .guide-section {
+    padding: 0 36px;
+  }
+
+  .guide-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2563eb;
+    letter-spacing: 1px;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+  .guide-toggle:hover { color: #1d4ed8; }
+  .guide-toggle .arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 10px;
+  }
+  .guide-toggle.open .arrow {
+    transform: rotate(180deg);
+  }
+
+  .guide-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 0;
+  }
+  .guide-body.open {
+    max-height: 600px;
+    opacity: 1;
+  }
+
+  .steps {
+    padding: 4px 0 24px;
+  }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 8px; }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .step-body h4 {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+  .step-body p {
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.65;
+  }
+  .step-body .note {
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: #2563eb;
+    background: #eff6ff;
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .step-body .note.warn {
+    color: #dc2626;
+    background: #fef2f2;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 16px 36px 20px;
+    text-align: center;
+    font-size: 11.5px;
+    color: #94a3b8;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .card { border-radius: 16px; }
+    .qr-section { padding: 32px 20px 0; }
+    .school { font-size: 16px; }
+    .section-divider { margin: 20px 20px 0; }
+    .guide-section { padding: 0 20px; }
+    .footer { padding: 14px 20px 18px; }
+    #qrcode canvas { width: 180px !important; height: 180px !important; }
+  }
+
+  /* ===== Print ===== */
+  @media print {
+    body { background: #fff; padding: 0; }
+    body::before, .orb { display: none; }
+    .card {
+      box-shadow: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 0;
+      max-width: 100%;
+    }
+    .card::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .icon-wrap { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .qr-wrapper { box-shadow: none; }
+    .qr-wrapper::before { display: none; }
+    .guide-toggle { display: none; }
+    .guide-body { max-height: none !important; opacity: 1 !important; }
+    .wx-hint { opacity: 1 !important; }
+    .section-divider { margin: 20px 24px 0; }
+    .footer { border-top: 1px solid #e5e7eb; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+
+  <!-- ===== QR Code Section ===== -->
+  <div class="qr-section">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2l8 4v6c0 5.5-3.8 10.7-8 12-4.2-1.3-8-6.5-8-12V6l8-4z"/>
+        <line x1="12" y1="8" x2="12" y2="13"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+
+    <div class="school">桂平市金田镇第三初级中学</div>
+    <div class="tagline">安全隐患排查 · 扫码填报</div>
+
+    <div class="divider"></div>
+
+    <div class="qr-wrapper">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="wx-hint" id="wxHint">长按识别二维码</div>
+  </div>
+
+  <!-- ===== Divider ===== -->
+  <div class="section-divider"></div>
+
+  <!-- ===== Guide Section (collapsible) ===== -->
+  <div class="guide-section">
+    <button class="guide-toggle" id="guideToggle" onclick="toggleGuide()">
+      📋 操作指引
+      <span class="arrow">▼</span>
+    </button>
+
+    <div class="guide-body" id="guideBody">
+      <div class="steps">
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>扫码进入系统</h4>
+            <p>微信扫描上方二维码，打开安全隐患排查管理系统</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>先进入「后台管理」连接云端</h4>
+            <p>点击左侧菜单中的<strong>"后台管理"</strong>，系统将自动连接 Supabase 云端数据库，同步最新数据。</p>
+            <div class="note">⚠ 重要：每次填报前务必先同步，确保数据一致</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>等待同步完成</h4>
+            <p>后台管理界面左上角显示<strong>"云端已连接"</strong>绿色状态标识，即表示同步成功。</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>返回「隐患上报」填报</h4>
+            <p>点击左侧菜单中的<strong>"隐患上报"</strong>，选择区域地点、隐患类型、危险等级，上传照片后提交即可。</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <div class="footer">
+    系统版本 v5.7 &nbsp;·&nbsp; 数据存储 Supabase 云端
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // Generate QR code
+  new QRCode(document.getElementById("qrcode"), {
+    text: "https://alittle1994.github.io",
+    width: 210,
+    height: 210,
+    colorDark: "#1e293b",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Show WeChat hint if in WeChat
+  var isWechat = /micromessenger/i.test(navigator.userAgent);
+  if (isWechat) {
+    document.getElementById('wxHint').classList.add('show');
+  }
+})();
+
+// Toggle guide section
+function toggleGuide() {
+  var toggle = document.getElementById('guideToggle');
+  var body = document.getElementById('guideBody');
+  var isOpen = body.classList.contains('open');
+  if (isOpen) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+  }
+}
+</script>
+</body>
+</html>
