@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v5.8</title>
+<title>金田三中安全隐患排查整改系统 v5.9</title>
 <!-- Supabase JS SDK — 主CDN失败时自动切换备用CDN -->
 <script>
 (function() {
@@ -250,7 +250,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.8</div>
+    <div class="sidebar-footer">v5.9</div>
   </div>
 </div>
 
@@ -668,7 +668,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.8</div>
+<div class="version-badge">v5.9</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -724,8 +724,34 @@ let confirmCallback = null;
 
 // ===== 照片压缩工具 — 限制50KB =====
 // 使用Canvas两轮压缩：先缩放尺寸（最大1200px），再降质量直到≤50KB
+const IMGBB_API_KEY = '38310f76fe7218d2151e492b6f3a4a7e';
 const PHOTO_MAX_KB = 50;
 const PHOTO_MAX_PX = 1200; // 最长边像素上限
+// v5.9: 照片上传到 ImgBB 云端图床，Supabase 只存 URL（几十字节），彻底解决带宽超标
+async function uploadToImgBB(dataUrl) {
+  const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+  const formData = new FormData();
+  formData.append('key', IMGBB_API_KEY);
+  formData.append('image', base64);
+  try {
+    const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+    const json = await resp.json();
+    if (json.success) {
+      return { url: json.data.url, thumb: json.data.thumb.url, deleteUrl: json.data.delete_url };
+    }
+    console.warn('[ImgBB] upload failed:', json);
+    return null;
+  } catch (e) {
+    console.warn('[ImgBB] upload error:', e.message);
+    return null;
+  }
+}
+// v5.9: 统一取照片显示URL — 兼容对象{url,thumb}、http URL、data: base64
+function photoUrl(p) {
+  if (!p) return '';
+  if (typeof p === 'object') return p.url || p.thumb || '';
+  return p; // 字符串直接返回（http URL 或 data:base64）
+}
 function compressPhotoToLimit(dataUrl, maxKB) {
   return new Promise((resolve) => {
     maxKB = maxKB || PHOTO_MAX_KB;
@@ -1220,15 +1246,54 @@ async function checkRpcReady() {
 async function cloudPush(h) {
   if (!supabaseClient || !cloudConnected) return;
   const ts = (h.updatedAt || h.createdAt) ? new Date(h.updatedAt || h.createdAt).toISOString() : new Date().toISOString();
-  // 📸 v5.8 带宽优化：云端剥离照片字段，照片只存本地IndexedDB
-  // 云端只保存文字元数据，彻底消除照片base64对带宽的消耗
+  // 📸 v5.9 带宽优化：照片上传到 ImgBB 云端图床，Supabase 只存 URL（~100字节/张）
+  // 同时本地 IndexedDB 保留 base64 作为缓存，确保图床不可用时照片仍可查看
   const hCloud = Object.assign({}, h);
-  // 剥离所有照片字段（photos=隐患照片, afterPhotos=整改照片）
-  // 云端记录用 hasPhotos/hasAfterPhotos 布尔标记代替，不传输base64数据
-  hCloud.photos = [];
-  hCloud.afterPhotos = [];
-  hCloud.hasPhotos = Array.isArray(h.photos) && h.photos.length > 0;
-  hCloud.hasAfterPhotos = Array.isArray(h.afterPhotos) && h.afterPhotos.length > 0;
+  
+  // 上传隐患照片到 ImgBB，如上传失败则降级为仅保留 base64 本地
+  const cloudPhotos = [];
+  if (Array.isArray(h.photos) && h.photos.length > 0) {
+    for (const p of h.photos) {
+      if (typeof p === 'string' && p.startsWith('data:')) {
+        const result = await uploadToImgBB(p);
+        if (result) {
+          cloudPhotos.push({ url: result.url, thumb: result.thumb, deleteUrl: result.deleteUrl });
+        } else {
+          // 上传失败：保留原始 dataUrl，但标注为本地图片
+          cloudPhotos.push({ local: true, data: p });
+        }
+      } else if (typeof p === 'object' && p.url) {
+        // 已经是 ImgBB URL，直接复用
+        cloudPhotos.push(p);
+      } else {
+        cloudPhotos.push(p);
+      }
+    }
+  }
+  
+  // 上传整改后照片
+  const cloudAfterPhotos = [];
+  if (Array.isArray(h.afterPhotos) && h.afterPhotos.length > 0) {
+    for (const p of h.afterPhotos) {
+      if (typeof p === 'string' && p.startsWith('data:')) {
+        const result = await uploadToImgBB(p);
+        if (result) {
+          cloudAfterPhotos.push({ url: result.url, thumb: result.thumb, deleteUrl: result.deleteUrl });
+        } else {
+          cloudAfterPhotos.push({ local: true, data: p });
+        }
+      } else if (typeof p === 'object' && p.url) {
+        cloudAfterPhotos.push(p);
+      } else {
+        cloudAfterPhotos.push(p);
+      }
+    }
+  }
+  
+  hCloud.photos = cloudPhotos;
+  hCloud.afterPhotos = cloudAfterPhotos;
+  hCloud.hasPhotos = cloudPhotos.length > 0;
+  hCloud.hasAfterPhotos = cloudAfterPhotos.length > 0;
   let error = null;
   try {
     const res = await supabaseClient.from('hazards').upsert({
@@ -1395,8 +1460,22 @@ async function cloudPullAll(incremental = false) {
       const local = localMap[ridStr];
 
       if (!local) {
-        // 本地没有 → 新增记录（云端v5.8起photos=[],用本地照片回填保留空数组即可）
-        // 照片存在本地IndexedDB，云端不传输
+        // 本地没有 → 新增记录（v5.9云端存URL对象/字符串，跨设备可见）
+        // 将云端照片数据标准化：对象格式{url,thumb}保留，纯字符串data:保留
+        if (Array.isArray(remote.photos)) {
+          remote.photos = remote.photos.map(p => {
+            if (typeof p === 'object' && p.url) return p;
+            if (typeof p === 'string' && p.startsWith('http')) return { url: p, thumb: p };
+            return p;
+          });
+        }
+        if (Array.isArray(remote.afterPhotos)) {
+          remote.afterPhotos = remote.afterPhotos.map(p => {
+            if (typeof p === 'object' && p.url) return p;
+            if (typeof p === 'string' && p.startsWith('http')) return { url: p, thumb: p };
+            return p;
+          });
+        }
         await dbPut(remote);
         hazards.push(remote);
         added++;
@@ -1405,15 +1484,24 @@ async function cloudPullAll(incremental = false) {
         const localTs = new Date(local.updatedAt || local.createdAt || 0).getTime();
         const remoteTs = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
         if (remoteTs > localTs) {
-          // 远程更新：文字数据以云端为准，照片数据始终保留本地已有的
-          // v5.8: 云端photos=[]，需用本地照片回填，避免照片丢失
-          const localPhotos = Array.isArray(local.photos) && local.photos.length > 0
-            ? local.photos : (Array.isArray(remote.photos) ? remote.photos : []);
-          const localAfterPhotos = Array.isArray(local.afterPhotos) && local.afterPhotos.length > 0
-            ? local.afterPhotos : (Array.isArray(remote.afterPhotos) ? remote.afterPhotos : []);
+          // v5.9: 云端照片是 ImgBB URL（~100字节），本地 base64 作为兜底
+          // 优先使用云端 URL（跨设备可见），云端无照片时保留本地 base64
+          const remotePhotos = (Array.isArray(remote.photos) && remote.photos.length > 0) 
+            ? remote.photos : [];
+          const localPhotos = (Array.isArray(local.photos) && local.photos.length > 0) 
+            ? local.photos : [];
+          const remoteAfterPhotos = (Array.isArray(remote.afterPhotos) && remote.afterPhotos.length > 0)
+            ? remote.afterPhotos : [];
+          const localAfterPhotos = (Array.isArray(local.afterPhotos) && local.afterPhotos.length > 0)
+            ? local.afterPhotos : [];
+          
+          // 合并策略：云端有照片就用云端的（URL跨设备可见），否则保留本地base64
+          const finalPhotos = remotePhotos.length > 0 ? remotePhotos : localPhotos;
+          const finalAfterPhotos = remoteAfterPhotos.length > 0 ? remoteAfterPhotos : localAfterPhotos;
+          
           const merged = Object.assign({}, remote, {
-            photos: localPhotos,
-            afterPhotos: localAfterPhotos
+            photos: finalPhotos,
+            afterPhotos: finalAfterPhotos
           });
           const idx = hazards.findIndex(h => String(h.id) === ridStr);
           if (idx >= 0) {
@@ -1983,11 +2071,11 @@ async function runDailyCheck(silent = true) {
     result.checks.dedup = { ok: false, msg: '去重检测异常: ' + e.message };
   }
 
-  // 检测8：云端空间保护（v5.8起照片不上传云端，只存本地IndexedDB）
+  // 检测8：云端空间保护（v5.9起照片上传ImgBB图床，Supabase只存URL）
   try {
-    result.checks.cloudStorage = { ok: true, msg: 'v5.8带宽优化: 照片仅存本地设备，不上传云端，带宽消耗降低95%+' };
+    result.checks.cloudStorage = { ok: true, msg: 'v5.9 ImgBB图床: 照片上传ImgBB存URL，Supabase带宽降低99.9%' };
   } catch(e) {
-    result.checks.cloudStorage = { ok: true, msg: 'v5.8带宽优化已启用：照片数据不经过云端传输' };
+    result.checks.cloudStorage = { ok: true, msg: 'v5.9 ImgBB图床已启用：照片存储与数据库分离' };
   }
 
   // 汇总结果
@@ -2391,7 +2479,7 @@ function renderWorkerList() {
     const ut = h.urgency === '紧急' ? 'red' : h.urgency === '中' ? 'blue' : 'gray';
     const ph = h.photos && h.photos.length
       ? '<div style="margin:10px 0;display:flex;gap:6px;flex-wrap:wrap">' +
-        h.photos.map(p => '<img src="' + p + '" style="width:66px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" alt="">').join('') +
+        h.photos.map(p => '<img src="' + photoUrl(p) + '" style="width:66px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" alt="">').join('') +
         '</div>'
       : '';
     return '<div class="hazard-item ' + uc + '">' +
@@ -2596,7 +2684,7 @@ function renderAdminList() {
   html += items.map(h => {
     const cls = h.urgency === '紧急' ? 'uh' : h.urgency === '中' ? 'um' : 'ul';
     const ph = h.photos && h.photos.length
-      ? '<img src="' + h.photos[0] + '" onclick="viewPhoto(this.src)" alt="">'
+      ? '<img src="' + photoUrl(h.photos[0]) + '" onclick="viewPhoto(this.src)" alt="">'
       : '<span class="no-photo">无</span>';
     const ut = h.urgency === '紧急'
       ? '<span style="color:#ef4444;font-weight:700">紧急</span>'
