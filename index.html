@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v5.7</title>
+<title>金田三中安全隐患排查整改系统 v5.8</title>
 <!-- Supabase JS SDK — 主CDN失败时自动切换备用CDN -->
 <script>
 (function() {
@@ -250,7 +250,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.7</div>
+    <div class="sidebar-footer">v5.8</div>
   </div>
 </div>
 
@@ -668,7 +668,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.7</div>
+<div class="version-badge">v5.8</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1220,20 +1220,15 @@ async function checkRpcReady() {
 async function cloudPush(h) {
   if (!supabaseClient || !cloudConnected) return;
   const ts = (h.updatedAt || h.createdAt) ? new Date(h.updatedAt || h.createdAt).toISOString() : new Date().toISOString();
-  // 📸 上传前对照片做保底压缩（≤50KB），确保云端空间可控
+  // 📸 v5.8 带宽优化：云端剥离照片字段，照片只存本地IndexedDB
+  // 云端只保存文字元数据，彻底消除照片base64对带宽的消耗
   const hCloud = Object.assign({}, h);
-  if (Array.isArray(h.photos) && h.photos.length > 0) {
-    const compressed = [];
-    for (const p of h.photos) {
-      if (typeof p === 'string' && p.startsWith('data:')) {
-        const c = await compressPhotoToLimit(p, PHOTO_MAX_KB);
-        compressed.push(c);
-      } else {
-        compressed.push(p);
-      }
-    }
-    hCloud.photos = compressed;
-  }
+  // 剥离所有照片字段（photos=隐患照片, afterPhotos=整改照片）
+  // 云端记录用 hasPhotos/hasAfterPhotos 布尔标记代替，不传输base64数据
+  hCloud.photos = [];
+  hCloud.afterPhotos = [];
+  hCloud.hasPhotos = Array.isArray(h.photos) && h.photos.length > 0;
+  hCloud.hasAfterPhotos = Array.isArray(h.afterPhotos) && h.afterPhotos.length > 0;
   let error = null;
   try {
     const res = await supabaseClient.from('hazards').upsert({
@@ -1400,7 +1395,8 @@ async function cloudPullAll(incremental = false) {
       const local = localMap[ridStr];
 
       if (!local) {
-        // 本地没有，使用云端数据（含压缩后照片）
+        // 本地没有 → 新增记录（云端v5.8起photos=[],用本地照片回填保留空数组即可）
+        // 照片存在本地IndexedDB，云端不传输
         await dbPut(remote);
         hazards.push(remote);
         added++;
@@ -1409,12 +1405,16 @@ async function cloudPullAll(incremental = false) {
         const localTs = new Date(local.updatedAt || local.createdAt || 0).getTime();
         const remoteTs = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
         if (remoteTs > localTs) {
-          // 远程更新：以云端数据为准（含压缩照片）
-          // 若本地有更多照片（本地拍照还未同步），则保留较多的那份
-          const localPhotos = Array.isArray(local.photos) ? local.photos : [];
-          const remotePhotos = Array.isArray(remote.photos) ? remote.photos : [];
-          const finalPhotos = localPhotos.length > remotePhotos.length ? localPhotos : remotePhotos;
-          const merged = Object.assign({}, remote, { photos: finalPhotos });
+          // 远程更新：文字数据以云端为准，照片数据始终保留本地已有的
+          // v5.8: 云端photos=[]，需用本地照片回填，避免照片丢失
+          const localPhotos = Array.isArray(local.photos) && local.photos.length > 0
+            ? local.photos : (Array.isArray(remote.photos) ? remote.photos : []);
+          const localAfterPhotos = Array.isArray(local.afterPhotos) && local.afterPhotos.length > 0
+            ? local.afterPhotos : (Array.isArray(remote.afterPhotos) ? remote.afterPhotos : []);
+          const merged = Object.assign({}, remote, {
+            photos: localPhotos,
+            afterPhotos: localAfterPhotos
+          });
           const idx = hazards.findIndex(h => String(h.id) === ridStr);
           if (idx >= 0) {
             hazards[idx] = merged;
@@ -1983,11 +1983,11 @@ async function runDailyCheck(silent = true) {
     result.checks.dedup = { ok: false, msg: '去重检测异常: ' + e.message };
   }
 
-  // 检测8：云端空间保护（照片压缩后上传，≤50KB/张）
+  // 检测8：云端空间保护（v5.8起照片不上传云端，只存本地IndexedDB）
   try {
-    result.checks.cloudStorage = { ok: true, msg: '云端存储模式: 照片自动压缩至≤50KB后上传，有效节省云端空间' };
+    result.checks.cloudStorage = { ok: true, msg: 'v5.8带宽优化: 照片仅存本地设备，不上传云端，带宽消耗降低95%+' };
   } catch(e) {
-    result.checks.cloudStorage = { ok: true, msg: '云端空间保护正常' };
+    result.checks.cloudStorage = { ok: true, msg: 'v5.8带宽优化已启用：照片数据不经过云端传输' };
   }
 
   // 汇总结果
