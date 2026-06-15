@@ -263,7 +263,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.9.3</div>
+    <div class="sidebar-footer">v5.9.4</div>
   </div>
 </div>
 
@@ -681,7 +681,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.9.3</div>
+<div class="version-badge">v5.9.4</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3076,18 +3076,19 @@ function showLedgerModal() {
 
   // 一、文字台账（全部记录）
   html += '<h3 style="margin:24px 0 12px;font-size:15px;border-left:3px solid var(--primary-light);padding-left:10px">一、隐患整改记录</h3>' +
-    '<table><tr><th>序号</th><th>隐患位置</th><th>隐患描述</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
+    '<table><tr><th>序号</th><th>隐患位置及描述</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
     (hazards.length ? hazards.map(function(h, i) {
+      var loc = h.building + ' ' + h.floor + ' ' + h.room;
+      var desc = h.description || '';
       return '<tr><td>' + (i + 1) + '</td>' +
-      '<td>' + h.building + ' ' + h.floor + ' ' + h.room + '</td>' +
-      '<td>' + h.description + '</td>' +
+      '<td><b>' + loc + '</b><br>' + desc + '</td>' +
       '<td>' + h.reporter + '</td>' +
       '<td>' + h.reportDate + '</td>' +
       '<td>' + (h.status === '已整改' ? '已维修整改' : h.status === '无法整改' ? '上报学校处理' : '待处理') + '</td>' +
       '<td>' + (h.handler || '-') + '</td>' +
       '<td>' + (h.status === '已整改' ? (h.updatedAt ? h.updatedAt.slice(0, 10) : '-') : '-') + '</td>' +
       '<td>' + h.status + '</td></tr>';
-    }).join('') : '<tr><td colspan="9" style="text-align:center">暂无记录</td></tr>') +
+    }).join('') : '<tr><td colspan="8" style="text-align:center">暂无记录</td></tr>') +
     '</table>';
 
   // 二、整改前后照片对比（仅含 afterPhotos 的记录）
