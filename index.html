@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v5.9.1</title>
+<title>金田三中安全隐患排查整改系统 v5.9.2</title>
 <!-- Supabase JS SDK — 主CDN失败时自动切换备用CDN -->
 <script>
 (function() {
@@ -126,6 +126,19 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 .review-sig-block .sig-lines{margin-top:12px}
 .review-sig-block .sig-line{border-bottom:1px solid #333;padding:6px 0;font-size:12px;color:var(--text-sub);margin-bottom:8px;min-height:28px}
 .review-sig-block .sig-date{font-size:12px;color:var(--text-muted);text-align:right;margin-top:8px}
+
+/* 闭环台账照片对比表 */
+.ledger-photo-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+.ledger-photo-table th{background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;font-weight:600;font-size:12px;padding:10px 8px;text-align:center;border:1px solid #1e40af}
+.ledger-photo-table td{border:1px solid var(--border);padding:8px;vertical-align:top}
+.ledger-photo-table tr:nth-child(even) td{background:#f8fafc}
+.ledger-photo-table img{transition:transform .2s}
+.ledger-photo-table img:hover{transform:scale(1.03)}
+@media print{
+  .ledger-photo-table{page-break-inside:auto}
+  .ledger-photo-table tr{page-break-inside:avoid;page-break-after:auto}
+  .ledger-photo-table th{background:#1e3a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 
 /* Worker Bar */
 .worker-bar{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);border:1px solid var(--border)}.worker-bar .avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--primary-mid),var(--primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:700;flex-shrink:0}.worker-bar .info{flex:1}.worker-bar .name{font-size:15px;font-weight:700}.worker-bar .role{font-size:12px;color:var(--text-sub)}.worker-bar .status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:#ecfdf5;color:#059669;border-radius:20px;font-size:11px;font-weight:700;border:1px solid #a7f3d0}
@@ -250,7 +263,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.9.1</div>
+    <div class="sidebar-footer">v5.9.2</div>
   </div>
 </div>
 
@@ -668,7 +681,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.9.1</div>
+<div class="version-badge">v5.9.2</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3053,12 +3066,19 @@ function showReportModal() {
 }
 
 function showLedgerModal() {
-  document.getElementById('ledgerContent').innerHTML =
-    '<h2>金田三中安全隐患排查整改台账</h2>' +
-    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室</p>' +
+  // 筛选有整改后照片的记录（afterPhotos存在且数量>0）
+  var hasAfter = hazards.filter(function(h) {
+    return h.afterPhotos && h.afterPhotos.length > 0;
+  });
+  
+  var html = '<h2>金田三中安全隐患排查整改台账</h2>' +
+    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室</p>';
+
+  // 一、文字台账（全部记录）
+  html += '<h3 style="margin:24px 0 12px;font-size:15px;border-left:3px solid var(--primary-light);padding-left:10px">一、隐患整改记录</h3>' +
     '<table><tr><th>序号</th><th>隐患位置</th><th>隐患描述</th><th>紧急度</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
-    (hazards.length ? hazards.map((h, i) =>
-      '<tr><td>' + (i + 1) + '</td>' +
+    (hazards.length ? hazards.map(function(h, i) {
+      return '<tr><td>' + (i + 1) + '</td>' +
       '<td>' + h.building + ' ' + h.floor + ' ' + h.room + '</td>' +
       '<td>' + h.description + '</td>' +
       '<td>' + h.urgency + '</td>' +
@@ -3067,13 +3087,72 @@ function showLedgerModal() {
       '<td>' + (h.status === '已整改' ? '已维修整改' : h.status === '无法整改' ? '上报学校处理' : '待处理') + '</td>' +
       '<td>' + (h.handler || '-') + '</td>' +
       '<td>' + (h.status === '已整改' ? (h.updatedAt ? h.updatedAt.slice(0, 10) : '-') : '-') + '</td>' +
-      '<td>' + h.status + '</td></tr>'
-    ).join('') : '<tr><td colspan="10" style="text-align:center">暂无记录</td></tr>') +
-    '</table>' +
-    '<div class="sign-row">' +
+      '<td>' + h.status + '</td></tr>';
+    }).join('') : '<tr><td colspan="10" style="text-align:center">暂无记录</td></tr>') +
+    '</table>';
+
+  // 二、整改前后照片对比（仅含 afterPhotos 的记录）
+  html += '<h3 style="margin:28px 0 12px;font-size:15px;border-left:3px solid var(--success);padding-left:10px">二、整改前后对比（共 ' + hasAfter.length + ' 项）</h3>';
+  
+  if (hasAfter.length > 0) {
+    html += '<table class="ledger-photo-table"><thead><tr>' +
+      '<th style="width:8%">序号</th>' +
+      '<th style="width:36%">整改前</th>' +
+      '<th style="width:36%">整改后</th>' +
+      '<th style="width:20%">整改说明</th>' +
+      '</tr></thead><tbody>';
+    
+    hasAfter.forEach(function(h, idx) {
+      // 收集隐患前照片（photos）— 取第一张
+      var beforeHtml = '';
+      if (h.photos && h.photos.length > 0) {
+        beforeHtml = h.photos.map(function(p) {
+          var src = photoUrl(p);
+          return src ? '<img src="' + src + '" style="display:block;max-width:100%;height:auto;max-height:160px;margin:4px 0;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="">' : '';
+        }).join('');
+      }
+      if (!beforeHtml) beforeHtml = '<span style="color:var(--text-muted);font-size:12px">无照片</span>';
+      
+      // 收集整改后照片（afterPhotos）
+      var afterHtml = '';
+      if (h.afterPhotos && h.afterPhotos.length > 0) {
+        afterHtml = h.afterPhotos.map(function(p) {
+          var src = photoUrl(p);
+          return src ? '<img src="' + src + '" style="display:block;max-width:100%;height:auto;max-height:160px;margin:4px 0;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="">' : '';
+        }).join('');
+      }
+      if (!afterHtml) afterHtml = '<span style="color:var(--text-muted);font-size:12px">无照片</span>';
+      
+      // 整改说明
+      var noteText = h.rectificationNote || '';
+      if (!noteText && h.handler) noteText = '维修人员：' + h.handler;
+      
+      html += '<tr>' +
+        '<td style="text-align:center;vertical-align:top;padding-top:12px;font-weight:700">' + (idx + 1) + '</td>' +
+        '<td style="text-align:center;vertical-align:top;padding:8px">' + beforeHtml + '</td>' +
+        '<td style="text-align:center;vertical-align:top;padding:8px">' + afterHtml + '</td>' +
+        '<td style="vertical-align:top;padding:8px;font-size:12px">' +
+          '<div style="font-weight:600;margin-bottom:4px">' + (h.building || '') + ' ' + (h.floor || '') + '</div>' +
+          '<div style="color:var(--text-sub);margin-bottom:4px">' + (h.description || '') + '</div>' +
+          (noteText ? '<div style="color:var(--success);margin-bottom:2px">' + noteText + '</div>' : '') +
+          '<div style="color:var(--text-muted);font-size:11px">上报人：' + (h.reporter || '-') + '</div>' +
+          '<div style="color:var(--text-muted);font-size:11px">' + (h.reportDate || '') + '</div>' +
+        '</td>' +
+        '</tr>';
+    });
+    
+    html += '</tbody></table>';
+  } else {
+    html += '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px">暂无整改后照片的记录</div>';
+  }
+
+  // 签字栏
+  html += '<div class="sign-row">' +
     '<div class="sign-box"><div class="sign-line"></div>经办人：仇启仁</div>' +
     '<div class="sign-box"><div class="sign-line"></div>审核：凌锦辉</div>' +
     '<div class="sign-box"><div class="sign-line"></div>审批：蒙健清（校长）</div></div>';
+    
+  document.getElementById('ledgerContent').innerHTML = html;
   document.getElementById('ledgerModal').classList.add('show');
 }
 
