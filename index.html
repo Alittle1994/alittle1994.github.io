@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v5.9</title>
+<title>金田三中安全隐患排查整改系统 v5.9.1</title>
 <!-- Supabase JS SDK — 主CDN失败时自动切换备用CDN -->
 <script>
 (function() {
@@ -250,7 +250,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.9</div>
+    <div class="sidebar-footer">v5.9.1</div>
   </div>
 </div>
 
@@ -436,7 +436,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <!-- Photo Viewer -->
 <div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
   <button class="close">&times;</button>
-  <img id="photoViewerImg" src="" alt="">
+  <img id="photoViewerImg" src="" alt="" onerror="this.alt='图片加载失败'">
 </div>
 
 <!-- Report Modal -->
@@ -668,7 +668,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.9</div>
+<div class="version-badge">v5.9.1</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -746,10 +746,15 @@ async function uploadToImgBB(dataUrl) {
     return null;
   }
 }
-// v5.9: 统一取照片显示URL — 兼容对象{url,thumb}、http URL、data: base64
+// v5.9.1: 统一取照片显示URL — 兼容对象{url,thumb}、{local,data}降级、http URL、data: base64
 function photoUrl(p) {
   if (!p) return '';
-  if (typeof p === 'object') return p.url || p.thumb || '';
+  if (typeof p === 'object') {
+    if (p.url) return p.url;
+    if (p.thumb) return p.thumb;
+    if (p.local && p.data) return p.data; // ImgBB上传失败降级 → 返回base64
+    return '';
+  }
   return p; // 字符串直接返回（http URL 或 data:base64）
 }
 function compressPhotoToLimit(dataUrl, maxKB) {
@@ -2479,7 +2484,10 @@ function renderWorkerList() {
     const ut = h.urgency === '紧急' ? 'red' : h.urgency === '中' ? 'blue' : 'gray';
     const ph = h.photos && h.photos.length
       ? '<div style="margin:10px 0;display:flex;gap:6px;flex-wrap:wrap">' +
-        h.photos.map(p => '<img src="' + photoUrl(p) + '" style="width:66px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" alt="">').join('') +
+        h.photos.map(p => {
+          const url = photoUrl(p);
+          return url ? '<img src="' + url + '" style="width:66px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="">' : '';
+        }).join('') +
         '</div>'
       : '';
     return '<div class="hazard-item ' + uc + '">' +
@@ -2683,8 +2691,9 @@ function renderAdminList() {
   let html = '<table class="admin-table"><thead><tr><th class="chk-col"><input type="checkbox" id="chk-select-all-th" onchange="toggleSelectAll()" title="全选/取消"></th><th>#</th><th>上报人</th><th>填报时间</th><th>隐患位置</th><th>隐患描述</th><th>照片</th><th>紧急度</th><th>状态</th><th>上报汇总</th><th>处理人</th><th>操作</th></tr></thead><tbody>';
   html += items.map(h => {
     const cls = h.urgency === '紧急' ? 'uh' : h.urgency === '中' ? 'um' : 'ul';
-    const ph = h.photos && h.photos.length
-      ? '<img src="' + photoUrl(h.photos[0]) + '" onclick="viewPhoto(this.src)" alt="">'
+    const phUrl = photoUrl(h.photos && h.photos[0]);
+    const ph = phUrl
+      ? '<img src="' + phUrl + '" onclick="viewPhoto(this.src)" alt="" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span class=no-photo>加载失败</span>\'">'
       : '<span class="no-photo">无</span>';
     const ut = h.urgency === '紧急'
       ? '<span style="color:#ef4444;font-weight:700">紧急</span>'
@@ -2793,14 +2802,16 @@ function renderEditAfterPhotos(existingPhotos) {
   const container = document.getElementById('e-after-photos');
   if (!container) return;
   const allPhotos = existingPhotos.concat(editAfterPhotos);
-  let html = allPhotos.map((p, i) =>
-    '<div class="rectify-photo-item has-photo">' +
-    '<img src="' + p + '" onclick="viewPhoto(this.src)" alt="">' +
+  let html = allPhotos.map((p, i) => {
+    const src = photoUrl(p);
+    if (!src) return '';
+    return '<div class="rectify-photo-item has-photo">' +
+    '<img src="' + src + '" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="">' +
     (i >= existingPhotos.length
       ? '<button class="r-del" onclick="event.stopPropagation();removeEditAfterPhoto(' + (i - existingPhotos.length) + ')">×</button>'
       : '<button class="r-del" onclick="event.stopPropagation();removeEditExistingAfterPhoto(' + i + ')" title="删除已存图片" style="background:#f59e0b">×</button>') +
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
   if (allPhotos.length < 4) {
     html += '<div class="rectify-photo-item" onclick="document.getElementById(\'e-after-photo-input\').click()" title="上传整改后照片"><span>+</span></div>';
   }
@@ -3353,7 +3364,8 @@ function generateReviewReport() {
   records.forEach(h => {
     if (h.photos && h.photos.length) {
       h.photos.forEach((p, pidx) => {
-        allPhotos.push({ src: p, num: recordPhotoMap[h.id][pidx] });
+        const src = photoUrl(p);
+        if (src) allPhotos.push({ src: src, num: recordPhotoMap[h.id][pidx] });
       });
     }
   });
