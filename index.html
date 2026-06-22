@@ -1522,9 +1522,10 @@ async function runDailyCheck(silent = true) {
     result.checks.cloudConnect = { ok: false, msg: 'GitHub云端未连接' };
   } else {
     try {
-      const data = await gitHubRead();
-      if (data && data.records !== undefined) {
-        result.checks.cloudConnect = { ok: true, msg: 'GitHub云端连接正常，数据文件可访问（' + Object.keys(data.records).length + '条记录）' };
+      const readRes = await gitHubRead();
+      const cloudData = readRes && readRes.data;
+      if (cloudData && cloudData.records !== undefined) {
+        result.checks.cloudConnect = { ok: true, msg: 'GitHub云端连接正常，数据文件可访问（' + Object.keys(cloudData.records).length + '条记录）' };
       } else {
         result.checks.cloudConnect = { ok: false, msg: 'GitHub云端读取失败：数据为空或格式异常' };
       }
@@ -1534,10 +1535,11 @@ async function runDailyCheck(silent = true) {
   }
 
   // 检测4：云端读写权限（GitHub API）
-  if (cloudConnected) {
+  if (clo    if (cloudConnected) {
     try {
-      const data = await gitHubRead();
-      if (data && data.records !== undefined) {
+      const readRes = await gitHubRead();
+      const cloudData = readRes && readRes.data;
+      if (cloudData && cloudData.records !== undefined) {
         result.checks.cloudWrite = { ok: true, msg: 'GitHub云端读写正常（API可访问）' };
       } else {
         result.checks.cloudWrite = { ok: false, msg: 'GitHub云端数据格式异常' };
