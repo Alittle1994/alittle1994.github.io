@@ -977,7 +977,9 @@ async function gitHubRead() {
     if (resp.status === 404) return { sha: null, data: { version: 1, records: {} } };
     if (!resp.ok) throw new Error('GitHub API ' + resp.status);
     const json = await resp.json();
-    const content = JSON.parse(atob(json.content));
+    // GitHub API base64 带换行符，atob() 不认，需先清洗
+    const cleanB64 = json.content.replace(/\s/g, '');
+    const content = JSON.parse(atob(cleanB64));
     return { sha: json.sha, data: content };
   } catch (e) {
     throw e;
