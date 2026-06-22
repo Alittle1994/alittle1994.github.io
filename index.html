@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.0</title>
-<!-- v6.0: GitHub 云端存储，无需外部SDK -->
+<title>金田三中安全隐患排查整改系统 v6.0.1</title>
+<!-- v6.0.1: GitHub 云端存储，无需外部SDK -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -247,7 +247,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v6.0</div>
+    <div class="sidebar-footer">v6.0.1</div>
   </div>
 </div>
 
@@ -644,7 +644,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.0</div>
+<div class="version-badge">v6.0.1</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -680,7 +680,7 @@ let editAfterPhotos = []; // 编辑弹窗中新增的整改后照片
 let db = null;
 
 
-// v6.0: GitHub 云端存储 — 替代 Supabase，零成本无限制
+// v6.0.1: GitHub 云端存储 — 替代 Supabase，零成本无限制
 // Token 分段存储，绕过 GitHub Secret Scanning 推送保护
 const GITHUB_TOKEN = 'ghp_' + '3h5nJZ72cQM5do' + 'x2xlNKm1r6cV' + 'ZdbV09ygl1';
 const GITHUB_REPO = 'Alittle1994/alittle1994.github.io';
@@ -693,6 +693,7 @@ let lastSyncPushOk = 0;
 let lastSyncPullOk = 0;
 let lastSyncTime = 0;
 let lastSyncError = '';
+let lastConnectError = ''; // v6.0.1: 连接失败原因，UI中展示
 
 // 确认对话框回调
 let confirmCallback = null;
@@ -963,14 +964,15 @@ async function deleteData(id) {
   if (cloudConnected) cloudDelete(id);
 }
 
-// ===== GitHub 云同步（v6.0） =====
+// ===== GitHub 云同步（v6.0.1） =====
 // 用 GitHub 仓库的 hazards-data/hazards.json 存储数据，零成本无限制
 // 格式: { "version": 1, "records": { "id1": {...}, "id2": {...} } }
 
 async function gitHubRead() {
   try {
     const resp = await fetch(GITHUB_API, {
-      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' }
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-store'
     });
     if (resp.status === 404) return { sha: null, data: { version: 1, records: {} } };
     if (!resp.ok) throw new Error('GitHub API ' + resp.status);
@@ -999,10 +1001,75 @@ async function gitHubWrite(sha, data) {
 
 async function initGitHubBackend() {
   try {
-    const { sha, data } = await gitHubRead();
-    cloudConnected = true;
-    console.log('[Sync] GitHub 存储连接成功, 已存 ' + Object.keys(data.records || {}).length + ' 条');
+    // v6.0.1: 分步诊断，给出详细错误信息
+    const apiUrl = GITHUB_API;
+    console.log('[Sync] 测试 GitHub API 连接: ' + apiUrl);
     
+    let resp;
+    try {
+      resp = await fetch(apiUrl, {
+        headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-store'  // 禁止缓存，避免看到旧数据
+      });
+    } catch (netErr) {
+      // fetch 本身失败 = 网络不通或被屏蔽
+      lastConnectError = '网络不通: ' + netErr.message;
+      console.error('[Sync] fetch 失败:', netErr.message);
+      throw new Error('无法访问 GitHub API（' + netErr.message + '）');
+    }
+    
+    if (resp.status === 403) {
+      lastConnectError = 'Token 无效或已被撤销（HTTP 403）';
+      throw new Error('GitHub Token 无效或已被撤销');
+    }
+    if (resp.status === 404) {
+      // 数据文件不存在 → 初始化空文件
+      const initData = { version: 1, records: {} };
+      try {
+        // 创建初始文件（不带 sha，因为不存在）
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(initData))));
+        const body = JSON.stringify({ message: 'init hazards-data', content: content, branch: 'main' });
+        const putResp = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+          body: body
+        });
+        if (!putResp.ok) {
+          const errText = await putResp.text();
+          lastConnectError = '创建数据文件失败(HTTP ' + putResp.status + '): ' + errText.substring(0, 100);
+          throw new Error('创建数据文件失败');
+        }
+        const putJson = await putResp.json();
+        cloudConnected = true;
+        lastConnectError = '';
+        console.log('[Sync] GitHub 存储连接成功，已初始化空数据文件');
+        updateSyncUI();
+        startSyncTimer();
+        return true;
+      } catch (createErr) {
+        lastConnectError = '创建数据文件失败: ' + createErr.message;
+        throw createErr;
+      }
+    }
+    if (!resp.ok) {
+      const errText = await resp.text();
+      lastConnectError = 'API错误(HTTP ' + resp.status + '): ' + errText.substring(0, 100);
+      throw new Error('GitHub API ' + resp.status);
+    }
+    
+    const json = await resp.json();
+    // 解析 base64 内容
+    let content;
+    try {
+      content = JSON.parse(atob(json.content));
+    } catch (parseErr) {
+      lastConnectError = '数据解析失败: ' + parseErr.message;
+      throw new Error('JSON 解析失败');
+    }
+    
+    cloudConnected = true;
+    lastConnectError = '';
+    console.log('[Sync] GitHub 存储连接成功, 已存 ' + Object.keys(content.records || {}).length + ' 条');
     updateSyncUI();
     startSyncTimer();
     
@@ -1013,6 +1080,7 @@ async function initGitHubBackend() {
     return true;
   } catch (e) {
     console.error('[Sync] GitHub 初始化失败:', e.message);
+    if (!lastConnectError) lastConnectError = e.message;
     cloudConnected = false;
     updateSyncUI();
     return false;
@@ -1258,7 +1326,12 @@ function updateSyncUI() {
     if (label) label.textContent = '未连接';
     if (banner) { banner.className = 'cloud-banner'; banner.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)'; banner.style.borderLeftColor = '#fca5a5'; }
     if (bTitle) bTitle.textContent = '⚠ GitHub云端未连接（自动重连中）';
-    if (bSub) bSub.textContent = '点击此处立即重试 · 本地数据不受影响';
+    // v6.0.1: 展示具体错误原因，方便排查
+    let subText = '点击此处立即重试 · 本地数据不受影响';
+    if (lastConnectError) {
+      subText = '原因: ' + lastConnectError + ' · 点击重试';
+    }
+    if (bSub) bSub.textContent = subText;
     // 开始自动重连
     startAutoRetry();
   }
@@ -1306,6 +1379,7 @@ function stopAutoRetry() {
 async function retryCloudNow() {
   if (cloudConnected) { showToast('云端已连接，无需重试'); return; }
   stopAutoRetry(); // 重置自动重连计数器
+  lastConnectError = ''; // 清除上次错误
   showToast('正在重连云端...');
   const ok = await initGitHubBackend();
   if (ok) {
@@ -1314,7 +1388,8 @@ async function retryCloudNow() {
     showToast('☁ 云端重连成功！');
     renderCurrentPage();
   } else {
-    showToast('❌ 仍无法连接，请检查网络后重试');
+    updateSyncUI(); // v6.0.1: 更新UI显示错误原因
+    showToast('❌ 仍无法连接: ' + (lastConnectError || '请检查网络后重试'));
   }
 }
 
@@ -1500,7 +1575,7 @@ async function runDailyCheck(silent = true) {
 
   // 检测8：云端存储空间
   try {
-    result.checks.cloudStorage = { ok: true, msg: 'v6.0 GitHub云端: 照片上传ImgBB存URL，GitHub只存JSON数据，零成本无限制' };
+    result.checks.cloudStorage = { ok: true, msg: 'v6.0.1 GitHub云端: 照片上传ImgBB存URL，GitHub只存JSON数据，零成本无限制' };
   } catch(e) {
     result.checks.cloudStorage = { ok: true, msg: 'ImgBB图床已启用：照片存储与数据库分离' };
   }
@@ -3265,7 +3340,7 @@ async function boot() {
   updateDataInfo();
 
 
-  // v6.0: 自动连接 GitHub 云端
+  // v6.0.1: 自动连接 GitHub 云端
   console.log('[System] 尝试连接 GitHub 云端...');
   
   const ok = await initGitHubBackend();
