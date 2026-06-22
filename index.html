@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v5.9.3</title>
+<title>金田三中安全隐患排查整改系统 v5.10</title>
 <!-- Supabase JS SDK — 主CDN失败时自动切换备用CDN -->
 <script>
 (function() {
@@ -263,7 +263,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v5.9.4</div>
+    <div class="sidebar-footer">v5.10</div>
   </div>
 </div>
 
@@ -681,7 +681,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE hazards;</code>
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v5.9.4</div>
+<div class="version-badge">v5.10</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -729,8 +729,8 @@ let lastSyncPullOk = 0;    // 上次成功拉取条数
 let lastSyncError = '';    // 上次同步错误信息
 
 // 内置 Supabase 配置 — 开箱即用，所有设备自动连接
-const BUILTIN_SUPABASE_URL = 'https://wbiwjdtxpoiurtwodjxc.supabase.co';
-const BUILTIN_SUPABASE_KEY = 'sb_publishable_wctkT5_PKz1sVsX8wHd-Dw_NBAwLerB';
+const BUILTIN_SUPABASE_URL = 'https://gouymclqcpsjmddjudnq.supabase.co';
+const BUILTIN_SUPABASE_KEY = 'sb_publishable_pv18Jn0kSViNEbbfUQEBoQ_9SA40I3S';
 
 // 确认对话框回调
 let confirmCallback = null;
@@ -2202,7 +2202,7 @@ function showDailyReport() {
             style="padding:8px 16px;background:#ea580c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">
             📋 复制修复SQL
           </button>
-          <a href="https://supabase.com/dashboard/project/wbiwjdtxpoiurtwodjxc/sql/new" target="_blank"
+          <a href="https://supabase.com/dashboard/project/gouymclqcpsjmddjudnq/sql/new" target="_blank"
             style="padding:8px 16px;background:#0284c7;color:#fff;border-radius:6px;text-decoration:none;font-weight:600">
             🔗 打开Supabase SQL编辑器
           </a>
@@ -2211,7 +2211,7 @@ function showDailyReport() {
         系统已通过 RPC 函数（<code>hazard_upsert</code>）绕过 schema 缓存正常工作。<br>
         建议前往 Supabase 后台刷新 schema 以获得最佳性能。
         <br>
-        <a href="https://supabase.com/dashboard/project/wbiwjdtxpoiurtwodjxc/sql/new" target="_blank"
+        <a href="https://supabase.com/dashboard/project/gouymclqcpsjmddjudnq/sql/new" target="_blank"
           style="display:inline-block;margin-top:8px;padding:6px 14px;background:#059669;color:#fff;border-radius:6px;text-decoration:none;font-weight:600">
           🔗 打开Supabase后台 (&larr; 运行 <code>NOTIFY pgrst, 'reload schema';</code>)
         </a>
