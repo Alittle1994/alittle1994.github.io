@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.0.6</title>
-<!-- v6.0.6: 修复 runDailyCheck 代码损坏导致 JS 解析失败 -->
+<title>金田三中安全隐患排查整改系统 v6.0.7</title>
+<!-- v6.0.7: 修复 cloudPush undefined 导致上报提交报错 + initGitHubBackend atob 换行符 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -644,7 +644,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.0.6</div>
+<div class="version-badge">v6.0.7</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -948,7 +948,8 @@ async function loadData() {
 async function saveData(h) {
   if (!h) return;
   await dbPut(h);
-  if (cloudConnected) cloudPush(h);
+  // GitHub 云存储通过定时全量同步，单条增量推送非必须
+  // 这里仅记录脏标记，由 cloudPushAll 统一处理
 }
 
 async function deleteData(id) {
@@ -1081,7 +1082,7 @@ async function initGitHubBackend() {
     // 解析 base64 内容
     let content;
     try {
-      content = JSON.parse(atob(json.content));
+      content = JSON.parse(atob(json.content.replace(/\s/g, '')));
     } catch (parseErr) {
       lastConnectError = '数据解析失败: ' + parseErr.message;
       throw new Error('JSON 解析失败');
