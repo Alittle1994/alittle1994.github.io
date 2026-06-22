@@ -1006,9 +1006,12 @@ async function initGitHubBackend() {
     
     // 第1步：测试基础连通性（raw.githubusercontent.com 无需认证）
     try {
+      const ctrl1 = new AbortController();
+      const t1 = setTimeout(function() { ctrl1.abort(); }, 10000);
       const rawResp = await fetch('https://raw.githubusercontent.com/Alittle1994/alittle1994.github.io/main/hazards-data/hazards.json', {
-        cache: 'no-store', signal: AbortSignal.timeout(10000)
+        cache: 'no-store', signal: ctrl1.signal
       });
+      clearTimeout(t1);
       console.log('[Sync] 基础连通性 OK, 状态码: ' + rawResp.status);
     } catch (rawErr) {
       lastConnectError = '网络不通: 无法访问 GitHub（' + rawErr.message + '）';
@@ -1436,7 +1439,8 @@ async function doConnectCloud() {
     closeModal('cloudModal');
     showToast('☁ GitHub云端连接成功！');
   } else {
-    showToast('连接失败，请按F12打开Console查看[Sync]错误详情');
+    var errMsg = lastConnectError || '请求失败';
+    showToast('❌ 连接失败: ' + errMsg);
   }
 }
 
