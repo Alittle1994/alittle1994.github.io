@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>金田三中安全隐患排查整改系统 v6.2.0</title>
-<!-- v6.2.0: 更新GitHub Token为永不过期版本 -->
+<!-- v6.2.0: 照片改存 GitHub 仓库 photos/ 目录，不再依赖 ImgBB -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -700,25 +700,37 @@ let confirmCallback = null;
 
 // ===== 照片压缩工具 — 限制50KB =====
 // 使用Canvas两轮压缩：先缩放尺寸（最大1200px），再降质量直到≤50KB
-const IMGBB_API_KEY = '38310f76fe7218d2151e492b6f3a4a7e';
 const PHOTO_MAX_KB = 50;
 const PHOTO_MAX_PX = 1200; // 最长边像素上限
-// v5.9: 照片上传到 ImgBB 云端图床，Supabase 只存 URL（几十字节），彻底解决带宽超标
-async function uploadToImgBB(dataUrl) {
+// v6.2.0: 照片直接上传到 GitHub 仓库 photos/ 目录（替代 ImgBB 图床）
+// 返回 { url, thumb } — GitHub 无缩略图，thumb 与 url 相同
+async function uploadPhotoToGitHub(dataUrl) {
   const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-  const formData = new FormData();
-  formData.append('key', IMGBB_API_KEY);
-  formData.append('image', base64);
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  const filename = 'photos/' + timestamp + '_' + random + '.jpg';
+  const apiUrl = 'https://api.github.com/repos/Alittle1994/alittle1994.github.io/contents/' + encodeURIComponent(filename);
+  const body = JSON.stringify({ message: 'upload: ' + filename, content: base64, branch: 'main' });
   try {
-    const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
-    const json = await resp.json();
-    if (json.success) {
-      return { url: json.data.url, thumb: json.data.thumb.url, deleteUrl: json.data.delete_url };
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 30000);
+    const resp = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: body,
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      console.warn('[GitHub Photo] upload failed:', resp.status, errText.substring(0, 200));
+      return null;
     }
-    console.warn('[ImgBB] upload failed:', json);
-    return null;
+    const json = await resp.json();
+    const rawUrl = 'https://raw.githubusercontent.com/Alittle1994/alittle1994.github.io/main/' + filename;
+    return { url: rawUrl, thumb: rawUrl };
   } catch (e) {
-    console.warn('[ImgBB] upload error:', e.message);
+    console.warn('[GitHub Photo] upload error:', e.message);
     return null;
   }
 }
@@ -1157,7 +1169,7 @@ async function cloudPushAll(incremental) {
         for (var pi = 0; pi < h.photos.length; pi++) {
           var p = h.photos[pi];
           if (typeof p === 'string' && p.indexOf('data:') === 0) {
-            var imgResult = await uploadToImgBB(p);
+            var imgResult = await uploadPhotoToGitHub(p);
             if (imgResult) {
               cloudPhotos.push({ url: imgResult.url, thumb: imgResult.thumb, deleteUrl: imgResult.deleteUrl });
             } else {
@@ -1175,7 +1187,7 @@ async function cloudPushAll(incremental) {
         for (var ai = 0; ai < h.afterPhotos.length; ai++) {
           var ap = h.afterPhotos[ai];
           if (typeof ap === 'string' && ap.indexOf('data:') === 0) {
-            var aResult = await uploadToImgBB(ap);
+            var aResult = await uploadPhotoToGitHub(ap);
             if (aResult) {
               cloudAfterPhotos.push({ url: aResult.url, thumb: aResult.thumb, deleteUrl: aResult.deleteUrl });
             } else {
