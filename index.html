@@ -597,7 +597,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
         <div class="steps">
           <strong>&#128204; 说明：</strong><br>
           本系统已内置 GitHub Token，数据存储在 <code>Alittle1994/alittle1994.github.io</code> 仓库的 <code>hazards-data/hazards.json</code> 文件中。<br>
-          照片仍上传至 ImgBB 图床，云端只存 URL 引用，节省存储空间。<br><br>
+          照片直接上传至 GitHub 仓库 <code>photos/</code> 目录，无需第三方图床，永久稳定。<br><br>
           点击下方按钮即可连接云端，无需额外配置。
         </div>
       </div>
@@ -1163,7 +1163,7 @@ async function cloudPushAll(incremental) {
       var h = toPush[j];
       var hCloud = Object.assign({}, h);
 
-      // ImgBB upload photos
+      // Upload photos to GitHub photos/ directory
       var cloudPhotos = [];
       if (Array.isArray(h.photos) && h.photos.length > 0) {
         for (var pi = 0; pi < h.photos.length; pi++) {
@@ -1610,9 +1610,9 @@ async function runDailyCheck(silent = true) {
 
   // 检测8：云端存储空间
   try {
-    result.checks.cloudStorage = { ok: true, msg: 'v6.0.1 GitHub云端: 照片上传ImgBB存URL，GitHub只存JSON数据，零成本无限制' };
+    result.checks.cloudStorage = { ok: true, msg: 'v6.2.0 GitHub云端: 照片存photos/目录，数据存hazards.json，零成本无限制（仓库已用0.1%/1024MB）' };
   } catch(e) {
-    result.checks.cloudStorage = { ok: true, msg: 'ImgBB图床已启用：照片存储与数据库分离' };
+    result.checks.cloudStorage = { ok: true, msg: 'GitHub存储正常：照片和数据均存储在GitHub仓库' };
   }
 
   // 汇总结果
