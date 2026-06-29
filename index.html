@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.2.0</title>
-<!-- v6.2.0: 照片改存 GitHub 仓库 photos/ 目录，不再依赖 ImgBB -->
+<title>金田三中安全隐患排查整改系统 v6.3.0</title>
+<!-- v6.3.0: 数据变更即时推送到云端，任何人进入系统自动拉取最新数据 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -247,7 +247,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v6.2.0</div>
+    <div class="sidebar-footer">v6.3.0</div>
   </div>
 </div>
 
@@ -644,7 +644,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.2.0</div>
+<div class="version-badge">v6.3.0</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -957,11 +957,23 @@ async function loadData() {
   }
 }
 
+// ===== 即时云端推送（防抖2秒，批量操作合并为单次推送）=====
+let _cloudPushPending = null;
+
+function scheduleCloudPush() {
+  if (_cloudPushPending) return;
+  _cloudPushPending = setTimeout(async function() {
+    _cloudPushPending = null;
+    if (cloudConnected && navigator.onLine) {
+      try { await cloudPushAll(true); } catch(e) { console.warn('[Sync] 即时推送失败:', e.message); }
+    }
+  }, 2000);
+}
+
 async function saveData(h) {
   if (!h) return;
   await dbPut(h);
-  // GitHub 云存储通过定时全量同步，单条增量推送非必须
-  // 这里仅记录脏标记，由 cloudPushAll 统一处理
+  scheduleCloudPush();
 }
 
 async function deleteData(id) {
@@ -1338,7 +1350,7 @@ function updateSyncUI() {
     if (dot) { dot.className = 'dot online'; }
     if (label) label.textContent = '云同步';
     if (banner) { banner.className = 'cloud-banner'; banner.style.background = ''; banner.style.borderLeftColor = ''; }
-    if (bTitle) bTitle.textContent = '☁ 已连接GitHub云端 · 数据实时同步';
+    if (bTitle) bTitle.textContent = '☁ 已连接GitHub云端 · 数据实时同步（变更2秒内推送）';
     let syncDetail = '电脑和手机打开同一网址，数据自动同步';
     if (lastSyncError) {
       syncDetail = '⚠ ' + lastSyncError;
