@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.3.1</title>
-<!-- v6.3.1: 校园网兼容 — 连通性测试改用 api.github.com，照片 URL 改用 jsDelivr CDN -->
+<title>金田三中安全隐患排查整改系统 v6.3.2</title>
+<!-- v6.3.2: 自动重连取消3次上限，每5分钟无限重连直到成功，校园网络波动自动恢复 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -247,7 +247,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v6.3.1</div>
+    <div class="sidebar-footer">v6.3.2</div>
   </div>
 </div>
 
@@ -644,7 +644,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.3.1</div>
+<div class="version-badge">v6.3.2</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1394,16 +1394,11 @@ let autoRetryCount = 0;
 
 function startAutoRetry() {
   if (autoRetryTimer) return; // 已在重连中
-  if (autoRetryCount >= 3) {
-    // 已重试3次均失败，放弃自动重连（用户可点击横幅手动重试）
-    console.log('[Sync] 已自动重试3次均失败，停止自动重连。可点击横幅手动重试。');
-    return;
-  }
   autoRetryTimer = setInterval(async () => {
     if (cloudConnected) { stopAutoRetry(); return; }
     if (!navigator.onLine) return; // 设备离线，跳过
     autoRetryCount++;
-    console.log('[Sync] 自动重连第 ' + autoRetryCount + '/3 次...');
+    console.log('[Sync] 自动重连第 ' + autoRetryCount + ' 次...');
     const ok = await initGitHubBackend();
     if (ok) {
       console.log('[Sync] 自动重连成功！');
@@ -1412,11 +1407,9 @@ function startAutoRetry() {
       showToast('☁ 云端已自动重连成功！');
       renderCurrentPage();
       stopAutoRetry();
-    } else if (autoRetryCount >= 3) {
-      stopAutoRetry();
-      console.log('[Sync] 3次重连均失败，已停止自动重连。点击顶部横幅可手动重试。');
     }
-  }, 300000); // 每5分钟重试（原15秒，降低20倍请求量）
+    // v6.3.2: 取消3次上限，每5分钟无限重连，直到成功
+  }, 300000); // 每5分钟重试
 }
 
 function stopAutoRetry() {
