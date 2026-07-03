@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.3.2</title>
-<!-- v6.3.2: 自动重连取消3次上限，每5分钟无限重连直到成功，校园网络波动自动恢复 -->
+<title>金田三中安全隐患排查整改系统 v6.3.3</title>
+<!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#0f172a;--primary-mid:#1e3a8a;--primary-light:#3b82f6;--accent:#f59e0b;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--info:#06b6d4;--purple:#8b5cf6;--bg:#f0f4f8;--card:#fff;--text:#1e293b;--text-sub:#64748b;--text-muted:#94a3b8;--border:#e2e8f0;--shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 6px rgba(0,0,0,.05);--shadow-lg:0 10px 25px rgba(0,0,0,.08);--shadow-xl:0 20px 50px rgba(0,0,0,.12);--radius:16px;--radius-sm:10px;--radius-xs:8px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
@@ -247,7 +247,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v6.3.2</div>
+    <div class="sidebar-footer">v6.3.3</div>
   </div>
 </div>
 
@@ -644,7 +644,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.3.2</div>
+<div class="version-badge">v6.3.3</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1008,9 +1008,25 @@ async function gitHubRead() {
     if (resp.status === 404) return { sha: null, data: { version: 1, records: {} } };
     if (!resp.ok) throw new Error('GitHub API ' + resp.status);
     const json = await resp.json();
+    // v6.3.3: 文件超过 1MB 时 Contents API 不返回 content，改用 Git Data API blobs
+    let contentB64;
+    if (!json.content && json.sha && json.size && json.size > 1000000) {
+      const blobResp = await fetch('https://api.github.com/repos/Alittle1994/alittle1994.github.io/git/blobs/' + json.sha, {
+        headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-store'
+      });
+      if (!blobResp.ok) throw new Error('GitHub blob API ' + blobResp.status);
+      const blobJson = await blobResp.json();
+      contentB64 = blobJson.content;
+    } else {
+      contentB64 = json.content;
+    }
     // GitHub API base64 带换行符，atob() 不认，需先清洗
-    const cleanB64 = json.content.replace(/\s/g, '');
-    const content = JSON.parse(atob(cleanB64));
+    const cleanB64 = (contentB64 || '').replace(/\s/g, '');
+    if (!cleanB64) throw new Error('云端数据文件内容为空');
+    const raw = atob(cleanB64);
+    // v6.3.3: 正确解码 UTF-8（之前漏了解码，导致中文经过多次读写后变成乱码、文件膨胀）
+    const content = JSON.parse(decodeURIComponent(escape(raw)));
     return { sha: json.sha, data: content };
   } catch (e) {
     throw e;
@@ -1113,7 +1129,24 @@ async function initGitHubBackend() {
     // 解析 base64 内容
     let content;
     try {
-      content = JSON.parse(atob(json.content.replace(/\s/g, '')));
+      // v6.3.3: 文件超过 1MB 时 Contents API 不返回 content，改用 Git Data API blobs
+      let contentB64;
+      if (!json.content && json.sha && json.size && json.size > 1000000) {
+        const blobResp = await fetch('https://api.github.com/repos/Alittle1994/alittle1994.github.io/git/blobs/' + json.sha, {
+          headers: { 'Authorization': 'Bearer ' + GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json' },
+          cache: 'no-store'
+        });
+        if (!blobResp.ok) throw new Error('GitHub blob API ' + blobResp.status);
+        const blobJson = await blobResp.json();
+        contentB64 = blobJson.content;
+      } else {
+        contentB64 = json.content;
+      }
+      const cleanB64 = (contentB64 || '').replace(/\s/g, '');
+      if (!cleanB64) throw new Error('云端数据文件内容为空');
+      const raw = atob(cleanB64);
+      // v6.3.3: 正确解码 UTF-8（与保存时 btoa(unescape(encodeURIComponent(...))) 对应）
+      content = JSON.parse(decodeURIComponent(escape(raw)));
     } catch (parseErr) {
       lastConnectError = '数据解析失败: ' + parseErr.message;
       throw new Error('JSON 解析失败');
@@ -1408,7 +1441,7 @@ function startAutoRetry() {
       renderCurrentPage();
       stopAutoRetry();
     }
-    // v6.3.2: 取消3次上限，每5分钟无限重连，直到成功
+    // v6.3.3: 取消3次上限，每5分钟无限重连，直到成功
   }, 300000); // 每5分钟重试
 }
 
