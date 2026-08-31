@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.3.3</title>
+<title>金田三中安全隐患排查整改系统 v6.4.0</title>
+<!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -247,7 +248,11 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div class="sidebar-item" onclick="importJSON();toggleSidebar()"><span class="si-icon">&#128194;</span> 恢复数据(JSON)</div>
       <div class="sidebar-item" onclick="exportCSV();toggleSidebar()"><span class="si-icon">&#128196;</span> 导出CSV</div>
     </div>
-    <div class="sidebar-footer">v6.3.3</div>
+    <div style="padding:6px 24px 10px">
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
+      <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
+    </div>
+    <div class="sidebar-footer">v6.4.0</div>
   </div>
 </div>
 
@@ -335,6 +340,9 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     <button class="btn btn-amber" style="flex:1" onclick="showPage('report')">+ 自查上报</button>
     <button class="btn btn-outline" style="width:auto;padding:12px 16px" onclick="refreshAll()">&#8635; 刷新</button>
   </div>
+  <div class="filter-row">
+    <select class="form-select" id="w-semester" onchange="setSemesterView(this.value)"></select>
+  </div>
   <div class="stats-grid" id="w-stats"></div>
   <div class="tabs" id="w-tabs">
     <button class="tab active" onclick="setWorkerTab('pending',this)">&#9888; 待处理隐患 <span class="badge" id="w-pending-count">0</span></button>
@@ -389,6 +397,9 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   <div class="stats-grid" id="a-stats"></div>
 
   <!-- Filters & Search -->
+  <div class="filter-row">
+    <select class="form-select" id="a-semester" onchange="setSemesterView(this.value)"></select>
+  </div>
   <div class="filter-row">
     <select class="form-select" id="a-filter-status" onchange="renderAdminList()">
       <option value="">全部状态</option>
@@ -644,7 +655,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.3.3</div>
+<div class="version-badge">v6.4.0</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -678,6 +689,60 @@ let workerTab = 'pending';
 let editingId = null;
 let editAfterPhotos = []; // 编辑弹窗中新增的整改后照片
 let db = null;
+
+// ===== 学期模块 (v6.4.0) =====
+// 学期划分规则：2-7月 = 当年春季期，8-12月 = 当年秋季期，1月 = 上一年秋季期
+function semesterOfDate(d) {
+  const m = d.getMonth() + 1;
+  const y = d.getFullYear();
+  if (m >= 2 && m <= 7) return y + '年春季期';
+  if (m >= 8) return y + '年秋季期';
+  return (y - 1) + '年秋季期';
+}
+function currentSemester() { return semesterOfDate(new Date()); }
+// 记录归属学期：优先读字段；无字段的历史记录按创建时间推算
+// （2026-08-01 之前的历史数据统一归入「2026年春季期」）
+function recordSemester(h) {
+  if (h.semester) return h.semester;
+  const d = new Date(h.createdAt || 0);
+  if (isNaN(d.getTime()) || d.getTime() < new Date('2026-08-01T00:00:00').getTime()) return '2026年春季期';
+  return semesterOfDate(d);
+}
+// 当前学期视图（localStorage 持久化，'all' = 全部学期）
+let semesterView = localStorage.getItem('jt3_semester_view') || currentSemester();
+let semesterMigrationDone = false; // 学期字段迁移标记，云端连接后全量推送一次
+// 按当前学期视图过滤后的数据（供列表/统计/导出使用）
+function semHazards() {
+  if (semesterView === 'all') return hazards;
+  return hazards.filter(h => recordSemester(h) === semesterView);
+}
+// 数据中出现过的所有学期（新学期排前），并保证当前学期始终在列
+function allSemesters() {
+  const set = {};
+  hazards.forEach(h => { set[recordSemester(h)] = true; });
+  set[currentSemester()] = true;
+  return Object.keys(set).sort().reverse();
+}
+function setSemesterView(v) {
+  if (v === semesterView) return;
+  semesterView = v;
+  localStorage.setItem('jt3_semester_view', v);
+  renderSemesterSelects();
+  renderCurrentPage();
+  showToast(v === 'all' ? '📆 已切换：全部学期' : '📆 已切换：' + v);
+}
+// 刷新所有学期下拉框（维修工作台 / 管理后台 / 侧边栏）
+function renderSemesterSelects() {
+  const opts = '<option value="all"' + (semesterView === 'all' ? ' selected' : '') + '>全部学期</option>' +
+    allSemesters().map(s =>
+      '<option value="' + s + '"' + (semesterView === s ? ' selected' : '') + '>' +
+      s + (s === currentSemester() ? '（本学期）' : '') + '</option>'
+    ).join('');
+  ['w-semester', 'a-semester', 's-semester'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
 
 
 // v6.0.1: GitHub 云端存储 — 替代 Supabase，零成本无限制
@@ -957,6 +1022,21 @@ async function loadData() {
     }
 
     hazards.sort((a, b) => String(a.id) > String(b.id) ? -1 : 1);
+
+    // v6.4.0: 学期字段迁移 — 无 semester 字段的历史记录按规则归入学期
+    // 2026-08-01 之前的历史数据统一归入「2026年春季期」
+    let semMigrated = 0;
+    for (const h of hazards) {
+      if (!h.semester) {
+        h.semester = recordSemester(h);
+        semMigrated++;
+        try { await dbPut(h); } catch (e) { console.warn('[Data] 学期迁移写入失败:', h.id, e.message); }
+      }
+    }
+    if (semMigrated > 0) {
+      console.log('[Data] 学期迁移: ' + semMigrated + ' 条历史记录已归入学期');
+      semesterMigrationDone = true; // 云端连接成功后全量推送一次
+    }
   } catch (e) {
     console.error('loadData error:', e);
     hazards = [];
@@ -1440,6 +1520,11 @@ function startAutoRetry() {
       showToast('☁ 云端已自动重连成功！');
       renderCurrentPage();
       stopAutoRetry();
+      // v6.4.0: 重连成功后若存在未推送的学期迁移，全量推送一次
+      if (semesterMigrationDone) {
+        try { await cloudPushAll(false); semesterMigrationDone = false; }
+        catch (e) { console.warn('[Sync] 学期迁移推送失败:', e.message); }
+      }
     }
     // v6.3.3: 取消3次上限，每5分钟无限重连，直到成功
   }, 300000); // 每5分钟重试
@@ -1949,6 +2034,7 @@ async function submitReport() {
     description: desc, urgency,
     photos: [...tempPhotos],
     status: '待处理', handler: '',
+    semester: currentSemester(), // v6.4.0: 自动归属当前学期
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     reportDate: pad(now.getMonth() + 1) + '-' + pad(now.getDate()),
@@ -1972,13 +2058,15 @@ async function submitReport() {
 
 // ===== 维修工作台 =====
 function renderWorker() {
+  renderSemesterSelects();
   renderWorkerStats();
   renderWorkerList();
 }
 
 function renderWorkerStats() {
+  const view = semHazards(); // v6.4.0: 按当前学期视图统计
   const s = { pending: 0, handling: 0, done: 0, reported: 0, cantfix: 0 };
-  hazards.forEach(h => {
+  view.forEach(h => {
     if (h.status === '待处理') s.pending++;
     if (h.status === '处理中') s.handling++;
     if (h.status === '已整改') s.done++;
@@ -1991,8 +2079,8 @@ function renderWorkerStats() {
     '<div class="stat-card green"><div class="num">' + s.done + '</div><div class="txt">已整改</div></div>' +
     '<div class="stat-card purple"><div class="num">' + s.reported + '</div><div class="txt">已上报</div></div>' +
     '<div class="stat-card gray"><div class="num">' + s.cantfix + '</div><div class="txt">无法整改</div></div>';
-  document.getElementById('w-pending-count').textContent = hazards.filter(h => ['待处理', '处理中'].includes(h.status)).length;
-  document.getElementById('w-done-count').textContent = hazards.filter(h => ['已整改', '无法整改'].includes(h.status)).length;
+  document.getElementById('w-pending-count').textContent = view.filter(h => ['待处理', '处理中'].includes(h.status)).length;
+  document.getElementById('w-done-count').textContent = view.filter(h => ['已整改', '无法整改'].includes(h.status)).length;
 }
 
 function setWorkerTab(t, btn) {
@@ -2004,9 +2092,10 @@ function setWorkerTab(t, btn) {
 
 function renderWorkerList() {
   const list = document.getElementById('w-list');
+  const view = semHazards(); // v6.4.0: 按当前学期视图过滤
   let items = workerTab === 'pending'
-    ? hazards.filter(h => ['待处理', '处理中'].includes(h.status))
-    : hazards.filter(h => ['已整改', '无法整改'].includes(h.status));
+    ? view.filter(h => ['待处理', '处理中'].includes(h.status))
+    : view.filter(h => ['已整改', '无法整改'].includes(h.status));
 
   // 按紧急程度排序
   const urgencyOrder = { '紧急': 0, '中': 1, '一般': 2 };
@@ -2162,8 +2251,10 @@ async function changeWorkerStatus(id, newStatus) {
 
 // ===== 管理后台 =====
 function renderAdminStats() {
-  const s = { total: hazards.length, pending: 0, handling: 0, done: 0, reported: 0, urgent: 0, cantfix: 0 };
-  hazards.forEach(h => {
+  renderSemesterSelects(); // v6.4.0: 刷新学期下拉框
+  const view = semHazards(); // v6.4.0: 按当前学期视图统计
+  const s = { total: view.length, pending: 0, handling: 0, done: 0, reported: 0, urgent: 0, cantfix: 0 };
+  view.forEach(h => {
     if (h.status === '待处理') s.pending++;
     if (h.status === '处理中') s.handling++;
     if (h.status === '已整改') s.done++;
@@ -2203,7 +2294,7 @@ function renderAdminList() {
   const fr = document.getElementById('a-filter-reported').value;
   const kw = document.getElementById('a-search').value.trim().toLowerCase();
 
-  let items = [...hazards];
+  let items = [...semHazards()]; // v6.4.0: 按当前学期视图过滤
   if (fs) items = items.filter(h => h.status === fs);
   if (fu) items = items.filter(h => h.urgency === fu);
   if (fr === 'reported') items = items.filter(h => h.reviewReportedAt);
@@ -2512,30 +2603,31 @@ async function handleImportFile(input) {
 }
 
 function exportCSV() {
-  // 排除已上报汇总的记录（仅导出未上报记录）
-  let filtered = hazards.filter(h => !h.reviewReportedAt);
+  // v6.4.0: 按当前学期视图导出；排除已上报汇总的记录（仅导出未上报记录）
+  const view = semHazards();
+  let filtered = view.filter(h => !h.reviewReportedAt);
   // 按紧急程度排序：紧急→中→一般
   const urgencyOrder = { '紧急': 0, '中': 1, '一般': 2 };
 
   if (filtered.length === 0) {
     // 没有未上报记录，询问是否导出全部
-    const reportedCount = hazards.filter(h => h.reviewReportedAt).length;
+    const reportedCount = view.filter(h => h.reviewReportedAt).length;
     if (reportedCount > 0) {
       showConfirm(
         '📋 CSV导出',
-        '当前没有未上报汇总的记录。<br>是否导出<strong>全部 ' + hazards.length + ' 条记录</strong>（含已上报汇总的 ' + reportedCount + ' 条）？',
+        '当前学期没有未上报汇总的记录。<br>是否导出<strong>全部 ' + view.length + ' 条记录</strong>（含已上报汇总的 ' + reportedCount + ' 条）？',
         '导出全部',
-        () => { doExportCSV(hazards); }
+        () => { doExportCSV(view); }
       );
     } else {
-      showToast('当前没有任何记录可导出');
+      showToast('当前学期没有任何记录可导出');
     }
     return;
   }
 
   const sorted = [...filtered].sort((a, b) => (urgencyOrder[a.urgency] || 2) - (urgencyOrder[b.urgency] || 2));
   doExportCSV(sorted);
-  const reportedCount = hazards.filter(h => h.reviewReportedAt).length;
+  const reportedCount = view.filter(h => h.reviewReportedAt).length;
   if (reportedCount > 0) {
     showToast('CSV导出成功！含 ' + sorted.length + ' 条待上报记录（已排除 ' + reportedCount + ' 条已上报汇总）');
   }
@@ -2561,12 +2653,14 @@ function doExportCSV(items) {
 // ===== 报告与台账 =====
 function showReportModal() {
   const now = new Date();
-  const p = hazards.filter(h => h.status === '待处理');
+  const view = semHazards(); // v6.4.0: 按当前学期视图生成报告
+  const semLabel = semesterView === 'all' ? '全部学期' : semesterView;
+  const p = view.filter(h => h.status === '待处理');
   document.getElementById('reportContent').innerHTML =
     '<h2>金田三中校园安全隐患排查报告</h2>' +
-    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室<br>生成时间：' + now.toLocaleString('zh-CN') + '</p>' +
+    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室<br>统计学期：' + semLabel + '<br>生成时间：' + now.toLocaleString('zh-CN') + '</p>' +
     '<h3>一、隐患概况</h3>' +
-    '<p>本次排查共发现隐患 <strong>' + hazards.length + '</strong> 项，其中待处理 <strong>' + p.length + '</strong> 项。</p>' +
+    '<p>' + semLabel + '共发现隐患 <strong>' + view.length + '</strong> 项，其中待处理 <strong>' + p.length + '</strong> 项。</p>' +
     '<h3>二、待处理隐患明细</h3>' +
     '<table><tr><th>序号</th><th>位置</th><th>隐患描述</th><th>紧急程度</th><th>上报人</th><th>上报时间</th></tr>' +
     (p.length ? p.map((h, i) =>
@@ -2582,18 +2676,20 @@ function showReportModal() {
 }
 
 function showLedgerModal() {
+  const view = semHazards(); // v6.4.0: 按当前学期视图生成台账
+  const semLabel = semesterView === 'all' ? '全部学期' : semesterView;
   // 筛选有整改后照片的记录（afterPhotos存在且数量>0）
-  var hasAfter = hazards.filter(function(h) {
+  var hasAfter = view.filter(function(h) {
     return h.afterPhotos && h.afterPhotos.length > 0;
   });
-  
+
   var html = '<h2>金田三中安全隐患排查整改台账</h2>' +
-    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室</p>';
+    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室<br>统计学期：' + semLabel + '</p>';
 
   // 一、文字台账（全部记录）
   html += '<h3 style="margin:24px 0 12px;font-size:15px;border-left:3px solid var(--primary-light);padding-left:10px">一、隐患整改记录</h3>' +
     '<table><tr><th>序号</th><th>隐患位置及描述</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
-    (hazards.length ? hazards.map(function(h, i) {
+    (view.length ? view.map(function(h, i) {
       var loc = h.building + ' ' + h.floor + ' ' + h.room;
       var desc = h.description || '';
       return '<tr><td>' + (i + 1) + '</td>' +
@@ -2678,7 +2774,10 @@ function updateDataInfo() {
   const reportInfo = reportedCount > 0
     ? ' &middot; <span style="color:#6366f1">已上报汇总 ' + reportedCount + ' 条</span>'
     : '';
-  i.innerHTML = '&#x1F4C1; 共 <strong>' + hazards.length + '</strong> 条记录' + reportInfo + ' &middot; ' + mode + syncInfo;
+  // v6.4.0: 学期视图信息
+  const semLabel = semesterView === 'all' ? '全部学期' : semesterView;
+  const semInfo = ' &middot; 📆 学期视图：<strong>' + semLabel + '</strong> ' + semHazards().length + ' 条（全库 ' + hazards.length + ' 条）';
+  i.innerHTML = '&#x1F4C1; 共 <strong>' + hazards.length + '</strong> 条记录' + reportInfo + semInfo + ' &middot; ' + mode + syncInfo;
 }
 
 // ===== 刷新全部数据 =====
@@ -3424,11 +3523,18 @@ async function boot() {
   console.log('[System] 尝试连接 GitHub 云端...');
   
   const ok = await initGitHubBackend();
-  
+
   if (!ok) {
     console.log('[System] 云端连接失败，使用本地模式');
     // 延迟5秒后开始后台静默重试（不弹toast，减少打扰）
     setTimeout(function() { startAutoRetry(); }, 5000);
+  } else if (semesterMigrationDone) {
+    // v6.4.0: 学期字段迁移过 → 全量推送一次，把 semester 字段同步到云端
+    try {
+      console.log('[System] 检测到学期迁移，全量推送云端...');
+      await cloudPushAll(false);
+      semesterMigrationDone = false;
+    } catch (e) { console.warn('[Sync] 学期迁移推送失败，将在下次同步重试:', e.message); }
   }
 
   updateSyncUI();
