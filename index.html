@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.1</title>
-<!-- v6.4.1: 2026-2027学年班级更新 — 23级毕业移除，26级新生7个班（261-267），25级升八年级、24级升九年级 -->
+<title>金田三中安全隐患排查整改系统 v6.4.2</title>
+<!-- v6.4.2: 修复8月记录无法查看 — 默认视图回落「全部学期」，seedDemo补semester字段，云端拉取自动补齐缺失学期字段 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.1</div>
+    <div class="sidebar-footer">v6.4.2</div>
   </div>
 </div>
 
@@ -656,7 +656,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.1</div>
+<div class="version-badge">v6.4.2</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -711,7 +711,13 @@ function recordSemester(h) {
   return semesterOfDate(d);
 }
 // 当前学期视图（localStorage 持久化，'all' = 全部学期）
-let semesterView = localStorage.getItem('jt3_semester_view') || currentSemester();
+// v6.4.2: 视图版本升级 → 打开默认「全部学期」，确保新旧学期记录都能看到
+const SEM_VIEW_VER = 'v2';
+if (localStorage.getItem('jt3_sem_view_ver') !== SEM_VIEW_VER) {
+  localStorage.setItem('jt3_sem_view_ver', SEM_VIEW_VER);
+  localStorage.setItem('jt3_semester_view', 'all');
+}
+let semesterView = localStorage.getItem('jt3_semester_view') || 'all';
 let semesterMigrationDone = false; // 学期字段迁移标记，云端连接后全量推送一次
 // 按当前学期视图过滤后的数据（供列表/统计/导出使用）
 function semHazards() {
@@ -1423,6 +1429,21 @@ async function cloudPullAll(incremental) {
         if (!idMap[key]) { idMap[key] = true; deduped.unshift(hazards[d]); }
       }
       hazards = deduped;
+      renderCurrentPage();
+      updateDataInfo();
+    }
+    // v6.4.2: 拉取后统一补齐缺失的 semester 字段（防止云端旧记录无字段导致学期视图丢失）
+    var semFixed = 0;
+    for (var s2 = 0; s2 < hazards.length; s2++) {
+      if (!hazards[s2].semester) {
+        hazards[s2].semester = recordSemester(hazards[s2]);
+        try { await dbPut(hazards[s2]); } catch (e) {}
+        semFixed++;
+      }
+    }
+    if (semFixed > 0) {
+      console.log('[Sync] 学期字段补齐: ' + semFixed + ' 条，待全量推回云端');
+      semesterMigrationDone = true;
       renderCurrentPage();
       updateDataInfo();
     }
@@ -3485,11 +3506,11 @@ window.addEventListener('offline', () => {
 // ===== 预置示例数据 =====
 async function seedDemoData() {
   const demos = [
-    { id: 'JT20260831-112300-101', reporter: '仇老师', building: '男生公寓楼二', floor: '四楼', room: '七年级262班', description: '洗澡时水龙头经常性停水', urgency: '紧急', photos: [], status: '待处理', handler: '', createdAt: '2026-08-31T11:23:00Z', updatedAt: '2026-08-31T11:23:00Z', reportDate: '08-31', reportTime: '11:23' },
-    { id: 'JT20260831-071000-202', reporter: '苏瑞敏', building: '教学楼', floor: '四楼', room: '七年级263班', description: '263班教室走廊安全指示牌脱落，存在安全隐患', urgency: '紧急', photos: [], status: '待处理', handler: '', createdAt: '2026-08-31T07:10:00Z', updatedAt: '2026-08-31T07:10:00Z', reportDate: '08-31', reportTime: '07:10' },
-    { id: 'JT20260831-060000-303', reporter: '仇老师', building: '功能楼', floor: '二楼', room: '楼梯间', description: '自查发现二楼楼梯间灯不亮，已及时维修更换', urgency: '一般', photos: [], status: '已整改', handler: '仇启仁', createdAt: '2026-08-31T06:00:00Z', updatedAt: '2026-09-01T08:00:00Z', reportDate: '08-31', reportTime: '06:00' },
-    { id: 'JT20260830-150000-404', reporter: '刘肖霞', building: '女生公寓楼三', floor: '一楼', room: '宿舍', description: '一楼102宿舍洗手间水管脱落，漏水严重', urgency: '紧急', photos: [], status: '待处理', handler: '', createdAt: '2026-08-30T15:00:00Z', updatedAt: '2026-08-30T15:00:00Z', reportDate: '08-30', reportTime: '15:00' },
-    { id: 'JT20260831-090000-505', reporter: '覃鸿力', building: '功能楼', floor: '二楼', room: '九年级241班', description: '241班教室里面那台吊扇转动时噪音很大', urgency: '中', photos: [], status: '待处理', handler: '', createdAt: '2026-08-31T09:00:00Z', updatedAt: '2026-08-31T09:00:00Z', reportDate: '08-31', reportTime: '09:00' }
+    { id: 'JT20260831-112300-101', reporter: '仇老师', building: '男生公寓楼二', floor: '四楼', room: '七年级262班', description: '洗澡时水龙头经常性停水', urgency: '紧急', photos: [], status: '待处理', handler: '', semester: '2026年秋季期', createdAt: '2026-08-31T11:23:00Z', updatedAt: '2026-08-31T11:23:00Z', reportDate: '08-31', reportTime: '11:23' },
+    { id: 'JT20260831-071000-202', reporter: '苏瑞敏', building: '教学楼', floor: '四楼', room: '七年级263班', description: '263班教室走廊安全指示牌脱落，存在安全隐患', urgency: '紧急', photos: [], status: '待处理', handler: '', semester: '2026年秋季期', createdAt: '2026-08-31T07:10:00Z', updatedAt: '2026-08-31T07:10:00Z', reportDate: '08-31', reportTime: '07:10' },
+    { id: 'JT20260831-060000-303', reporter: '仇老师', building: '功能楼', floor: '二楼', room: '楼梯间', description: '自查发现二楼楼梯间灯不亮，已及时维修更换', urgency: '一般', photos: [], status: '已整改', handler: '仇启仁', semester: '2026年秋季期', createdAt: '2026-08-31T06:00:00Z', updatedAt: '2026-09-01T08:00:00Z', reportDate: '08-31', reportTime: '06:00' },
+    { id: 'JT20260830-150000-404', reporter: '刘肖霞', building: '女生公寓楼三', floor: '一楼', room: '宿舍', description: '一楼102宿舍洗手间水管脱落，漏水严重', urgency: '紧急', photos: [], status: '待处理', handler: '', semester: '2026年秋季期', createdAt: '2026-08-30T15:00:00Z', updatedAt: '2026-08-30T15:00:00Z', reportDate: '08-30', reportTime: '15:00' },
+    { id: 'JT20260831-090000-505', reporter: '覃鸿力', building: '功能楼', floor: '二楼', room: '九年级241班', description: '241班教室里面那台吊扇转动时噪音很大', urgency: '中', photos: [], status: '待处理', handler: '', semester: '2026年秋季期', createdAt: '2026-08-31T09:00:00Z', updatedAt: '2026-08-31T09:00:00Z', reportDate: '08-31', reportTime: '09:00' }
   ];
   for (const h of demos) {
     // 防重复：如果该ID已存在则跳过
