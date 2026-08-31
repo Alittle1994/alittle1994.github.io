@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>金田三中 — 安全隐患扫码填报</title>
+<title>金田三中 — 安全隐患扫码填报 v6.4.1</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -365,32 +365,34 @@
           <div class="step-num">1</div>
           <div class="step-body">
             <h4>扫码进入系统</h4>
-            <p>微信扫描上方二维码，打开安全隐患排查管理系统</p>
+            <p>微信扫描上方二维码，打开安全隐患排查管理系统，无需安装任何软件</p>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">2</div>
           <div class="step-body">
-            <h4>先进入「后台管理」连接云端</h4>
-            <p>点击左侧菜单中的<strong>"后台管理"</strong>，系统将自动连接 Supabase 云端数据库，同步最新数据。</p>
-            <div class="note">⚠ 重要：每次填报前务必先同步，确保数据一致</div>
+            <h4>填写隐患信息并提交</h4>
+            <p>点击左侧<strong>"隐患上报"</strong>，选择建筑物/楼层/班级、隐患描述与紧急程度，可拍照上传，填写完成点"提交"即可。</p>
+            <div class="note">✓ 提交后自动同步云端，无需手动操作</div>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-body">
-            <h4>等待同步完成</h4>
-            <p>后台管理界面左上角显示<strong>"云端已连接"</strong>绿色状态标识，即表示同步成功。</p>
+            <h4>后台实时查看与管理</h4>
+            <p>学校管理人员在电脑打开同一网址，进入<strong>"后台管理"</strong>即可实时看到所有上报记录，进行审核、指派维修、跟踪整改闭环。</p>
+            <div class="note">✓ 每一条上报都会自动出现在后台</div>
           </div>
         </div>
 
         <div class="step">
           <div class="step-num">4</div>
           <div class="step-body">
-            <h4>返回「隐患上报」填报</h4>
-            <p>点击左侧菜单中的<strong>"隐患上报"</strong>，选择区域地点、隐患类型、危险等级，上传照片后提交即可。</p>
+            <h4>数据安全有保障</h4>
+            <p>上报数据同时保存在手机本地与云端，即使断网也能正常填报，网络恢复后自动补传，不会丢失。</p>
+            <div class="note warn">⚠ 填报时请如实填写班级/位置与联系电话，便于维修人员及时处理</div>
           </div>
         </div>
 
@@ -400,7 +402,7 @@
 
   <!-- ===== Footer ===== -->
   <div class="footer">
-    系统版本 v5.7 &nbsp;·&nbsp; 数据存储 Supabase 云端
+    系统版本 v6.4.1 &nbsp;·&nbsp; 云端自动同步 · 上报实时可见
   </div>
 
 </div>
