@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>金田三中 — 安全隐患排查系统推广海报</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
+    background: #eef2f7;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* ===== A4 Sheet ===== */
+  .sheet {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top gradient band */
+  .band {
+    height: 8mm;
+    background: linear-gradient(90deg, #1d4ed8, #06b6d4, #2563eb);
+  }
+
+  .inner {
+    padding: 12mm 16mm 10mm;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .icon-wrap {
+    width: 20mm; height: 20mm;
+    border-radius: 6mm;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6mm;
+  }
+  .icon-wrap svg {
+    width: 11mm; height: 11mm;
+    fill: none; stroke: #2563eb; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .school {
+    font-size: 34px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 3px;
+  }
+  .sub {
+    margin-top: 4px;
+    font-size: 15px;
+    color: #64748b;
+    letter-spacing: 6px;
+    font-weight: 500;
+  }
+
+  .divider {
+    width: 30mm; height: 2px;
+    background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+    margin: 8mm 0;
+  }
+
+  /* QR */
+  .qr-box {
+    padding: 5mm;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 4mm;
+    background: #fff;
+    box-shadow: 0 0 0 2mm rgba(37,99,235,0.04);
+    display: inline-block;
+  }
+  .qr-box img {
+    display: block;
+    width: 96mm;
+    height: 96mm;
+  }
+  .qr-tip {
+    margin-top: 4mm;
+    font-size: 14px;
+    color: #2563eb;
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+
+  /* Steps */
+  .steps {
+    width: 100%;
+    margin-top: 9mm;
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
+  }
+  .step {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 4mm;
+    padding: 5mm 3mm 4mm;
+  }
+  .step-num {
+    width: 8mm; height: 8mm;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2.5mm;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5mm;
+  }
+  .step-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+
+  /* Admin notice */
+  .admin-note {
+    margin-top: 9mm;
+    width: 100%;
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border: 1px solid #bfdbfe;
+    border-radius: 4mm;
+    padding: 5mm 6mm;
+    text-align: left;
+  }
+  .admin-note .t {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 2mm;
+  }
+  .admin-note .d {
+    font-size: 12.5px;
+    color: #475569;
+    line-height: 1.8;
+  }
+
+  /* Footer */
+  .foot {
+    padding: 4mm 0 7mm;
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+  }
+
+  /* ===== Print ===== */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet {
+      box-shadow: none;
+      border-radius: 0;
+      width: 100%;
+      min-height: auto;
+    }
+    .band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .step-num, .icon-wrap, .admin-note { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+  <div class="band"></div>
+
+  <div class="inner">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2l8 4v6c0 5.5-3.8 10.7-8 12-4.2-1.3-8-6.5-8-12V6l8-4z"/>
+        <line x1="12" y1="8" x2="12" y2="13"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+
+    <div class="school">桂平市金田镇第三初级中学</div>
+    <div class="sub">安全隐患排查 · 扫码即报</div>
+
+    <div class="divider"></div>
+
+    <div class="qr-box">
+      <img src="qrcode-latest.png" alt="扫码填报二维码">
+    </div>
+    <div class="qr-tip">📱 微信 / 手机浏览器 扫码进入填报</div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">扫码进入</div>
+        <div class="step-desc">扫描上方二维码<br>打开系统填报页面</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">填写上报</div>
+        <div class="step-desc">选择位置、描述隐患<br>可拍照上传，一键提交</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">自动同步</div>
+        <div class="step-desc">提交即同步云端<br>断网也可正常填报</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">后台处理</div>
+        <div class="step-desc">学校后台实时查看<br>审核指派维修整改</div>
+      </div>
+    </div>
+
+    <div class="admin-note">
+      <div class="t">🏫 学校管理说明</div>
+      <div class="d">
+        全体师生上报的隐患，将<strong>实时自动同步到学校管理后台</strong>。管理人员在电脑打开
+        <strong>https://alittle1994.github.io</strong> → 进入「后台管理」，即可查看所有上报记录并完成
+        审核 → 指派 → 维修 → 整改闭环管理。
+      </div>
+    </div>
+
+    <div class="foot">金田三中安全隐患排查整改系统 v6.4.1 · 云端自动同步</div>
+  </div>
+</div>
+
+</body>
+</html>
