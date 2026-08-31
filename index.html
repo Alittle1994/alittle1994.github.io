@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.2</title>
-<!-- v6.4.2: 修复8月记录无法查看 — 默认视图回落「全部学期」，seedDemo补semester字段，云端拉取自动补齐缺失学期字段 -->
+<title>金田三中安全隐患排查整改系统 v6.4.3</title>
+<!-- v6.4.3: 审核汇报自由勾选分批上报 — 候选记录逐条勾选，只有勾选的进入汇报并标记已上报，支持全选/清空 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.2</div>
+    <div class="sidebar-footer">v6.4.3</div>
   </div>
 </div>
 
@@ -488,16 +488,26 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     <div class="review-form" style="margin-bottom:16px">
       <label class="form-label">选择汇报日期范围</label>
       <div style="display:flex;gap:10px">
-        <input type="date" class="form-input" id="rv-date-from" style="flex:1">
+        <input type="date" class="form-input" id="rv-date-from" style="flex:1" onchange="refreshReviewCandidates()">
         <span style="align-self:center;color:var(--text-muted)">至</span>
-        <input type="date" class="form-input" id="rv-date-to" style="flex:1">
+        <input type="date" class="form-input" id="rv-date-to" style="flex:1" onchange="refreshReviewCandidates()">
         <button class="btn btn-primary" style="width:auto;padding:12px 20px" onclick="generateReviewReport()">生成汇报</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:6px">留空则默认为当日之前所有记录</div>
-      <div id="rv-report-hint" style="font-size:12px;color:var(--primary-mid);margin-top:6px;font-weight:600"></div>
       <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="rv-include-reported"> 包含已上报汇总的记录
+        <input type="checkbox" id="rv-include-reported" onchange="refreshReviewCandidates()"> 包含已上报汇总的记录
       </label>
+      <div style="border-top:1px dashed var(--border);margin-top:12px;padding-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+          <label style="font-size:13px;font-weight:600;color:var(--text)">勾选本次上报的记录（已选 <span id="rv-pick-count" style="color:var(--primary-mid)">0</span> 条）</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;min-width:auto" onclick="rvPickAll(true)">全选</button>
+            <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;min-width:auto" onclick="rvPickAll(false)">清空</button>
+          </div>
+        </div>
+        <div id="rv-record-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px;background:var(--bg)"></div>
+        <div id="rv-report-hint" style="font-size:12px;color:var(--primary-mid);margin-top:6px;font-weight:600"></div>
+      </div>
     </div>
     <div class="report-preview" id="reviewContent"></div>
     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
@@ -656,7 +666,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.2</div>
+<div class="version-badge">v6.4.3</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2857,6 +2867,10 @@ function printLedger() {
 }
 
 // ===== 审核汇报 =====
+// v6.4.3: 自由勾选分批上报 — 候选记录逐条勾选，只有勾选的进入汇报并被标记已上报
+let rvCandidates = [];   // 当前筛选条件下的候选记录
+let rvSelectedIds = {};  // 已勾选的记录 id
+
 function showReviewReport() {
   // 默认日期：当日
   const today = new Date();
@@ -2865,7 +2879,9 @@ function showReviewReport() {
   document.getElementById('rv-date-to').value = ds;
   document.getElementById('rv-include-reported').checked = false;
   reviewEditMode = false;
-  generateReviewReport();
+  rvSelectedIds = {}; // v6.4.3: 每次打开默认不勾选，由用户自由挑选
+  refreshReviewCandidates();
+  document.getElementById('reviewContent').innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px">📋 请在上方勾选本次要上报的记录，然后点击「生成汇报」<br><small style="font-size:12px">支持分批上报：每次勾选几条，剩余的下次再报</small></div>';
   document.getElementById('reviewModal').classList.add('show');
   // 重置编辑按钮状态
   const btn = document.getElementById('btn-edit-review');
@@ -2874,49 +2890,97 @@ function showReviewReport() {
   if (content) { content.contentEditable = 'false'; content.classList.remove('review-editing'); }
 }
 
+// 刷新候选记录勾选列表（按日期范围 + 是否包含已上报）
+function refreshReviewCandidates() {
+  const fromStr = document.getElementById('rv-date-from').value;
+  const toStr = document.getElementById('rv-date-to').value;
+  const includeReported = document.getElementById('rv-include-reported').checked;
+
+  let records = [...hazards];
+  if (fromStr) {
+    records = records.filter(h => new Date(h.createdAt) >= new Date(fromStr));
+  }
+  if (toStr) {
+    records = records.filter(h => new Date(h.createdAt) <= new Date(toStr + 'T23:59:59'));
+  }
+  if (!includeReported) {
+    records = records.filter(h => !h.reviewReportedAt);
+  }
+  records.sort((a, b) => String(b.id) > String(a.id) ? 1 : -1); // 新记录在前
+  rvCandidates = records;
+
+  // 清理已不在候选中的勾选（如切换日期范围后）
+  const valid = {};
+  records.forEach(h => { if (rvSelectedIds[h.id]) valid[h.id] = true; });
+  rvSelectedIds = valid;
+
+  renderReviewPickList();
+}
+
+// 渲染候选记录勾选列表
+function renderReviewPickList() {
+  const list = document.getElementById('rv-record-list');
+  const cnt = document.getElementById('rv-pick-count');
+  if (cnt) cnt.textContent = Object.keys(rvSelectedIds).length;
+  if (!list) return;
+  if (rvCandidates.length === 0) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:13px">该范围内没有可上报的记录</div>';
+    return;
+  }
+  list.innerHTML = rvCandidates.map(h => {
+    const checked = rvSelectedIds[h.id] ? ' checked' : '';
+    const loc = (h.building || '') + (h.floor || '') + (h.room || '');
+    const d = h.createdAt ? new Date(h.createdAt) : null;
+    const dStr = d ? (pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())) : '';
+    const urgColor = h.urgency === '紧急' ? '#ef4444' : (h.urgency === '中' ? '#f59e0b' : '#10b981');
+    const rptTag = h.reviewReportedAt ? '<span style="font-size:11px;background:#e2e8f0;color:#475569;border-radius:4px;padding:1px 5px;margin-left:4px">已上报</span>' : '';
+    const doneTag = h.status === '已整改' ? '<span style="font-size:11px;background:#d1fae5;color:#059669;border-radius:4px;padding:1px 5px;margin-left:4px">已整改</span>' : '';
+    return '<label style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:400;line-height:1.5;' + (rvSelectedIds[h.id] ? 'background:rgba(37,99,235,.06)' : '') + '" onmouseover="this.style.background=\'rgba(37,99,235,.04)\'" onmouseout="this.style.background=\'' + (rvSelectedIds[h.id] ? 'rgba(37,99,235,.06)' : 'transparent') + '\'">'
+      + '<input type="checkbox"' + checked + ' onchange="rvTogglePick(\'' + h.id + '\', this.checked)" style="margin-top:3px;flex-shrink:0">'
+      + '<span style="flex:1;min-width:0"><b>' + (h.reporter || '未知') + '</b><span style="color:var(--text-muted);font-size:12px"> · ' + dStr + ' · ' + loc + '</span>' + rptTag + doneTag
+      + '<br><span style="color:var(--text);font-size:12px">' + (h.description || '').slice(0, 50) + ((h.description || '').length > 50 ? '…' : '') + '</span>'
+      + '<span style="color:' + urgColor + ';font-size:11px;margin-left:6px">' + (h.urgency || '') + '</span></span></label>';
+  }).join('');
+}
+
+// 勾选/取消单条
+function rvTogglePick(id, on) {
+  if (on) rvSelectedIds[id] = true; else delete rvSelectedIds[id];
+  const cnt = document.getElementById('rv-pick-count');
+  if (cnt) cnt.textContent = Object.keys(rvSelectedIds).length;
+  // 更新该行背景
+  renderReviewPickList();
+}
+
+// 全选 / 清空勾选
+function rvPickAll(on) {
+  rvSelectedIds = {};
+  if (on) rvCandidates.forEach(h => { rvSelectedIds[h.id] = true; });
+  renderReviewPickList();
+}
+
 function generateReviewReport() {
   const fromStr = document.getElementById('rv-date-from').value;
   const toStr = document.getElementById('rv-date-to').value;
   const includeReported = document.getElementById('rv-include-reported').checked;
 
-  // 筛选记录
-  let records = [...hazards];
-  if (fromStr) {
-    records = records.filter(h => {
-      const d = new Date(h.createdAt);
-      return d >= new Date(fromStr);
-    });
-  }
-  if (toStr) {
-    records = records.filter(h => {
-      const d = new Date(h.createdAt);
-      const toDate = new Date(toStr + 'T23:59:59');
-      return d <= toDate;
-    });
-  }
+  // v6.4.3: 只用勾选的记录生成汇报（分批上报）
+  let records = rvCandidates.filter(h => rvSelectedIds[h.id]);
 
-  // 默认排除已上报汇总的记录（除非勾选包含）
-  if (!includeReported) {
-    records = records.filter(h => !h.reviewReportedAt);
+  if (records.length === 0) {
+    showToast('请先勾选要本次上报的记录（可逐条挑选，分批上报）');
+    const hint = document.getElementById('rv-report-hint');
+    if (hint) hint.textContent = '尚未勾选任何记录 — 请勾选后再生成汇报';
+    return;
   }
 
   // 更新上报状态提示
-  const allInRange = [...hazards].filter(h => {
-    if (fromStr && new Date(h.createdAt) < new Date(fromStr)) return false;
-    if (toStr && new Date(h.createdAt) > new Date(toStr + 'T23:59:59')) return false;
-    return true;
-  });
-  const reportedCount = allInRange.filter(h => h.reviewReportedAt).length;
-  const unreportedCount = allInRange.filter(h => !h.reviewReportedAt).length;
+  const reportedCount = rvCandidates.filter(h => h.reviewReportedAt).length;
   const hint = document.getElementById('rv-report-hint');
   if (hint) {
-    if (reportedCount > 0 && !includeReported) {
-      hint.textContent = '已排除 ' + reportedCount + ' 条已上报汇总记录，当前待上报 ' + unreportedCount + ' 条';
-    } else if (reportedCount > 0 && includeReported) {
-      hint.textContent = '包含全部 ' + allInRange.length + ' 条（含已上报汇总 ' + reportedCount + ' 条）';
-    } else {
-      hint.textContent = '待上报 ' + unreportedCount + ' 条';
-    }
+    hint.textContent = '本次上报 ' + records.length + ' 条 / 范围内候选 ' + rvCandidates.length + ' 条'
+      + (reportedCount > 0 && !includeReported ? '（已排除已上报 ' + reportedCount + ' 条）' : '')
+      + '，剩余 ' + (rvCandidates.length - records.length) + ' 条可下次再报';
   }
   
   // 日期 — 以导出时间为准
@@ -3021,7 +3085,7 @@ function generateReviewReport() {
   const pBtn = document.getElementById('btn-print-review');
   if (pBtn) { pBtn.textContent = '🖨 打印审核汇报'; pBtn.style.opacity = '1'; }
 
-  // 自动标记：将本次汇报中的记录标记为"已上报汇总"
+  // 自动标记：将本次汇报中的记录标记为"已上报汇总"（v6.4.3: 仅勾选的记录）
   if (records.length > 0) {
     const reportTime = new Date().toISOString();
     let markedCount = 0;
@@ -3033,8 +3097,9 @@ function generateReviewReport() {
       }
     });
     if (markedCount > 0) {
-      showToast('已标记 ' + markedCount + ' 条记录为"已上报汇总"，后续汇报不再重复包含');
+      showToast('已标记 ' + markedCount + ' 条记录为"已上报汇总"，剩余 ' + (rvCandidates.length - records.length) + ' 条可下次再报');
       renderAdminList();
+      refreshReviewCandidates(); // 已上报记录即时从候选列表移除
     }
   }
 }
@@ -3486,7 +3551,7 @@ function resetReportedStatus() {
         saveData(h);
       });
       renderAdminList();
-      generateReviewReport();
+      refreshReviewCandidates(); // v6.4.3: 重置后刷新候选列表，供重新勾选上报
       showToast('已重置 ' + reported.length + ' 条记录的上报状态');
     }
   );
