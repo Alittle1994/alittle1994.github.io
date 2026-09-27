@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.4</title>
-<!-- v6.4.4: 填报增加隐患出现时间，后台按隐患时间排序，审核汇报标题以最晚隐患时间为准；编辑弹窗支持修改隐患时间 -->
+<title>金田三中安全隐患排查整改系统 v6.4.5</title>
+<!-- v6.4.5: 填报增加"XX附近"参考点区域（学生食堂/各楼附近），楼层与具体场所改为选填，各处位置显示自动兼容 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.4</div>
+    <div class="sidebar-footer">v6.4.5</div>
   </div>
 </div>
 
@@ -280,15 +280,15 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">哪层楼 <span class="req">*</span></label>
+      <label class="form-label">哪层楼 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（可选）</span></label>
       <div class="select-wrap">
-        <select class="form-select" id="r-floor"><option value="">请选择楼层...</option></select>
+        <select class="form-select" id="r-floor"><option value="">不选（可在描述中说明）</option></select>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">班级/宿舍/办公室/场所 <span class="req">*</span></label>
+      <label class="form-label">班级/宿舍/办公室/场所 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（可选，不选则请在描述中说明具体位置）</span></label>
       <div class="select-wrap">
-        <select class="form-select" id="r-room"><option value="">请选择班级/宿舍/办公室/场所...</option></select>
+        <select class="form-select" id="r-room"><option value="">不选（可在描述中说明）</option></select>
       </div>
     </div>
   </div>
@@ -674,7 +674,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.4</div>
+<div class="version-badge">v6.4.5</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -693,6 +693,8 @@ window.addEventListener('error', function(e) {
 
 // ===== 数据常量 =====
 const BUILDINGS = ['教学楼','女生公寓楼一','男生公寓楼二','女生公寓楼三','功能楼','旧饭堂','学校食堂','学校校园'];
+// v6.4.5: 附近参考点 — 以楼宇/场所为参照描述隐患位置，楼层和具体场所可不填
+const NEARBY_AREAS = ['学生食堂附近','旧饭堂附近','教学楼附近','功能楼附近','女生公寓楼一附近','男生公寓楼二附近','女生公寓楼三附近','操场附近','校门附近'];
 const FLOORS = ['一楼','二楼','三楼','四楼','五楼','六楼'];
 // v6.4.1: 2026-2027学年班级 — 23级毕业移除，26级新生7个班（261-267），原七年级25X升八年级、原八年级24X升九年级
 const ROOMS = [
@@ -1907,6 +1909,14 @@ function initSelects() {
     const o = document.createElement('option');
     o.value = x; o.textContent = x; b.appendChild(o);
   });
+  // v6.4.5: 附近参考点分组
+  const og = document.createElement('optgroup');
+  og.label = '—— 附近（以楼宇为参考点）——';
+  NEARBY_AREAS.forEach(x => {
+    const o = document.createElement('option');
+    o.value = x; o.textContent = x; og.appendChild(o);
+  });
+  b.appendChild(og);
   FLOORS.forEach(x => {
     const o = document.createElement('option');
     o.value = x; o.textContent = x; f.appendChild(o);
@@ -2052,17 +2062,18 @@ function removeTempPhoto(i) {
 
 async function submitReport() {
   const reporter = document.getElementById('r-reporter').value.trim();
-  const building = document.getElementById('r-building').value;
-  const floor = document.getElementById('r-floor').value;
-  const room = document.getElementById('r-room').value;
+  let building = document.getElementById('r-building').value;
+  let floor = document.getElementById('r-floor').value;
+  let room = document.getElementById('r-room').value;
   const desc = document.getElementById('r-desc').value.trim();
   const urgency = document.getElementById('r-urgency').value;
 
   if (!reporter) { showToast('请填写上报人姓名'); return; }
-  if (!building) { showToast('请选择建筑物'); return; }
-  if (!floor) { showToast('请选择楼层'); return; }
-  if (!room) { showToast('请选择房间'); return; }
+  if (!building) { showToast('请选择建筑物或场所'); return; }
+  // v6.4.5: 选"附近"参考点时楼层/具体场所不适用，自动置空；楼层/场所均为选填
+  if (building.indexOf('附近') >= 0) { floor = ''; room = ''; }
   if (!desc) { showToast('请填写隐患描述'); return; }
+  if (building.indexOf('附近') >= 0 && desc.length < 6) { showToast('选了"附近"参考点，请在描述中说明具体位置'); return; }
 
   const now = new Date();
   const ts = now.getFullYear().toString() +
@@ -2116,6 +2127,8 @@ function setHazardTimeDefault() {
 
 // v6.4.4: 记录的隐患时间（优先用户填写的隐患出现时间，旧记录回落到上报时间）
 function hazardTimeOf(h) { return h.hazardTime || h.createdAt || ''; }
+// v6.4.5: 位置文本（楼层/场所可为空，自动跳过）
+function locText(h) { return [h.building, h.floor, h.room].filter(Boolean).join(' '); }
 // ===== 维修工作台 =====
 function renderWorker() {
   renderSemesterSelects();
@@ -2183,7 +2196,7 @@ function renderWorkerList() {
       '<span class="hazard-tag ' + ut + '">' + h.urgency + '</span>' +
       '<span class="hazard-tag ' + sc + '">' + h.status + '</span>' +
       '<span class="hazard-id">#' + h.id + '</span></div>' +
-      '<div class="hazard-loc">' + h.building + ' ' + h.floor + ' ' + h.room + '</div>' +
+      '<div class="hazard-loc">' + locText(h) + '</div>' +
       '<div class="hazard-desc">' + h.description + '</div>' + ph +
       '<div class="hazard-meta">' +
       '<span>&#128100; ' + h.reporter + '</span>' +
@@ -2220,7 +2233,7 @@ function showRectifyModal(id) {
   const h = hazards.find(x => String(x.id) === String(id));
   if (!h) return;
   document.getElementById('rectify-info').innerHTML =
-    '<strong>&#128205; 位置：</strong>' + h.building + ' ' + h.floor + ' ' + h.room + '<br>' +
+    '<strong>&#128205; 位置：</strong>' + locText(h) + '<br>' +
     '<strong>&#128221; 描述：</strong>' + h.description + '<br>' +
     '<strong>&#9888; 紧急度：</strong><span style="color:' + (h.urgency === '紧急' ? '#ef4444' : h.urgency === '中' ? '#f59e0b' : '#10b981') + ';font-weight:700">' + h.urgency + '</span>';
   document.getElementById('rectify-note').value = '';
@@ -2360,7 +2373,7 @@ function renderAdminList() {
   if (fr === 'reported') items = items.filter(h => h.reviewReportedAt);
   if (fr === 'unreported') items = items.filter(h => !h.reviewReportedAt);
   if (kw) items = items.filter(h =>
-    (h.reporter + h.building + h.room + h.description + h.floor).toLowerCase().includes(kw)
+    (h.reporter + h.building + (h.room || '') + h.description + (h.floor || '')).toLowerCase().includes(kw)
   );
 
   // v6.4.4: 按隐患出现时间排序（最新在前）
@@ -2403,7 +2416,7 @@ function renderAdminList() {
       '<td class="id-col">' + h.id + '</td>' +
       '<td class="name-col">' + h.reporter + '</td>' +
       '<td style="font-size:12px;color:#475569;white-space:nowrap">' + htShow + '</td>' +
-      '<td class="loc-col">' + h.building + '<br>' + h.floor + ' ' + h.room + '</td>' +
+      '<td class="loc-col">' + h.building + (h.floor || h.room ? '<br>' + [h.floor, h.room].filter(Boolean).join(' ') : '') + '</td>' +
       '<td class="desc-col">' + h.description + '</td>' +
       '<td class="photo-col">' + ph + '</td>' +
       '<td>' + ut + '</td>' +
@@ -2732,7 +2745,7 @@ function showReportModal() {
     '<h3>二、待处理隐患明细</h3>' +
     '<table><tr><th>序号</th><th>位置</th><th>隐患描述</th><th>紧急程度</th><th>上报人</th><th>上报时间</th></tr>' +
     (p.length ? p.map((h, i) =>
-      '<tr><td>' + (i + 1) + '</td><td>' + h.building + ' ' + h.floor + ' ' + h.room + '</td><td>' +
+      '<tr><td>' + (i + 1) + '</td><td>' + locText(h) + '</td><td>' +
       h.description + '</td><td>' + h.urgency + '</td><td>' + h.reporter + '</td><td>' + h.reportDate + '</td></tr>'
     ).join('') : '<tr><td colspan="6" style="text-align:center;color:#999">暂无待处理隐患</td></tr>') +
     '</table>' +
@@ -2758,7 +2771,7 @@ function showLedgerModal() {
   html += '<h3 style="margin:24px 0 12px;font-size:15px;border-left:3px solid var(--primary-light);padding-left:10px">一、隐患整改记录</h3>' +
     '<table><tr><th>序号</th><th>隐患位置及描述</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
     (view.length ? view.map(function(h, i) {
-      var loc = h.building + ' ' + h.floor + ' ' + h.room;
+      var loc = locText(h);
       var desc = h.description || '';
       return '<tr><td>' + (i + 1) + '</td>' +
       '<td><b>' + loc + '</b><br>' + desc + '</td>' +
@@ -2811,7 +2824,7 @@ function showLedgerModal() {
         '<td style="text-align:center;vertical-align:top;padding:8px">' + beforeHtml + '</td>' +
         '<td style="text-align:center;vertical-align:top;padding:8px">' + afterHtml + '</td>' +
         '<td style="vertical-align:top;padding:8px;font-size:12px">' +
-          '<div style="font-weight:600;margin-bottom:4px">' + (h.building || '') + ' ' + (h.floor || '') + '</div>' +
+          '<div style="font-weight:600;margin-bottom:4px">' + locText(h) + '</div>' +
           '<div style="color:var(--text-sub);margin-bottom:4px">' + (h.description || '') + '</div>' +
           (noteText ? '<div style="color:var(--success);margin-bottom:2px">' + noteText + '</div>' : '') +
           '<div style="color:var(--text-muted);font-size:11px">上报人：' + (h.reporter || '-') + '</div>' +
@@ -3072,7 +3085,7 @@ function generateReviewReport() {
   if (records.length > 0) {
     html += '<div class="review-simple-list">';
     records.forEach((h, i) => {
-      const loc = h.building + '，' + h.floor + h.room;
+      const loc = h.building + ((h.floor || h.room) ? '，' + [h.floor, h.room].filter(Boolean).join('') : '');
       const photoRef = recordPhotoMap[h.id] ? '（图' + recordPhotoMap[h.id].join('、图') + '）' : '';
       html += '<div class="rs-item">' + (i+1) + '. ' + h.reporter + '：' + loc + '，' + h.description + photoRef + '</div>';
     });
