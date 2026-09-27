@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.6</title>
-<!-- v6.4.6: 云端连接快速自愈 — 页面切回前台时若离线立即重连，不等5分钟周期 -->
+<title>金田三中安全隐患排查整改系统 v6.4.7</title>
+<!-- v6.4.7: 去重规则修正 — 仅同一上报人+位置+描述且上报时间相差60秒内才算重复，不同时间的上报一律保留 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.6</div>
+    <div class="sidebar-footer">v6.4.7</div>
   </div>
 </div>
 
@@ -674,7 +674,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.6</div>
+<div class="version-badge">v6.4.7</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1015,13 +1015,11 @@ async function loadData() {
       }
     });
 
-    // 第2轮：按内容去重（上报人+建筑+楼层+房间+描述 相同视为重复）
+    // 第2轮：按内容去重（v6.4.7: 同一上报人+位置+描述 且 上报时间相差60秒内才算重复；不同时间的上报保留）
     const contentMap = {};
     let dupByContent = 0;
     Object.values(idMap).forEach(h => {
-      const cKey = [
-        h.reporter || '', h.building || '', h.floor || '', h.room || '', h.description || ''
-      ].join('|');
+      const cKey = contentDupKey(h);
       if (!contentMap[cKey]) {
         contentMap[cKey] = h;
       } else {
@@ -1783,7 +1781,7 @@ async function runDailyCheck(silent = true) {
     hazards.forEach(h => {
       const k = String(h.id);
       if (idSet.has(k)) dupIds++; else idSet.add(k);
-      const ck = [h.reporter||'', h.building||'', h.floor||'', h.room||'', h.description||''].join('|');
+      const ck = contentDupKey(h); // v6.4.7: 与去重策略一致（含60秒时间窗口）
       if (contentSet.has(ck)) dupContents++; else contentSet.add(ck);
     });
     if (dupIds === 0 && dupContents === 0) {
@@ -2148,6 +2146,13 @@ function setHazardTimeDefault() {
 function hazardTimeOf(h) { return h.hazardTime || h.createdAt || ''; }
 // v6.4.5: 位置文本（楼层/场所可为空，自动跳过）
 function locText(h) { return [h.building, h.floor, h.room].filter(Boolean).join(' '); }
+// v6.4.7: 内容去重 key — 同一上报人+同一位置+同一描述，且上报时间相差 60 秒内（双击/网络重试）才算重复提交
+// 不同时间的上报即使内容相同也一律保留（同一问题过段时间再报是新的隐患事件，具体隐患可能有区别）
+function contentDupKey(h) {
+  const t = new Date(h.createdAt || 0).getTime();
+  const bucket = isNaN(t) ? 'unk' : Math.floor(t / 60000);
+  return [h.reporter || '', h.building || '', h.floor || '', h.room || '', h.description || '', bucket].join('|');
+}
 // ===== 维修工作台 =====
 function renderWorker() {
   renderSemesterSelects();
@@ -3440,10 +3445,10 @@ async function silentDedup() {
       if (curTs > existTs) idMap[key] = h;
     }
   });
-  // 第2轮：按内容去重
+  // 第2轮：按内容去重（v6.4.7: 加60秒时间窗口，不同时间的上报保留）
   const contentMap = {};
   Object.values(idMap).forEach(h => {
-    const cKey = [h.reporter||'', h.building||'', h.floor||'', h.room||'', h.description||''].join('|');
+    const cKey = contentDupKey(h);
     if (!contentMap[cKey]) { contentMap[cKey] = h; }
     else {
       const existing = contentMap[cKey];
@@ -3560,11 +3565,11 @@ async function deduplicateAll() {
     }
   });
 
-  // 第2轮：按内容去重（上报人+建筑+楼层+房间+描述 相同视为重复）
+  // 第2轮：按内容去重（v6.4.7: 同一上报人+位置+描述 且 上报时间相差60秒内才算重复；不同时间的上报保留）
   const contentMap = {};
   let dupByContent = 0;
   Object.values(idMap).forEach(h => {
-    const cKey = [h.reporter || '', h.building || '', h.floor || '', h.room || '', h.description || ''].join('|');
+    const cKey = contentDupKey(h);
     if (!contentMap[cKey]) {
       contentMap[cKey] = h;
     } else {
