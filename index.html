@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.5</title>
-<!-- v6.4.5: 填报增加"XX附近"参考点区域（学生食堂/各楼附近），楼层与具体场所改为选填，各处位置显示自动兼容 -->
+<title>金田三中安全隐患排查整改系统 v6.4.6</title>
+<!-- v6.4.6: 云端连接快速自愈 — 页面切回前台时若离线立即重连，不等5分钟周期 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.5</div>
+    <div class="sidebar-footer">v6.4.6</div>
   </div>
 </div>
 
@@ -674,7 +674,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.5</div>
+<div class="version-badge">v6.4.6</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1580,6 +1580,25 @@ function stopAutoRetry() {
   }
   autoRetryCount = 0;
 }
+
+// v6.4.6: 页面切回前台时，若云端未连接则立即重连（不等5分钟周期，快速自愈）
+document.addEventListener('visibilitychange', async function() {
+  if (!document.hidden && !cloudConnected && navigator.onLine) {
+    console.log('[Sync] 页面回到前台，立即尝试重连云端...');
+    try {
+      const ok = await initGitHubBackend();
+      if (ok) {
+        updateSyncUI();
+        updateDataInfo();
+        showToast('☁ 云端已自动重连成功！');
+        renderCurrentPage();
+        stopAutoRetry();
+      } else {
+        startAutoRetry(); // 失败则确保重连循环在跑
+      }
+    } catch (e) { console.warn('[Sync] 前台重连失败:', e.message); }
+  }
+});
 
 async function retryCloudNow() {
   if (cloudConnected) { showToast('云端已连接，无需重试'); return; }
