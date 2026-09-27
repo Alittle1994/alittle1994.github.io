@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.7</title>
-<!-- v6.4.7: 去重规则修正 — 仅同一上报人+位置+描述且上报时间相差60秒内才算重复，不同时间的上报一律保留 -->
+<title>金田三中安全隐患排查整改系统 v6.4.8</title>
+<!-- v6.4.8: 新增手动去重 — 内容相同记录分组展示，用户自行勾选删除（默认保留每组最新一条，删除同步云端） -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.7</div>
+    <div class="sidebar-footer">v6.4.8</div>
   </div>
 </div>
 
@@ -431,6 +431,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   </div>
   <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
     <button class="btn btn-sm btn-outline" onclick="deduplicateAll()" style="font-size:12px;color:#6366f1;border-color:#c4b5fd">♻ 一键去重</button>
+    <button class="btn btn-sm btn-outline" onclick="showManualDedup()" style="font-size:12px;color:#7c3aed;border-color:#c4b5fd">✍️ 手动去重</button>
     <button class="btn btn-sm btn-green" onclick="batchRectify()" style="font-size:12px" id="btn-batch-rectify">✅ 一键整改</button>
     <button class="btn btn-sm btn-outline" onclick="showDailyReport()" style="font-size:12px;color:#0891b2;border-color:#67e8f9" id="btn-daily-report">📊 系统自检</button>
     <span class="admin-sel-all" id="sel-all-wrap" style="display:none"><input type="checkbox" id="chk-select-all" onchange="toggleSelectAll()"><label for="chk-select-all">全选</label></span>
@@ -520,6 +521,22 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <button class="btn btn-outline" style="flex:1;min-width:110px" onclick="showReviewHistoryModal()">📚 历史记录</button>
       <button class="btn btn-outline" style="flex:1;min-width:110px" onclick="resetReportedStatus()">↻ 重置上报状态</button>
       <button class="btn btn-outline" style="flex:1;min-width:80px" onclick="closeModal('reviewModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Dedup Modal (v6.4.8) -->
+<div class="modal" id="manualDedupModal">
+  <div class="modal-box" style="max-width:680px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 class="modal-title" style="margin:0">✍️ 手动去重</h3>
+      <button class="modal-close" onclick="closeModal('manualDedupModal')">&times;</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px" id="md-hint"></div>
+    <div id="md-groups" style="max-height:52vh;overflow-y:auto"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-red" style="flex:1" id="md-delete-btn" onclick="manualDedupDelete()">🗑 删除勾选的记录</button>
+      <button class="btn btn-outline" style="flex:0 0 auto" onclick="closeModal('manualDedupModal')">取消</button>
     </div>
   </div>
 </div>
@@ -674,7 +691,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.7</div>
+<div class="version-badge">v6.4.8</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3608,6 +3625,86 @@ async function deduplicateAll() {
       renderCurrentPage();
       updateDataInfo();
       showToast('♻ 去重完成！清除 ' + totalDup + ' 条重复，保留 ' + hazards.length + ' 条');
+    }
+  );
+}
+
+// ===== 手动去重 (v6.4.8) =====
+// 列出内容完全相同（同上报人+位置+描述）的记录组，由用户自行勾选要删除的条目
+let mdSelectedIds = {};
+
+function showManualDedup() {
+  mdSelectedIds = {};
+  // 按"上报人+位置+描述"分组（不限时间），组内 >=2 条的视为疑似重复组
+  const groups = {};
+  hazards.forEach(h => {
+    const key = [h.reporter || '', h.building || '', h.floor || '', h.room || '', h.description || ''].join('|');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(h);
+  });
+  const dupGroups = Object.values(groups)
+    .filter(g => g.length >= 2)
+    .map(g => g.sort((a, b) => new Date(hazardTimeOf(b)) - new Date(hazardTimeOf(a)))); // 组内新的在前
+
+  const container = document.getElementById('md-groups');
+  const hint = document.getElementById('md-hint');
+  const btn = document.getElementById('md-delete-btn');
+
+  if (dupGroups.length === 0) {
+    hint.textContent = '系统未发现内容完全相同的记录组。如需删除个别记录，可直接在后台列表使用每行的「删除」按钮。';
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px">🎉 没有发现疑似重复的记录</div>';
+    if (btn) btn.disabled = true;
+  } else {
+    const totalInGroups = dupGroups.reduce((s, g) => s + g.length, 0);
+    hint.textContent = '发现 ' + dupGroups.length + ' 组内容相同的记录（共 ' + totalInGroups + ' 条）。每组默认勾选较旧的记录（保留最新一条），可自行调整后删除。';
+    let html = '';
+    dupGroups.forEach((g, gi) => {
+      html += '<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:var(--bg)">';
+      html += '<div style="font-size:13px;font-weight:600;margin-bottom:6px">组 ' + (gi + 1) + '：' + (g[0].reporter || '未知') + ' · ' + locText(g[0])
+        + '<div style="font-weight:400;font-size:12px;color:var(--text-muted);margin-top:2px">' + String(g[0].description || '').slice(0, 46) + '</div></div>';
+      g.forEach((h, i) => {
+        if (i > 0) mdSelectedIds[h.id] = true; // 默认勾选旧记录，保留最新一条
+        const d = new Date(hazardTimeOf(h));
+        const tStr = isNaN(d.getTime()) ? '?' : (pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()));
+        html += '<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 6px;font-size:12px;font-weight:400;cursor:pointer;border-radius:6px">'
+          + '<input type="checkbox"' + (i > 0 ? ' checked' : '') + ' onchange="mdToggle(\'' + h.id + '\', this.checked)" style="margin-top:2px">'
+          + '<span>🗓 ' + tStr + ' · #' + h.id + ' · ' + (h.status || '') + (i === 0 ? ' <span style="color:#059669;font-weight:600">（保留最新）</span>' : '') + '</span></label>';
+      });
+      html += '</div>';
+    });
+    container.innerHTML = html;
+    if (btn) btn.disabled = false;
+  }
+  updateMdButton();
+  document.getElementById('manualDedupModal').classList.add('show');
+}
+
+function mdToggle(id, on) {
+  if (on) mdSelectedIds[id] = true; else delete mdSelectedIds[id];
+  updateMdButton();
+}
+
+function updateMdButton() {
+  const btn = document.getElementById('md-delete-btn');
+  if (!btn) return;
+  const n = Object.keys(mdSelectedIds).length;
+  btn.textContent = n > 0 ? '🗑 删除勾选的 ' + n + ' 条记录' : '🗑 删除勾选的记录';
+  btn.style.opacity = n > 0 ? '1' : '.5';
+}
+
+function manualDedupDelete() {
+  const ids = Object.keys(mdSelectedIds);
+  if (ids.length === 0) { showToast('请先勾选要删除的记录'); return; }
+  showConfirm(
+    '✍️ 手动去重删除',
+    '确定删除勾选的 <strong>' + ids.length + '</strong> 条记录吗？<br><small style="color:#64748b">删除会同步到云端，所有设备不再显示</small><br><br><span style="color:#ef4444">此操作不可恢复！</span>',
+    '确认删除',
+    async () => {
+      for (const id of ids) { await deleteData(id); }
+      renderCurrentPage();
+      updateDataInfo();
+      closeModal('manualDedupModal');
+      showToast('✅ 手动去重完成，已删除 ' + ids.length + ' 条记录');
     }
   );
 }
