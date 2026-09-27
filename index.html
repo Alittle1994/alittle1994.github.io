@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.10</title>
-<!-- v6.4.10: 修复隐患时间手动键入不完整被静默按当前时间上报 — 即时校验提示，不完整阻止提交，新增重置按钮 -->
+<title>金田三中安全隐患排查整改系统 v6.4.11</title>
+<!-- v6.4.11: 隐患出现时间简化为只选日期（精确到日），各处显示只到日期，时分仅作同日排序辅助 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.10</div>
+    <div class="sidebar-footer">v6.4.11</div>
   </div>
 </div>
 
@@ -309,9 +309,9 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">隐患出现时间 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（发现隐患的时间，默认当前）</span></label>
-      <input type="datetime-local" class="form-input" id="r-hazard-time" oninput="hazardTimeInput()" onchange="hazardTimeInput()">
-      <div style="margin-top:4px"><button class="btn btn-outline" style="padding:3px 12px;font-size:12px;min-width:auto" onclick="setHazardTimeDefault()">↻ 重置为当前时间</button></div>
+      <label class="form-label">隐患出现日期 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（发现隐患的日期，默认今天）</span></label>
+      <input type="date" class="form-input" id="r-hazard-time" oninput="hazardTimeInput()" onchange="hazardTimeInput()">
+      <div style="margin-top:4px"><button class="btn btn-outline" style="padding:3px 12px;font-size:12px;min-width:auto" onclick="setHazardTimeDefault()">↻ 重置为今天</button></div>
       <div id="r-hazard-time-tip" style="font-size:12px;color:#ef4444;margin-top:4px;display:none"></div>
     </div>
     <div class="form-group">
@@ -579,8 +579,8 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <input type="text" class="form-input" id="e-handler" placeholder="处理人姓名">
     </div>
     <div class="form-group" style="margin-top:10px">
-      <label class="form-label">隐患出现时间</label>
-      <input type="datetime-local" class="form-input" id="e-hazard-time">
+      <label class="form-label">隐患出现日期</label>
+      <input type="date" class="form-input" id="e-hazard-time">
     </div>
     <div id="e-reported-info" style="margin-top:10px;padding:8px 12px;border-radius:8px;font-size:12px;display:none"></div>
     <div class="form-group" style="margin-top:12px">
@@ -693,7 +693,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.10</div>
+<div class="version-badge">v6.4.11</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2120,19 +2120,20 @@ async function submitReport() {
 
   // v6.4.4: 隐患出现时间（用户填写，默认当前时间）
   // v6.4.10: 手动键入不完整时浏览器返回空值 → 不能静默按当前时间上报，必须提示阻止
+  // v6.4.11: 只选日期（精确到日），保存时日期取用户所选 + 时分取当下（仅作同日内排序辅助）
   const htEl = document.getElementById('r-hazard-time');
   const htv = htEl ? htEl.value : '';
   let hazardTime;
   if (htv) {
-    const hd = new Date(htv);
+    const hd = new Date(htv + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':00');
     if (isNaN(hd.getTime())) {
-      showHazardTimeTip('隐患出现时间输入不完整，请重新选择（点日历图标选择最稳妥）');
+      showHazardTimeTip('隐患出现日期不正确，请重新选择');
       return;
     }
     hazardTime = hd.toISOString();
   } else if (htEl && htEl.dataset.dirty === '1') {
-    // 用户改过时间但最终为空（没输完/被清空）→ 阻止提交，避免误按当前时间
-    showHazardTimeTip('隐患出现时间没有填完整，请重新选择时间；如想用当前时间，请点旁边按钮重置');
+    // 用户改过日期但最终为空（没输完/被清空）→ 阻止提交，避免误按今天
+    showHazardTimeTip('隐患出现日期没有填完整，请重新选择日期；如想用今天，请点「重置为今天」');
     return;
   } else {
     hazardTime = now.toISOString();
@@ -2168,29 +2169,28 @@ async function submitReport() {
 }
 
 // v6.4.4: 隐患出现时间默认当前时间（打开填报页/提交后重置）
-// v6.4.10: 重置时清除"用户已修改"标记和错误提示
+// v6.4.11: 简化为只选日期（精确到日），重置时清除"用户已修改"标记和错误提示
 function setHazardTimeDefault() {
   const el = document.getElementById('r-hazard-time');
   if (!el) return;
   const n = new Date();
   const pad2 = x => String(x).padStart(2, '0');
-  el.value = n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()) +
-    'T' + pad2(n.getHours()) + ':' + pad2(n.getMinutes());
+  el.value = n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate());
   delete el.dataset.dirty;
   const tip = document.getElementById('r-hazard-time-tip');
   if (tip) tip.style.display = 'none';
 }
 
-// v6.4.10: 用户改动隐患时间输入框时标记 dirty 并即时校验（手动键入不完整时浏览器 value 为空）
+// v6.4.10: 用户改动隐患日期输入框时标记 dirty 并即时校验（手动键入不完整时浏览器 value 为空）
 function hazardTimeInput() {
   const el = document.getElementById('r-hazard-time');
   if (!el) return;
   el.dataset.dirty = '1';
   const tip = document.getElementById('r-hazard-time-tip');
   if (!el.value) {
-    if (tip) { tip.textContent = '⚠ 时间还没填完整（手动键入时日期和时间都要填），填完后再提交，或点「重置」用当前时间'; tip.style.display = 'block'; }
+    if (tip) { tip.textContent = '⚠ 日期还没填完整，填完后再提交，或点「重置为今天」'; tip.style.display = 'block'; }
   } else if (isNaN(new Date(el.value).getTime())) {
-    if (tip) { tip.textContent = '⚠ 时间格式不正确，请重新选择'; tip.style.display = 'block'; }
+    if (tip) { tip.textContent = '⚠ 日期格式不正确，请重新选择'; tip.style.display = 'block'; }
   } else if (tip) {
     tip.style.display = 'none';
   }
@@ -2495,9 +2495,9 @@ function renderAdminList() {
     const rpt = h.reviewReportedAt
       ? '<span class="reported-badge done">已上报</span>'
       : '<span class="reported-badge pending">未上报</span>';
-    // v6.4.4: 显示隐患出现时间（旧记录回落到上报时间）
+    // v6.4.4: 显示隐患出现时间（旧记录回落到上报时间）；v6.4.11: 只显示日期
     const htd = new Date(hazardTimeOf(h));
-    const htShow = isNaN(htd.getTime()) ? '' : (pad(htd.getMonth() + 1) + '-' + pad(htd.getDate()) + '<br>' + pad(htd.getHours()) + ':' + pad(htd.getMinutes()));
+    const htShow = isNaN(htd.getTime()) ? '' : (pad(htd.getMonth() + 1) + '-' + pad(htd.getDate()));
     return '<tr class="' + cls + '">' +
       '<td class="chk-col"><input type="checkbox" class="chk-rectify" data-id="' + h.id + '" onchange="syncSelectAll()"></td>' +
       '<td class="id-col">' + h.id + '</td>' +
@@ -2532,12 +2532,12 @@ function showEditModal(id) {
   document.getElementById('e-status').value = h.status || '待处理';
   document.getElementById('e-handler').value = h.handler || '';
   document.getElementById('e-urgency').value = h.urgency || '一般';
-  // v6.4.4: 隐患出现时间（旧记录回落到上报时间）
+  // v6.4.4: 隐患出现时间（旧记录回落到上报时间）；v6.4.11: 编辑只选日期
   const eht = document.getElementById('e-hazard-time');
   if (eht) {
     const hd = new Date(hazardTimeOf(h));
     const pad2 = x => String(x).padStart(2, '0');
-    eht.value = isNaN(hd.getTime()) ? '' : hd.getFullYear() + '-' + pad2(hd.getMonth() + 1) + '-' + pad2(hd.getDate()) + 'T' + pad2(hd.getHours()) + ':' + pad2(hd.getMinutes());
+    eht.value = isNaN(hd.getTime()) ? '' : hd.getFullYear() + '-' + pad2(hd.getMonth() + 1) + '-' + pad2(hd.getDate());
   }
   // 渲染整改后照片（已有 + 待上传）
   renderEditAfterPhotos(h.afterPhotos || []);
@@ -2576,9 +2576,12 @@ async function saveEdit() {
   h.status = document.getElementById('e-status').value;
   h.handler = document.getElementById('e-handler').value.trim();
   h.urgency = document.getElementById('e-urgency').value;
-  // v6.4.4: 隐患出现时间可编辑
+  // v6.4.4: 隐患出现时间可编辑；v6.4.11: 只选日期，保存时日期取所选 + 时分取当下
   const ehtv = document.getElementById('e-hazard-time') ? document.getElementById('e-hazard-time').value : '';
-  if (ehtv) h.hazardTime = new Date(ehtv).toISOString();
+  if (ehtv && !isNaN(new Date(ehtv).getTime())) {
+    const en = new Date();
+    h.hazardTime = new Date(ehtv + 'T' + pad(en.getHours()) + ':' + pad(en.getMinutes()) + ':00').toISOString();
+  }
   // 合并新上传的整改后照片
   if (editAfterPhotos.length > 0) {
     if (!h.afterPhotos) h.afterPhotos = [];
@@ -3065,8 +3068,8 @@ function renderReviewPickList() {
   list.innerHTML = rvCandidates.map(h => {
     const checked = rvSelectedIds[h.id] ? ' checked' : '';
     const loc = (h.building || '') + (h.floor || '') + (h.room || '');
-    const d = h.createdAt ? new Date(h.createdAt) : null;
-    const dStr = d ? (pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes())) : '';
+    const d = h.createdAt ? new Date(hazardTimeOf(h)) : null;
+    const dStr = d ? (pad(d.getMonth()+1) + '-' + pad(d.getDate())) : '';
     const urgColor = h.urgency === '紧急' ? '#ef4444' : (h.urgency === '中' ? '#f59e0b' : '#10b981');
     const rptTag = h.reviewReportedAt ? '<span style="font-size:11px;background:#e2e8f0;color:#475569;border-radius:4px;padding:1px 5px;margin-left:4px">已上报</span>' : '';
     const doneTag = h.status === '已整改' ? '<span style="font-size:11px;background:#d1fae5;color:#059669;border-radius:4px;padding:1px 5px;margin-left:4px">已整改</span>' : '';
