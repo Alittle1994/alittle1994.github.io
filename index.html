@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.8</title>
-<!-- v6.4.8: 新增手动去重 — 内容相同记录分组展示，用户自行勾选删除（默认保留每组最新一条，删除同步云端） -->
+<title>金田三中安全隐患排查整改系统 v6.4.9</title>
+<!-- v6.4.9: 修复审核汇报图文错乱 — 等待图片全部加载后再打印(20秒兜底)，图号只分配给实际照片保证图文严格对应，图片加载失败显示占位，打印防跨页断裂 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.8</div>
+    <div class="sidebar-footer">v6.4.9</div>
   </div>
 </div>
 
@@ -691,7 +691,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.8</div>
+<div class="version-badge">v6.4.9</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3084,23 +3084,19 @@ function generateReviewReport() {
   const maxD = maxT ? new Date(maxT) : nowExport;
   const titleDate = maxD.getFullYear() + '年' + pad(maxD.getMonth() + 1) + '月' + pad(maxD.getDate()) + '日';
   
-  // 为每条记录的照片分配全局编号
-  let photoIdx = 1;
-  const recordPhotoMap = {}; // recordId -> [1, 2, ...]
+  // v6.4.9: 先收集实际可显示的照片，再按收集结果分配全局编号 — 保证照片区图号与文字引用严格一致
+  const allPhotos = [];
+  const recordPhotoMap = {}; // recordId -> [图号...]
   records.forEach(h => {
     if (h.photos && h.photos.length) {
       recordPhotoMap[h.id] = [];
-      h.photos.forEach(() => { recordPhotoMap[h.id].push(photoIdx++); });
-    }
-  });
-
-  // 收集所有照片（带编号）
-  const allPhotos = [];
-  records.forEach(h => {
-    if (h.photos && h.photos.length) {
-      h.photos.forEach((p, pidx) => {
+      h.photos.forEach(p => {
         const src = photoUrl(p);
-        if (src) allPhotos.push({ src: src, num: recordPhotoMap[h.id][pidx] });
+        if (src) {
+          const num = allPhotos.length + 1;
+          recordPhotoMap[h.id].push(num);
+          allPhotos.push({ src: src, num: num });
+        }
       });
     }
   });
@@ -3113,7 +3109,7 @@ function generateReviewReport() {
   if (allPhotos.length > 0) {
     html += '<div class="review-photos">';
     allPhotos.forEach(p => {
-      html += '<div class="review-photo-item"><img src="' + p.src + '" onclick="viewPhoto(this.src)" alt=""><div class="rp-label">图' + p.num + '</div></div>';
+      html += '<div class="review-photo-item"><img src="' + p.src + '" onclick="viewPhoto(this.src)" alt="" onerror="this.removeAttribute(\'src\');this.alt=\'图片加载失败\';this.style.minHeight=\'80px\';this.style.background=\'#f1f5f9\';this.style.display=\'flex\';this.style.alignItems=\'center\';this.style.justifyContent=\'center\'"><div class="rp-label">图' + p.num + '</div></div>';
     });
     html += '</div>';
   } else {
@@ -3298,12 +3294,28 @@ function printReview() {
       line-height: 2.0; font-size: 10.5pt;
     }
     img { max-width: 100%; height: auto; }
+    /* v6.4.9: 防止照片/条目在打印分页时被切断导致图文错乱 */
+    .review-photo-item, .rs-item { break-inside: avoid; page-break-inside: avoid; }
   `;
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>校园安全隐患审核汇报</title><style>' + printCSS + '</style></head><body>' + content + '</body></html>');
   w.document.close();
   // 保存打印历史
   saveReviewHistory(content);
-  setTimeout(() => w.print(), 600);
+  // v6.4.9: 等待打印窗口内所有图片加载完成后再打印（校园网图片慢，600ms会导致图片空白错位），最长等20秒兜底
+  const printWhenReady = () => {
+    const imgs = Array.prototype.slice.call(w.document.images || []);
+    let finished = false;
+    let loaded = 0;
+    const go = () => { try { w.focus(); w.print(); } catch (e) { console.warn('[Print] 打印失败:', e); } };
+    if (imgs.length === 0) { setTimeout(go, 300); return; }
+    const one = () => { loaded++; if (!finished && loaded >= imgs.length) { finished = true; setTimeout(go, 400); } };
+    imgs.forEach(im => {
+      if (im.complete) one();
+      else { im.addEventListener('load', one); im.addEventListener('error', one); }
+    });
+    setTimeout(() => { if (!finished) { finished = true; go(); } }, 20000);
+  };
+  printWhenReady();
 }
 
 // ===== 审核汇报打印历史 =====
