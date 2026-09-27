@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.3</title>
-<!-- v6.4.3: 审核汇报自由勾选分批上报 — 候选记录逐条勾选，只有勾选的进入汇报并标记已上报，支持全选/清空 -->
+<title>金田三中安全隐患排查整改系统 v6.4.4</title>
+<!-- v6.4.4: 填报增加隐患出现时间，后台按隐患时间排序，审核汇报标题以最晚隐患时间为准；编辑弹窗支持修改隐患时间 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.3</div>
+    <div class="sidebar-footer">v6.4.4</div>
   </div>
 </div>
 
@@ -307,6 +307,10 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
           <option value="紧急">紧急</option>
         </select>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">隐患出现时间 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（发现隐患的时间，默认当前）</span></label>
+      <input type="datetime-local" class="form-input" id="r-hazard-time">
     </div>
     <div class="form-group">
       <label class="form-label">现场照片</label>
@@ -555,6 +559,10 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <label class="form-label">处理人</label>
       <input type="text" class="form-input" id="e-handler" placeholder="处理人姓名">
     </div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">隐患出现时间</label>
+      <input type="datetime-local" class="form-input" id="e-hazard-time">
+    </div>
     <div id="e-reported-info" style="margin-top:10px;padding:8px 12px;border-radius:8px;font-size:12px;display:none"></div>
     <div class="form-group" style="margin-top:12px">
       <label class="form-label">整改后照片 <span style="color:var(--text-muted);font-weight:400">（可上传，不超过4张，支持拖拽上传）</span></label>
@@ -666,7 +674,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.3</div>
+<div class="version-badge">v6.4.4</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1929,7 +1937,8 @@ function showPage(id) {
   // 渲染对应页面
   if (id === 'worker') renderWorker();
   if (id === 'admin') { renderAdminStats(); renderAdminList(); updateDataInfo(); }
-  
+  if (id === 'report') setHazardTimeDefault(); // v6.4.4: 填报页默认当前时间
+
   window.scrollTo(0, 0);
 }
 
@@ -2062,12 +2071,17 @@ async function submitReport() {
   const rnd = Math.floor(Math.random() * 900 + 100);
   const id = 'JT' + ts + '-' + rnd;
 
+  // v6.4.4: 隐患出现时间（用户填写，默认当前时间）
+  const htv = document.getElementById('r-hazard-time').value;
+  const hazardTime = htv ? new Date(htv).toISOString() : now.toISOString();
+
   const h = {
     id, reporter, building, floor, room,
     description: desc, urgency,
     photos: [...tempPhotos],
     status: '待处理', handler: '',
     semester: currentSemester(), // v6.4.0: 自动归属当前学期
+    hazardTime: hazardTime, // v6.4.4: 隐患出现时间
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     reportDate: pad(now.getMonth() + 1) + '-' + pad(now.getDate()),
@@ -2085,10 +2099,23 @@ async function submitReport() {
   document.getElementById('r-room').value = '';
   document.getElementById('r-desc').value = '';
   document.getElementById('r-urgency').value = '一般';
+  setHazardTimeDefault();
   tempPhotos = [];
   renderTempPhotos();
 }
 
+// v6.4.4: 隐患出现时间默认当前时间（打开填报页/提交后重置）
+function setHazardTimeDefault() {
+  const el = document.getElementById('r-hazard-time');
+  if (!el) return;
+  const n = new Date();
+  const pad2 = x => String(x).padStart(2, '0');
+  el.value = n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()) +
+    'T' + pad2(n.getHours()) + ':' + pad2(n.getMinutes());
+}
+
+// v6.4.4: 记录的隐患时间（优先用户填写的隐患出现时间，旧记录回落到上报时间）
+function hazardTimeOf(h) { return h.hazardTime || h.createdAt || ''; }
 // ===== 维修工作台 =====
 function renderWorker() {
   renderSemesterSelects();
@@ -2336,13 +2363,8 @@ function renderAdminList() {
     (h.reporter + h.building + h.room + h.description + h.floor).toLowerCase().includes(kw)
   );
 
-  // 按工作流顺序排序：待处理 > 处理中 > 已整改 > 无法整改，同状态按最新上报排前
-  const so = { '待处理': 0, '处理中': 1, '已整改': 2, '无法整改': 3 };
-  items.sort((a, b) => {
-    const sa = so[a.status] ?? 4;
-    const sb = so[b.status] ?? 4;
-    return sa !== sb ? sa - sb : new Date(b.createdAt) - new Date(a.createdAt);
-  });
+  // v6.4.4: 按隐患出现时间排序（最新在前）
+  items.sort((a, b) => new Date(hazardTimeOf(b)) - new Date(hazardTimeOf(a)));
 
   document.getElementById('a-record-count').textContent = items.length;
 
@@ -2351,7 +2373,7 @@ function renderAdminList() {
     return;
   }
 
-  let html = '<table class="admin-table"><thead><tr><th class="chk-col"><input type="checkbox" id="chk-select-all-th" onchange="toggleSelectAll()" title="全选/取消"></th><th>#</th><th>上报人</th><th>填报时间</th><th>隐患位置</th><th>隐患描述</th><th>照片</th><th>紧急度</th><th>状态</th><th>上报汇总</th><th>处理人</th><th>操作</th></tr></thead><tbody>';
+  let html = '<table class="admin-table"><thead><tr><th class="chk-col"><input type="checkbox" id="chk-select-all-th" onchange="toggleSelectAll()" title="全选/取消"></th><th>#</th><th>上报人</th><th>隐患时间</th><th>隐患位置</th><th>隐患描述</th><th>照片</th><th>紧急度</th><th>状态</th><th>上报汇总</th><th>处理人</th><th>操作</th></tr></thead><tbody>';
   html += items.map(h => {
     const cls = h.urgency === '紧急' ? 'uh' : h.urgency === '中' ? 'um' : 'ul';
     const phUrl = photoUrl(h.photos && h.photos[0]);
@@ -2373,11 +2395,14 @@ function renderAdminList() {
     const rpt = h.reviewReportedAt
       ? '<span class="reported-badge done">已上报</span>'
       : '<span class="reported-badge pending">未上报</span>';
+    // v6.4.4: 显示隐患出现时间（旧记录回落到上报时间）
+    const htd = new Date(hazardTimeOf(h));
+    const htShow = isNaN(htd.getTime()) ? '' : (pad(htd.getMonth() + 1) + '-' + pad(htd.getDate()) + '<br>' + pad(htd.getHours()) + ':' + pad(htd.getMinutes()));
     return '<tr class="' + cls + '">' +
       '<td class="chk-col"><input type="checkbox" class="chk-rectify" data-id="' + h.id + '" onchange="syncSelectAll()"></td>' +
       '<td class="id-col">' + h.id + '</td>' +
       '<td class="name-col">' + h.reporter + '</td>' +
-      '<td style="font-size:12px;color:#475569;white-space:nowrap">' + (h.reportDate || '') + '<br>' + (h.reportTime || '') + '</td>' +
+      '<td style="font-size:12px;color:#475569;white-space:nowrap">' + htShow + '</td>' +
       '<td class="loc-col">' + h.building + '<br>' + h.floor + ' ' + h.room + '</td>' +
       '<td class="desc-col">' + h.description + '</td>' +
       '<td class="photo-col">' + ph + '</td>' +
@@ -2407,6 +2432,13 @@ function showEditModal(id) {
   document.getElementById('e-status').value = h.status || '待处理';
   document.getElementById('e-handler').value = h.handler || '';
   document.getElementById('e-urgency').value = h.urgency || '一般';
+  // v6.4.4: 隐患出现时间（旧记录回落到上报时间）
+  const eht = document.getElementById('e-hazard-time');
+  if (eht) {
+    const hd = new Date(hazardTimeOf(h));
+    const pad2 = x => String(x).padStart(2, '0');
+    eht.value = isNaN(hd.getTime()) ? '' : hd.getFullYear() + '-' + pad2(hd.getMonth() + 1) + '-' + pad2(hd.getDate()) + 'T' + pad2(hd.getHours()) + ':' + pad2(hd.getMinutes());
+  }
   // 渲染整改后照片（已有 + 待上传）
   renderEditAfterPhotos(h.afterPhotos || []);
   // 显示上报汇总状态
@@ -2444,6 +2476,9 @@ async function saveEdit() {
   h.status = document.getElementById('e-status').value;
   h.handler = document.getElementById('e-handler').value.trim();
   h.urgency = document.getElementById('e-urgency').value;
+  // v6.4.4: 隐患出现时间可编辑
+  const ehtv = document.getElementById('e-hazard-time') ? document.getElementById('e-hazard-time').value : '';
+  if (ehtv) h.hazardTime = new Date(ehtv).toISOString();
   // 合并新上传的整改后照片
   if (editAfterPhotos.length > 0) {
     if (!h.afterPhotos) h.afterPhotos = [];
@@ -2986,8 +3021,14 @@ function generateReviewReport() {
   // 日期 — 以导出时间为准
   const nowExport = new Date();
   const exportDate = nowExport.getFullYear() + '年' + pad(nowExport.getMonth() + 1) + '月' + pad(nowExport.getDate()) + '日';
-  // 标题用查询范围截止日（如有），否则也用导出日
-  const titleDate = toStr ? new Date(toStr).getFullYear() + '年' + pad(new Date(toStr).getMonth()+1) + '月' + pad(new Date(toStr).getDate()) + '日' : exportDate;
+  // v6.4.4: 标题以本次汇报记录中最晚的隐患出现时间为准（无记录时回落导出日）
+  let maxT = 0;
+  records.forEach(h => {
+    const t = new Date(hazardTimeOf(h)).getTime();
+    if (!isNaN(t) && t > maxT) maxT = t;
+  });
+  const maxD = maxT ? new Date(maxT) : nowExport;
+  const titleDate = maxD.getFullYear() + '年' + pad(maxD.getMonth() + 1) + '月' + pad(maxD.getDate()) + '日';
   
   // 为每条记录的照片分配全局编号
   let photoIdx = 1;
@@ -3589,6 +3630,7 @@ async function seedDemoData() {
 async function boot() {
   // 初始化表单
   initSelects();
+  setHazardTimeDefault(); // v6.4.4: 隐患出现时间默认当前
 
   // 初始化IndexedDB
   await initDB();
