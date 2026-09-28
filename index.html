@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.12</title>
-<!-- v6.4.12: 审核汇报排序调整 — 有图片的记录排前面，无图片的排后面，组内保持时间顺序 -->
+<title>金田三中安全隐患排查整改系统 v6.4.13</title>
+<!-- v6.4.13: 后台管理增加月份/季度归类查看 — 按隐患出现日期归入月份与季度（1-3月一季度等），统计卡与列表联动过滤 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
 <style>
@@ -253,7 +253,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.12</div>
+    <div class="sidebar-footer">v6.4.13</div>
   </div>
 </div>
 
@@ -406,6 +406,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   <!-- Filters & Search -->
   <div class="filter-row">
     <select class="form-select" id="a-semester" onchange="setSemesterView(this.value)"></select>
+    <select class="form-select" id="a-filter-period" onchange="setPeriodFilter(this.value)"></select>
   </div>
   <div class="filter-row">
     <select class="form-select" id="a-filter-status" onchange="renderAdminList()">
@@ -693,7 +694,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.12</div>
+<div class="version-badge">v6.4.13</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -791,6 +792,78 @@ function renderSemesterSelects() {
   });
 }
 
+
+// v6.4.13: 月份/季度归类查看（按隐患出现日期归类，1-3月为一季度、4-6月二季度、7-9月三季度、10-12月四季度）
+let periodFilter = 'all'; // 'all' | 'q:年-季度号' | 'm:年-月'
+
+function monthOfHazard(h) {
+  const d = new Date(hazardTimeOf(h));
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+// 刷新归类下拉选项（基于当前学期视图内的数据动态生成，新的在前）
+function refreshPeriodOptions() {
+  const el = document.getElementById('a-filter-period');
+  if (!el) return;
+  const months = {};
+  semHazards().forEach(h => { const m = monthOfHazard(h); if (m) months[m] = true; });
+  const mList = Object.keys(months).sort().reverse();
+  const qSet = {};
+  mList.forEach(m => { const p = m.split('-'); qSet[p[0] + '-' + Math.ceil(Number(p[1]) / 3)] = true; });
+  const qList = Object.keys(qSet).sort().reverse();
+  const qName = { 1: '第一季度 (1-3月)', 2: '第二季度 (4-6月)', 3: '第三季度 (7-9月)', 4: '第四季度 (10-12月)' };
+  // 当前选择已不在数据中时重置为全部
+  const exists = periodFilter === 'all' || qList.includes(periodFilter.slice(2)) || mList.includes(periodFilter.slice(2));
+  if (!exists) periodFilter = 'all';
+  let html = '<option value="all"' + (periodFilter === 'all' ? ' selected' : '') + '>📅 全部数据</option>';
+  if (qList.length) {
+    html += '<optgroup label="按季度">';
+    qList.forEach(q => {
+      const v = 'q:' + q;
+      const p = q.split('-');
+      html += '<option value="' + v + '"' + (periodFilter === v ? ' selected' : '') + '>' + p[0] + '年' + (qName[p[1]] || '') + '</option>';
+    });
+    html += '</optgroup>';
+  }
+  if (mList.length) {
+    html += '<optgroup label="按月份">';
+    mList.forEach(m => {
+      const v = 'm:' + m;
+      const p = m.split('-');
+      html += '<option value="' + v + '"' + (periodFilter === v ? ' selected' : '') + '>' + p[0] + '年' + p[1] + '月</option>';
+    });
+    html += '</optgroup>';
+  }
+  el.innerHTML = html;
+}
+
+function setPeriodFilter(v) {
+  periodFilter = v;
+  renderAdminStats();
+  renderAdminList();
+}
+
+// 应用归类过滤（供统计和列表共用）
+function periodHazards(list) {
+  if (periodFilter === 'all') return list;
+  if (periodFilter.indexOf('q:') === 0) {
+    const p = periodFilter.slice(2).split('-');
+    const y = Number(p[0]), q = Number(p[1]);
+    const moFrom = (q - 1) * 3 + 1, moTo = q * 3;
+    return list.filter(h => {
+      const m = monthOfHazard(h);
+      if (!m) return false;
+      const pp = m.split('-');
+      return Number(pp[0]) === y && Number(pp[1]) >= moFrom && Number(pp[1]) <= moTo;
+    });
+  }
+  if (periodFilter.indexOf('m:') === 0) {
+    const m = periodFilter.slice(2);
+    return list.filter(h => monthOfHazard(h) === m);
+  }
+  return list;
+}
 
 // v6.0.1: GitHub 云端存储 — 替代 Supabase，零成本无限制
 // Token 分段存储，绕过 GitHub Secret Scanning 推送保护
@@ -2412,7 +2485,8 @@ async function changeWorkerStatus(id, newStatus) {
 // ===== 管理后台 =====
 function renderAdminStats() {
   renderSemesterSelects(); // v6.4.0: 刷新学期下拉框
-  const view = semHazards(); // v6.4.0: 按当前学期视图统计
+  refreshPeriodOptions(); // v6.4.13: 刷新月份/季度归类下拉
+  const view = periodHazards(semHazards()); // v6.4.0: 按学期视图 + v6.4.13: 按月份/季度归类统计
   const s = { total: view.length, pending: 0, handling: 0, done: 0, reported: 0, urgent: 0, cantfix: 0 };
   view.forEach(h => {
     if (h.status === '待处理') s.pending++;
@@ -2454,7 +2528,7 @@ function renderAdminList() {
   const fr = document.getElementById('a-filter-reported').value;
   const kw = document.getElementById('a-search').value.trim().toLowerCase();
 
-  let items = [...semHazards()]; // v6.4.0: 按当前学期视图过滤
+  let items = [...periodHazards(semHazards())]; // v6.4.0: 学期过滤 + v6.4.13: 月份/季度归类过滤
   if (fs) items = items.filter(h => h.status === fs);
   if (fu) items = items.filter(h => h.urgency === fu);
   if (fr === 'reported') items = items.filter(h => h.reviewReportedAt);
