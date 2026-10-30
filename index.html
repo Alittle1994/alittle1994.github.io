@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.13</title>
+<title>金田三中安全隐患排查整改系统 v6.4.14</title>
+<!-- v6.4.14: 后台管理加密码锁 — 进入管理后台需输入密码，防止学生等闲杂人员误入改动；内置“修改后台密码”功能（密码存 localStorage，默认 8888） -->
 <!-- v6.4.13: 后台管理增加月份/季度归类查看 — 按隐患出现日期归入月份与季度（1-3月一季度等），统计卡与列表联动过滤 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
 <!-- v6.3.3: 修复云端数据 UTF-8 解码错误，支持超过 1MB 的大文件读取（Git Data API blobs），清理乱码历史数据 -->
@@ -175,6 +176,14 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 .reported-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;line-height:1.4}
 .reported-badge.done{background:#ede9fe;color:#6366f1}
 .reported-badge.pending{background:#f1f5f9;color:#94a3b8}
+
+/* ===== 后台密码锁 (v6.4.14) ===== */
+.lock-form{margin-top:6px}
+.lock-input{padding:12px 14px;font-size:16px;letter-spacing:2px;text-align:center}
+.lock-error{color:var(--danger);font-size:13px;margin-top:10px;text-align:center;font-weight:600}
+.lock-shake{animation:lockShake .4s ease}
+@keyframes lockShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.lock-hint{font-size:12px;color:var(--text-muted);text-align:center;margin-top:10px}
 </style>
 </head>
 <body>
@@ -253,7 +262,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.13</div>
+    <div class="sidebar-footer">v6.4.14</div>
   </div>
 </div>
 
@@ -383,6 +392,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <button class="data-btn" onclick="importJSON()"><span style="font-size:18px">&#128194;</span> 恢复JSON</button>
       <button class="data-btn" onclick="exportCSV()"><span style="font-size:18px">&#11015;</span> 导出CSV</button>
       <button class="data-btn" onclick="showCloudModal()"><span style="font-size:18px">&#9729;</span> 云同步设置</button>
+      <button class="data-btn" onclick="showChangePwdModal()"><span style="font-size:18px">&#128273;</span> 修改后台密码</button>
     </div>
     <div class="data-info" id="dataInfo">&#x1F4C1; 正在加载数据...</div>
   </div>
@@ -674,6 +684,41 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   </div>
 </div>
 
+<!-- Admin Password Lock (v6.4.14) -->
+<div class="modal" id="adminLockModal">
+  <div class="modal-box" style="max-width:420px">
+    <div style="text-align:center;margin-bottom:4px">
+      <div style="font-size:44px;line-height:1">🔐</div>
+      <h3 class="modal-title" style="margin:10px 0 4px">管理后台已加锁</h3>
+      <p style="color:var(--text-sub);font-size:13px;margin:0">请输入密码进入，避免闲杂人员误操作</p>
+    </div>
+    <div class="lock-form">
+      <input type="password" id="adminPwdInput" class="form-input lock-input" placeholder="请输入后台密码" onkeydown="if(event.key==='Enter')submitAdminPwd()" autocomplete="off">
+      <div class="lock-error" id="adminPwdError" style="display:none"></div>
+      <button class="btn btn-primary btn-block" onclick="submitAdminPwd()" style="margin-top:14px">🔓 解锁进入</button>
+      <button class="btn btn-outline btn-block" onclick="closeAdminLock()" style="margin-top:8px">取消返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Admin Password (v6.4.14) -->
+<div class="modal" id="changePwdModal">
+  <div class="modal-box" style="max-width:420px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 class="modal-title" style="margin:0">🔑 修改后台密码</h3>
+      <button class="modal-close" onclick="closeModal('changePwdModal')">&times;</button>
+    </div>
+    <div class="lock-form">
+      <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px">新密码（至少 4 位）</label>
+      <input type="password" id="newPwdInput" class="form-input" placeholder="设置新的后台密码" autocomplete="off">
+      <label style="display:block;font-size:13px;color:var(--text-sub);margin:12px 0 6px">确认新密码</label>
+      <input type="password" id="newPwdConfirm" class="form-input" placeholder="再次输入新密码" onkeydown="if(event.key==='Enter')saveAdminPwd()" autocomplete="off">
+      <div class="lock-error" id="changePwdError" style="display:none"></div>
+      <button class="btn btn-primary btn-block" onclick="saveAdminPwd()" style="margin-top:14px">保存新密码</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Dialog -->
 <div class="confirm-overlay" id="confirmDialog">
   <div class="confirm-box">
@@ -694,7 +739,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.13</div>
+<div class="version-badge">v6.4.14</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2038,6 +2083,11 @@ function initSelects() {
 
 // ===== 页面切换 =====
 function showPage(id) {
+  // v6.4.14: 后台加密码锁，未解锁先弹锁屏
+  if (id === 'admin' && !adminUnlocked) {
+    showAdminLock();
+    return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById('page-' + id);
   if (page) page.classList.add('active');
@@ -2063,6 +2113,68 @@ function showPage(id) {
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('show');
+}
+
+// ===== 后台密码锁 (v6.4.14) =====
+let adminUnlocked = false;
+const ADMIN_PWD_DEFAULT = '8888';
+const LS_ADMIN_PWD = 'jt3_admin_pwd';
+
+function getAdminPwd() {
+  return localStorage.getItem(LS_ADMIN_PWD) || ADMIN_PWD_DEFAULT;
+}
+
+function showAdminLock() {
+  const m = document.getElementById('adminLockModal');
+  m.classList.add('show');
+  const inp = document.getElementById('adminPwdInput');
+  inp.value = '';
+  document.getElementById('adminPwdError').style.display = 'none';
+  setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+}
+
+function closeAdminLock() {
+  document.getElementById('adminLockModal').classList.remove('show');
+  showPage('home'); // 取消则退回首页
+}
+
+function submitAdminPwd() {
+  const inp = document.getElementById('adminPwdInput');
+  const err = document.getElementById('adminPwdError');
+  const val = (inp.value || '').trim();
+  if (val === '') { err.textContent = '请输入密码'; err.style.display = 'block'; return; }
+  if (val === getAdminPwd()) {
+    adminUnlocked = true;
+    document.getElementById('adminLockModal').classList.remove('show');
+    showPage('admin'); // 真正进入后台
+  } else {
+    err.textContent = '密码错误，请重试';
+    err.style.display = 'block';
+    const box = document.querySelector('#adminLockModal .modal-box');
+    if (box) { box.classList.remove('lock-shake'); void box.offsetWidth; box.classList.add('lock-shake'); }
+    inp.value = '';
+    try { inp.focus(); } catch (e) {}
+  }
+}
+
+function showChangePwdModal() {
+  const m = document.getElementById('changePwdModal');
+  m.classList.add('show');
+  document.getElementById('newPwdInput').value = '';
+  document.getElementById('newPwdConfirm').value = '';
+  document.getElementById('changePwdError').style.display = 'none';
+  setTimeout(() => { try { document.getElementById('newPwdInput').focus(); } catch (e) {} }, 60);
+}
+
+function saveAdminPwd() {
+  const np = (document.getElementById('newPwdInput').value || '').trim();
+  const cp = (document.getElementById('newPwdConfirm').value || '').trim();
+  const err = document.getElementById('changePwdError');
+  if (np.length < 4) { err.textContent = '密码至少 4 位'; err.style.display = 'block'; return; }
+  if (np !== cp) { err.textContent = '两次输入的密码不一致'; err.style.display = 'block'; return; }
+  localStorage.setItem(LS_ADMIN_PWD, np);
+  closeModal('changePwdModal');
+  showToast('🔑 后台密码已更新');
 }
 
 function renderCurrentPage() {
