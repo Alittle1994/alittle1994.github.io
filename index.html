@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.14</title>
+<title>金田三中安全隐患排查整改系统 v6.4.15</title>
+<!-- v6.4.15: 后台编辑弹窗新增“整改结果”字段（共用 rectificationNote）；整改完成判定放宽——有整改后照片 或 整改结果 任一即自动置为“已整改”；台账“整改结果”列优先显示结果文本 -->
 <!-- v6.4.14: 后台管理加密码锁 — 进入管理后台需输入密码，防止学生等闲杂人员误入改动；内置“修改后台密码”功能（密码存 localStorage，默认 8888） -->
 <!-- v6.4.13: 后台管理增加月份/季度归类查看 — 按隐患出现日期归入月份与季度（1-3月一季度等），统计卡与列表联动过滤 -->
 <!-- v6.4.0: 学期模块 — 记录按学期归档（春季期/秋季期），历史记录归入2026年春季期，工作台/后台/导出按学期视图切换 -->
@@ -262,7 +263,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.14</div>
+    <div class="sidebar-footer">v6.4.15</div>
   </div>
 </div>
 
@@ -602,6 +603,10 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
            ondrop="event.preventDefault();this.classList.remove('drag-over');handleEditAfterDrop(event)"></div>
       <input type="file" accept="image/*" id="e-after-photo-input" style="display:none" onchange="addEditAfterPhoto(this)">
     </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">整改结果 <span style="color:var(--text-muted);font-weight:400">（选填：填写处理结果，无照片时也可凭此判定整改完成）</span></label>
+      <textarea class="form-textarea" id="e-result" rows="2" placeholder="例如：已更换损坏部件、已报修完成、已设置警示标识..."></textarea>
+    </div>
     <div style="display:flex;gap:10px;margin-top:16px">
       <button class="btn btn-primary btn-block" onclick="saveEdit()">&#10003; 保存修改</button>
       <button class="btn btn-outline btn-block" onclick="closeModal('editModal')">取消</button>
@@ -739,7 +744,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.14</div>
+<div class="version-badge">v6.4.15</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2727,6 +2732,9 @@ function showEditModal(id) {
   }
   // 渲染整改后照片（已有 + 待上传）
   renderEditAfterPhotos(h.afterPhotos || []);
+  // v6.4.15: 整改结果（与整改说明共用 rectificationNote 字段）
+  const er = document.getElementById('e-result');
+  if (er) er.value = h.rectificationNote || '';
   // 显示上报汇总状态
   const rpi = document.getElementById('e-reported-info');
   if (h.reviewReportedAt) {
@@ -2772,6 +2780,14 @@ async function saveEdit() {
   if (editAfterPhotos.length > 0) {
     if (!h.afterPhotos) h.afterPhotos = [];
     h.afterPhotos = h.afterPhotos.concat(editAfterPhotos);
+  }
+  // v6.4.15: 整改结果（与整改说明共用 rectificationNote 字段）
+  h.rectificationNote = (document.getElementById('e-result').value || '').trim();
+  // v6.4.15: 有整改后照片 或 整改结果 任一，即判定整改完成（状态自动置为已整改）
+  const hasAfter = (h.afterPhotos && h.afterPhotos.length > 0);
+  const hasResult = !!(h.rectificationNote && h.rectificationNote.trim());
+  if ((hasAfter || hasResult) && (h.status === '待处理' || h.status === '处理中')) {
+    h.status = '已整改';
   }
   h.updatedAt = new Date().toISOString();
   await saveData(h);
@@ -3056,7 +3072,7 @@ function showLedgerModal() {
       '<td>' + (h.status === '已整改' ? '已维修整改' : h.status === '无法整改' ? '上报学校处理' : '待处理') + '</td>' +
       '<td>' + (h.handler || '-') + '</td>' +
       '<td>' + (h.status === '已整改' ? (h.updatedAt ? h.updatedAt.slice(0, 10) : '-') : '-') + '</td>' +
-      '<td>' + h.status + '</td></tr>';
+      '<td>' + ((h.rectificationNote && h.rectificationNote.trim()) ? h.rectificationNote : h.status) + '</td></tr>';
     }).join('') : '<tr><td colspan="8" style="text-align:center">暂无记录</td></tr>') +
     '</table>';
 
