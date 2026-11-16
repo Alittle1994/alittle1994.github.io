@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.16</title>
+<title>金田三中安全隐患排查整改系统 v6.4.17</title>
+<!-- v6.4.17: 已报隐患整改闭环 — 已上报汇总且已整改的隐患，整改图片/结果按整改时间节点自动并入审核汇报（即使该隐患不在勾选候选里）；仅闭环项也可成报 -->
 <!-- v6.4.16: 审核汇报每条隐患后自动附检修整改结果（有整改照片配图、无照片显示整改说明文字），按时间节点关联；维修整改照片改存 afterPhotos 以正确显示 -->
 <!-- v6.4.15: 后台编辑弹窗新增“整改结果”字段（共用 rectificationNote）；整改完成判定放宽——有整改后照片 或 整改结果 任一即自动置为“已整改”；台账“整改结果”列优先显示结果文本 -->
 <!-- v6.4.14: 后台管理加密码锁 — 进入管理后台需输入密码，防止学生等闲杂人员误入改动；内置“修改后台密码”功能（密码存 localStorage，默认 8888） -->
@@ -107,6 +108,15 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 .rs-rectify .rsr-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
 .rs-rectify .rsr-photos img{width:70px;height:54px;object-fit:cover;border-radius:5px;border:1px solid #a7f3d0;cursor:pointer}
 .rs-rectify .rsr-meta{color:#64748b;font-size:11px}
+/* v6.4.17: 已报隐患整改闭环自动汇总 */
+.review-closedloop{margin-top:16px;padding:12px 14px;background:#f8fafc;border:1px solid #d1fae5;border-radius:8px}
+.rcl-title{font-weight:700;font-size:13px;color:#059669;margin-bottom:10px;padding-bottom:6px;border-bottom:1px dashed #a7f3d0}
+.rcl-item{padding:8px 0;border-bottom:1px dashed var(--border)}
+.rcl-item:last-child{border-bottom:none}
+.rcl-head{font-size:13px;color:var(--text)}
+.rcl-date{color:#059669;font-size:11px;margin-left:6px}
+.rcl-desc{font-size:12px;color:var(--text-sub);margin:2px 0}
+.rcl-note{font-size:12px;color:#065f46;margin-top:2px}
 /* 审核汇报编辑模式 */
 .review-editing{border:2px dashed #f59e0b !important;border-radius:var(--radius-sm) !important;padding:8px !important;background:#fffbeb !important;outline:none !important}
 .review-editing .review-section{border:1px dashed #e2e8f0;border-radius:6px;padding:12px;margin-bottom:16px;background:#fff}
@@ -270,7 +280,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.16</div>
+    <div class="sidebar-footer">v6.4.17</div>
   </div>
 </div>
 
@@ -751,7 +761,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.16</div>
+<div class="version-badge">v6.4.17</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3322,7 +3332,26 @@ function generateReviewReport() {
     return pa - pb;
   });
 
-  if (records.length === 0) {
+  // v6.4.17: 已报隐患整改闭环 — 从全量 hazards 自动捞取「已上报汇总 + 已整改」的隐患（不在候选中被勾选也不丢）
+  const selectedIds = {};
+  records.forEach(function(h){ selectedIds[String(h.id)] = true; });
+  let closedLoop = hazards.filter(function(h){
+    if (selectedIds[String(h.id)]) return false;
+    if (!h.reviewReportedAt) return false;
+    const hasFix = (h.afterPhotos && h.afterPhotos.length > 0)
+      || (h.rectificationNote && h.rectificationNote.trim())
+      || h.status === '已整改';
+    if (!hasFix) return false;
+    const rt = new Date(h.updatedAt || h.createdAt);
+    if (fromStr && rt < new Date(fromStr)) return false;
+    if (toStr && rt > new Date(toStr + 'T23:59:59')) return false;
+    return true;
+  });
+  closedLoop.sort(function(a, b){
+    return new Date(a.updatedAt || 0) - new Date(b.updatedAt || 0); // 按整改时间升序（时间节点）
+  });
+
+  if (records.length === 0 && closedLoop.length === 0) {
     showToast('请先勾选要本次上报的记录（可逐条挑选，分批上报）');
     const hint = document.getElementById('rv-report-hint');
     if (hint) hint.textContent = '尚未勾选任何记录 — 请勾选后再生成汇报';
@@ -3344,6 +3373,10 @@ function generateReviewReport() {
   // v6.4.4: 标题以本次汇报记录中最晚的隐患出现时间为准（无记录时回落导出日）
   let maxT = 0;
   records.forEach(h => {
+    const t = new Date(hazardTimeOf(h)).getTime();
+    if (!isNaN(t) && t > maxT) maxT = t;
+  });
+  closedLoop.forEach(h => { // v6.4.17: 闭环记录同样纳入标题时间取值
     const t = new Date(hazardTimeOf(h)).getTime();
     if (!isNaN(t) && t > maxT) maxT = t;
   });
@@ -3414,6 +3447,36 @@ function generateReviewReport() {
     html += '</div>';
   } else {
     html += '<p style="color:#999;font-size:13px">暂无隐患记录</p>';
+  }
+
+  // v6.4.17: 已报隐患整改闭环（closedLoop 已在上方计算并排序）— 按整改时间节点自动并入汇报
+  if (closedLoop.length) {
+    html += '<div class="review-closedloop">';
+    html += '<div class="rcl-title">&#128257; 已报隐患整改闭环（' + closedLoop.length + ' 项 · 按整改时间）</div>';
+    closedLoop.forEach(function(h, ci){
+      const loc = h.building + ((h.floor || h.room) ? '，' + [h.floor, h.room].filter(Boolean).join('') : '');
+      const rdate = h.updatedAt ? h.updatedAt.slice(0, 10) : '';
+      const note = (h.rectificationNote || '').trim();
+      const afters = (h.afterPhotos && h.afterPhotos.length)
+        ? h.afterPhotos.map(function(p){ return photoUrl(p); }).filter(Boolean) : [];
+      html += '<div class="rcl-item">';
+      html += '<div class="rcl-head">' + (ci+1) + '. <b>' + (h.reporter || '') + '</b>：' + loc + (rdate ? '<span class="rcl-date">整改 ' + rdate + '</span>' : '') + '</div>';
+      html += '<div class="rcl-desc">' + (h.description || '') + '</div>';
+      if (note) html += '<div class="rcl-note">&#9989; 整改结果：' + note + '</div>';
+      else if (!afters.length) html += '<div class="rcl-note">&#9989; 已完成整改</div>';
+      if (afters.length) {
+        html += '<div class="rsr-photos">';
+        afters.forEach(function(src){
+          html += '<img src="' + src + '" onclick="viewPhoto(this.src)" alt="整改图片" onerror="this.style.display=\'none\'">';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    // 提示已报隐患整改数量
+    const hint2 = document.getElementById('rv-report-hint');
+    if (hint2) hint2.textContent += ' · 另自动纳入已报隐患整改闭环 ' + closedLoop.length + ' 项';
   }
   html += '</div>';
   
