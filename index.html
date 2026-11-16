@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.17</title>
+<title>金田三中安全隐患排查整改系统 v6.4.18</title>
+<!-- v6.4.18: 维修工作台新增「检修内容」tab — 按整改时间顺序（时间轴）展示所有已检修隐患（含未上报的），显示检修结果说明+整改照片+上报人/检修人 -->
 <!-- v6.4.17: 已报隐患整改闭环 — 已上报汇总且已整改的隐患，整改图片/结果按整改时间节点自动并入审核汇报（即使该隐患不在勾选候选里）；仅闭环项也可成报 -->
 <!-- v6.4.16: 审核汇报每条隐患后自动附检修整改结果（有整改照片配图、无照片显示整改说明文字），按时间节点关联；维修整改照片改存 afterPhotos 以正确显示 -->
 <!-- v6.4.15: 后台编辑弹窗新增“整改结果”字段（共用 rectificationNote）；整改完成判定放宽——有整改后照片 或 整改结果 任一即自动置为“已整改”；台账“整改结果”列优先显示结果文本 -->
@@ -75,6 +76,19 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 /* Hazard List */
 .hazard-list{display:flex;flex-direction:column;gap:12px}.hazard-item{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden}.hazard-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--danger)}.hazard-item.orange::before{background:var(--warning)}.hazard-item.green::before{background:var(--success)}.hazard-item.gray::before{background:#94a3b8}
 .hazard-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}.hazard-tag{font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700}.hazard-tag.red{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}.hazard-tag.orange{background:#fffbeb;color:#d97706;border:1px solid #fde68a}.hazard-tag.green{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0}.hazard-tag.gray{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}.hazard-tag.blue{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe}.hazard-id{font-size:12px;color:var(--text-muted);font-weight:600}.hazard-loc{font-size:15px;font-weight:700;margin-bottom:4px}.hazard-desc{font-size:13px;color:var(--text-sub);margin-bottom:10px;line-height:1.6}.hazard-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}.hazard-meta span{display:flex;align-items:center;gap:4px}.hazard-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+/* v6.4.18: 检修内容（按时间顺序）时间轴卡片 */
+.fixlog-day{font-size:13px;font-weight:700;color:var(--primary-mid);padding:6px 2px;margin-top:4px;border-bottom:2px solid var(--primary-light)}
+.fixlog-item{background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border:1px solid var(--border);border-left:4px solid var(--success)}
+.fl-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.fl-date{font-size:12px;color:#059669;font-weight:700;background:#ecfdf5;border-radius:6px;padding:2px 8px}
+.fl-time{font-size:11px;color:var(--text-muted)}
+.fl-loc{font-size:15px;font-weight:700;margin-bottom:4px}
+.fl-desc{font-size:13px;color:var(--text-sub);margin-bottom:8px;line-height:1.6}
+.fl-result{font-size:13px;color:#065f46;background:#f0fdf4;border-radius:6px;padding:8px 10px;margin-top:6px;line-height:1.6}
+.fl-label{font-weight:700;color:#059669}
+.fl-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fl-photos img{width:76px;height:58px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer}
+.fl-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted);margin-top:8px;flex-wrap:wrap}
 
 /* Action Bar */
 .action-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.action-btn{background:var(--card);border-radius:var(--radius);padding:16px 6px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);cursor:pointer;transition:all .2s}.action-btn:active{transform:scale(.96)}.action-btn .icon{font-size:22px;margin-bottom:6px;display:block}.action-btn .txt{font-size:11px;font-weight:600;color:var(--text-sub);letter-spacing:.3px;line-height:1.4}.action-btn.green .icon{color:var(--success)}.action-btn.red .icon{color:var(--danger)}.action-btn.teal .icon{color:var(--info)}.action-btn.yellow .icon{color:var(--warning)}.action-btn.blue .icon{color:var(--primary-light)}.action-btn.purple .icon{color:var(--purple)}
@@ -280,7 +294,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.17</div>
+    <div class="sidebar-footer">v6.4.18</div>
   </div>
 </div>
 
@@ -381,6 +395,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   <div class="tabs" id="w-tabs">
     <button class="tab active" onclick="setWorkerTab('pending',this)">&#9888; 待处理隐患 <span class="badge" id="w-pending-count">0</span></button>
     <button class="tab" onclick="setWorkerTab('done',this)">&#10003; 已处理记录 <span class="badge" id="w-done-count">0</span></button>
+    <button class="tab" onclick="setWorkerTab('fixlog',this)">&#128203; 检修内容 <span class="badge" id="w-fixlog-count">0</span></button>
   </div>
   <div class="hazard-list" id="w-list"></div>
 </div>
@@ -761,7 +776,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.17</div>
+<div class="version-badge">v6.4.18</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2448,6 +2463,9 @@ function renderWorkerStats() {
     '<div class="stat-card gray"><div class="num">' + s.cantfix + '</div><div class="txt">无法整改</div></div>';
   document.getElementById('w-pending-count').textContent = view.filter(h => ['待处理', '处理中'].includes(h.status)).length;
   document.getElementById('w-done-count').textContent = view.filter(h => ['已整改', '无法整改'].includes(h.status)).length;
+  // v6.4.18: 检修内容计数 — 所有已检修（有整改说明/整改照片/状态已整改），不管是否上报
+  const fixlogEl = document.getElementById('w-fixlog-count');
+  if (fixlogEl) fixlogEl.textContent = view.filter(isFixedHazard).length;
 }
 
 function setWorkerTab(t, btn) {
@@ -2457,9 +2475,23 @@ function setWorkerTab(t, btn) {
   renderWorkerList();
 }
 
+// v6.4.18: 判定一条隐患是否已检修（有整改说明/整改照片/状态已整改）
+function isFixedHazard(h) {
+  return h.status === '已整改'
+    || !!(h.rectificationNote && h.rectificationNote.trim())
+    || !!(h.afterPhotos && h.afterPhotos.length);
+}
+
 function renderWorkerList() {
   const list = document.getElementById('w-list');
   const view = semHazards(); // v6.4.0: 按当前学期视图过滤
+
+  // v6.4.18: 检修内容 tab — 按整改时间顺序展示所有已检修隐患（含未上报的）
+  if (workerTab === 'fixlog') {
+    renderFixlogList(view, list);
+    return;
+  }
+
   let items = workerTab === 'pending'
     ? view.filter(h => ['待处理', '处理中'].includes(h.status))
     : view.filter(h => ['已整改', '无法整改'].includes(h.status));
@@ -2515,6 +2547,63 @@ function renderWorkerList() {
       '<button class="btn btn-outline-gray btn-sm" onclick="confirmDelete(\'' + h.id + '\')">&#128465; 删除</button>' +
       '</div></div>';
   }).join('');
+}
+
+// v6.4.18: 检修内容清单 — 按整改时间(updatedAt)顺序展示所有已检修隐患（含未上报的）
+function renderFixlogList(view, list) {
+  let items = view.filter(isFixedHazard);
+  // 按整改时间排序（时间节点：新→旧）
+  items.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+
+  if (!items.length) {
+    list.innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted);padding:36px;font-size:14px">暂无检修记录<br><small style="font-size:12px">在「待处理隐患」中完成整改后，会自动按时间出现在这里</small></div>';
+    return;
+  }
+
+  const pad2 = x => String(x).padStart(2, '0');
+  let lastDay = '';
+  let html = '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">共 ' + items.length + ' 项检修记录 · 按整改时间由近到远排列</div>';
+
+  items.forEach(h => {
+    const rt = new Date(h.updatedAt || h.createdAt || 0);
+    const dayStr = isNaN(rt.getTime()) ? '日期未知'
+      : rt.getFullYear() + '-' + pad2(rt.getMonth() + 1) + '-' + pad2(rt.getDate());
+    if (dayStr !== lastDay) {
+      html += '<div class="fixlog-day">📅 ' + dayStr + '</div>';
+      lastDay = dayStr;
+    }
+    const timeStr = isNaN(rt.getTime()) ? '' : pad2(rt.getHours()) + ':' + pad2(rt.getMinutes());
+    const note = (h.rectificationNote || '').trim();
+    const afters = (h.afterPhotos && h.afterPhotos.length)
+      ? h.afterPhotos.map(p => photoUrl(p)).filter(Boolean) : [];
+    const rptTag = h.reviewReportedAt ? '<span class="hazard-tag gray">已上报汇总</span>' : '';
+    const statusTag = h.status === '已整改'
+      ? '<span class="hazard-tag green">✅ 已整改</span>'
+      : '<span class="hazard-tag orange">' + (h.status || '已处理') + '</span>';
+
+    html += '<div class="fixlog-item">';
+    html += '<div class="fl-top">' + statusTag + rptTag
+      + '<span class="fl-date">🔧 ' + dayStr + '</span>'
+      + (timeStr ? '<span class="fl-time">' + timeStr + '</span>' : '')
+      + '<span class="hazard-id">#' + h.id + '</span></div>';
+    html += '<div class="fl-loc">' + locText(h) + '</div>';
+    html += '<div class="fl-desc">隐患：' + (h.description || '') + '</div>';
+    html += '<div class="fl-result"><span class="fl-label">检修结果：</span>'
+      + (note || '已完成整改') + '</div>';
+    if (afters.length) {
+      html += '<div class="fl-photos">';
+      afters.forEach(src => {
+        html += '<img src="' + src + '" onclick="viewPhoto(this.src)" alt="整改照片" onerror="this.style.display=\'none\'">';
+      });
+      html += '</div>';
+    }
+    html += '<div class="fl-meta">'
+      + '<span>👤 上报：' + (h.reporter || '-') + '</span>'
+      + '<span>🔧 检修：' + (h.handler || '仇启仁') + '</span>'
+      + '</div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
 }
 
 // ===== 隐患整改弹窗 =====
