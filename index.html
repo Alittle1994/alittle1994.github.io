@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.15</title>
+<title>金田三中安全隐患排查整改系统 v6.4.16</title>
+<!-- v6.4.16: 审核汇报每条隐患后自动附检修整改结果（有整改照片配图、无照片显示整改说明文字），按时间节点关联；维修整改照片改存 afterPhotos 以正确显示 -->
 <!-- v6.4.15: 后台编辑弹窗新增“整改结果”字段（共用 rectificationNote）；整改完成判定放宽——有整改后照片 或 整改结果 任一即自动置为“已整改”；台账“整改结果”列优先显示结果文本 -->
 <!-- v6.4.14: 后台管理加密码锁 — 进入管理后台需输入密码，防止学生等闲杂人员误入改动；内置“修改后台密码”功能（密码存 localStorage，默认 8888） -->
 <!-- v6.4.13: 后台管理增加月份/季度归类查看 — 按隐患出现日期归入月份与季度（1-3月一季度等），统计卡与列表联动过滤 -->
@@ -100,6 +101,12 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 .review-simple-list{line-height:2.2;font-size:14px;color:var(--text)}
 .rs-item{padding:3px 0;border-bottom:1px dashed var(--border)}
 .rs-item:last-child{border-bottom:none}
+/* v6.4.16: 审核汇报每条隐患后附的检修整改结果 */
+.rs-rectify{margin:2px 0 8px;padding:6px 10px;background:#f0fdf4;border-left:3px solid #10b981;border-radius:5px;font-size:12px;color:#065f46;line-height:1.7}
+.rs-rectify .rsr-label{font-weight:700;color:#059669}
+.rs-rectify .rsr-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.rs-rectify .rsr-photos img{width:70px;height:54px;object-fit:cover;border-radius:5px;border:1px solid #a7f3d0;cursor:pointer}
+.rs-rectify .rsr-meta{color:#64748b;font-size:11px}
 /* 审核汇报编辑模式 */
 .review-editing{border:2px dashed #f59e0b !important;border-radius:var(--radius-sm) !important;padding:8px !important;background:#fffbeb !important;outline:none !important}
 .review-editing .review-section{border:1px dashed #e2e8f0;border-radius:6px;padding:12px;margin-bottom:16px;background:#fff}
@@ -263,7 +270,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.15</div>
+    <div class="sidebar-footer">v6.4.16</div>
   </div>
 </div>
 
@@ -744,7 +751,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.15</div>
+<div class="version-badge">v6.4.16</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2565,10 +2572,11 @@ async function confirmRectify() {
   h.status = '已整改';
   h.handler = '仇启仁';
   h.rectificationNote = note || '';
-  // 追加整改照片到已有照片
+  // v6.4.16: 整改照片存入「整改后照片」字段（原误存到隐患照片 photos，导致审核汇报/台账无法显示整改前后对比）
   if (rectifyPhotos.length > 0) {
-    if (!h.photos) h.photos = [];
-    h.photos = h.photos.concat(rectifyPhotos);
+    if (!h.afterPhotos) h.afterPhotos = [];
+    h.afterPhotos = h.afterPhotos.concat(rectifyPhotos);
+    h.hasAfterPhotos = true;
   }
   h.updatedAt = new Date().toISOString();
   await saveData(h);
@@ -3383,6 +3391,25 @@ function generateReviewReport() {
       const loc = h.building + ((h.floor || h.room) ? '，' + [h.floor, h.room].filter(Boolean).join('') : '');
       const photoRef = recordPhotoMap[h.id] ? '（图' + recordPhotoMap[h.id].join('、图') + '）' : '';
       html += '<div class="rs-item">' + (i+1) + '. ' + h.reporter + '：' + loc + '，' + h.description + photoRef + '</div>';
+      // v6.4.16: 每条隐患后附检修整改结果 — 有整改照片就配图，没有就只显示整改结果文字；系统自动关联，无需手动
+      var rNote = (h.rectificationNote || '').trim();
+      var rAfter = (h.afterPhotos && h.afterPhotos.length)
+        ? h.afterPhotos.map(function(p){ return photoUrl(p); }).filter(Boolean) : [];
+      if (rNote || rAfter.length || h.status === '已整改') {
+        var rMeta = h.updatedAt ? h.updatedAt.slice(0, 10) : '';
+        html += '<div class="rs-rectify"><span class="rsr-label">✅ 检修整改结果：</span>';
+        if (rNote) html += rNote;
+        else if (!rAfter.length) html += '已完成整改';
+        if (rMeta) html += ' <span class="rsr-meta">（整改日期 ' + rMeta + '）</span>';
+        if (rAfter.length) {
+          html += '<div class="rsr-photos">';
+          rAfter.forEach(function(src){
+            html += '<img src="' + src + '" onclick="viewPhoto(this.src)" alt="整改照片" onerror="this.style.display=\'none\'">';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
     });
     html += '</div>';
   } else {
@@ -3553,7 +3580,8 @@ function printReview() {
     }
     img { max-width: 100%; height: auto; }
     /* v6.4.9: 防止照片/条目在打印分页时被切断导致图文错乱 */
-    .review-photo-item, .rs-item { break-inside: avoid; page-break-inside: avoid; }
+    .review-photo-item, .rs-item, .rs-rectify { break-inside: avoid; page-break-inside: avoid; }
+    .rs-rectify .rsr-photos img { width: 54px; height: 42px; }
   `;
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>校园安全隐患审核汇报</title><style>' + printCSS + '</style></head><body>' + content + '</body></html>');
   w.document.close();
