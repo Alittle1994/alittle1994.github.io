@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.19</title>
+<title>金田三中安全隐患排查整改系统 v6.4.20</title>
+<!-- v6.4.20: 检修填报匹配修复 — 门牌号提取与冲突一票否决(205≠204不再误配)；楼栋楼层仅作辅助分，必须内容关键词≥2/门牌号相同/位置命中才算相关；新增手动改选下拉(可指定并入某隐患或改为单独记录)，提交尊重手动选择 -->
 <!-- v6.4.19: 检修填报 — 维修人员无需先上报，直接填检修日期/内容/位置/照片；系统自动匹配"已上报未整改"隐患(楼栋+楼层+位置+关键词打分)→并入闭环；匹配不上→单独建一条已整改记录。照片存 afterPhotos -->
 <!-- v6.4.18: 维修工作台新增「检修内容」tab — 按整改时间顺序（时间轴）展示所有已检修隐患（含未上报的），显示检修结果说明+整改照片+上报人/检修人 -->
 <!-- v6.4.17: 已报隐患整改闭环 — 已上报汇总且已整改的隐患，整改图片/结果按整改时间节点自动并入审核汇报（即使该隐患不在勾选候选里）；仅闭环项也可成报 -->
@@ -295,7 +296,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.19</div>
+    <div class="sidebar-footer">v6.4.20</div>
   </div>
 </div>
 
@@ -836,7 +837,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.19</div>
+<div class="version-badge">v6.4.20</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2668,11 +2669,13 @@ function renderFixlogList(view, list) {
 
 // ===== 检修填报 (v6.4.19) — 维修人员直接填检修内容，自动匹配已报隐患闭环 =====
 let ffPhotos = [];
-let ffMatchId = null; // 当前自动匹配到的隐患 id（null=单独新建）
+let ffMatchId = null;    // 当前选中的隐患 id（null=单独新建）
+let ffManualSel = null;  // v6.4.20: null=自动匹配；'NEW'=手动单独记录；隐患id=手动指定并入
 
 function showFixFillModal() {
   ffPhotos = [];
   ffMatchId = null;
+  ffManualSel = null;
   const d = new Date();
   const ds = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
   const dateEl = document.getElementById('ff-date');
@@ -2692,6 +2695,17 @@ function showFixFillModal() {
 }
 
 // 自动匹配：从"已上报汇总 + 未整改"的隐患里，按位置(楼栋/楼层)与内容关键词打分，取最佳
+// 提取门牌号（205室 / 204宿舍 / 301房 / 独立3位数）
+function ffExtractRoomNums(str) {
+  if (!str) return [];
+  const out = [];
+  let re = /(\d{3,4})\s*(?:室|房|号|宿舍)/g, m;
+  while ((m = re.exec(str)) !== null) out.push(m[1]);
+  re = /(?:^|[^\d])(\d{3})(?!\d)/g;
+  while ((m = re.exec(str)) !== null) out.push(m[1]);
+  return Array.from(new Set(out));
+}
+
 function ffFindMatch() {
   const content = (document.getElementById('ff-content').value || '').trim();
   const b = document.getElementById('ff-building').value;
@@ -2706,7 +2720,9 @@ function ffFindMatch() {
   );
   if (!candidates.length) return null;
 
-  // 从检修内容里提取 2 字词作为关键词
+  const ffNums = ffExtractRoomNums(content + ' ' + room); // 检修方门牌号
+
+  // 内容关键词（2字词）
   const kws = [];
   const clean = content.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, ' ');
   clean.split(/\s+/).forEach(tok => {
@@ -2716,26 +2732,41 @@ function ffFindMatch() {
   });
   const uniqKw = Array.from(new Set(kws));
 
-  let best = null, bestScore = 0;
+  let best = null, bestScore = -1;
   candidates.forEach(h => {
-    let score = 0;
     const hb = h.building || '';
     const hf = h.floor || '';
     const hr = h.room || '';
-    const htext = (hb + hf + hr + (h.description || '')).replace(/\s/g, '');
+    const hdesc = h.description || '';
+    const hNums = ffExtractRoomNums(hr + ' ' + hdesc); // 隐患方门牌号
 
-    if (b && hb === b) score += 6;              // 楼栋完全一致 → 强信号
-    if (f && hf === f) score += 3;              // 楼层一致
-    if (room && (htext.indexOf(room) >= 0)) score += 3; // 具体位置文字命中
-    // 内容关键词命中隐患描述（每命中一个+1，最多+6）
+    // ① 门牌号冲突一票否决：两边都有号码但没有一个相同 → 直接排除
+    if (ffNums.length && hNums.length) {
+      const common = ffNums.filter(n => hNums.indexOf(n) >= 0);
+      if (!common.length) return;
+    }
+
+    const bMatch = !!(b && hb === b);
+    const fMatch = !!(f && hf === f);
+    const numMatch = ffNums.some(n => hNums.indexOf(n) >= 0);
+    const roomHit = !!(room && (hr + hdesc).indexOf(room) >= 0);
     let hit = 0;
-    uniqKw.forEach(k => { if ((h.description || '').indexOf(k) >= 0) hit++; });
-    score += Math.min(hit, 6);
+    uniqKw.forEach(k => { if (hdesc.indexOf(k) >= 0) hit++; });
 
+    // ② 必须有"问题内容相关性"：关键词命中≥2 或 门牌号相同 或 位置文字命中
+    //    仅楼栋/楼层相同不再足以匹配
+    const relevant = hit >= 2 || numMatch || roomHit;
+    if (!relevant) return;
+
+    let score = (bMatch ? 3 : 0) + (fMatch ? 2 : 0)
+      + (numMatch ? 5 : 0) + (roomHit ? 3 : 0) + Math.min(hit, 6);
     if (score > bestScore) { bestScore = score; best = h; }
   });
-  // 只有达到最低可信分才认为匹配
-  return bestScore >= 6 ? { h: best, score: bestScore } : null;
+  return bestScore >= 8 ? { h: best, score: bestScore } : null;
+}
+
+function ffCandidateList() {
+  return hazards.filter(h => h.reviewReportedAt && h.status !== '已整改' && h.status !== '无法整改');
 }
 
 function ffPreviewMatch() {
@@ -2746,27 +2777,71 @@ function ffPreviewMatch() {
     ffMatchId = null;
     box.style.background = '#f8fafc';
     box.style.borderColor = 'var(--border)';
+    box.style.color = 'var(--text-sub)';
     box.innerHTML = '&#128269; 填写检修内容后，这里会显示自动匹配结果';
     return;
   }
-  const m = ffFindMatch();
-  if (m) {
-    ffMatchId = m.h.id;
-    const loc = locText(m.h);
-    const dt = m.h.reportDate ? '（上报 ' + m.h.reportDate + '）' : '';
-    box.style.background = '#ecfdf5';
-    box.style.borderColor = '#a7f3d0';
-    box.style.color = '#065f46';
-    box.innerHTML = '&#9989; <strong>自动匹配到已报隐患</strong>：' + (m.h.reporter || '') + ' · ' + loc
-      + dt + '<br><span style="font-size:12px">' + (m.h.description || '').slice(0, 40) + '</span>'
-      + '<br><span style="font-size:12px;color:#059669">提交后将并入该隐患，完成闭环整改</span>';
-  } else {
+
+  // v6.4.20: ffManualSel 三态 — null=自动匹配；'NEW'=手动单独记录；隐患id=手动指定并入
+  if (ffManualSel === 'NEW') {
     ffMatchId = null;
     box.style.background = '#fffbeb';
     box.style.borderColor = '#fde68a';
     box.style.color = '#92400e';
-    box.innerHTML = '&#128209; <strong>没有匹配的已报隐患</strong> — 提交后将单独记录为一条检修完成记录';
+    box.innerHTML = '&#128209; <strong>已手动设为「单独记录」</strong> — 提交后将新建一条检修完成记录，不并入任何隐患'
+      + '<br><button type="button" onclick="ffManualSel=null;ffPreviewMatch()" style="margin-top:6px;padding:3px 10px;font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;cursor:pointer">↩ 恢复自动匹配</button>';
+    return;
   }
+
+  let target = null;   // 最终选中的隐患
+  let isAuto = true;   // 是否自动匹配
+  if (ffManualSel) {
+    target = hazards.find(x => String(x.id) === String(ffManualSel)) || null;
+    isAuto = false;
+  } else {
+    const m = ffFindMatch();
+    target = m ? m.h : null;
+  }
+  ffMatchId = target ? target.id : null;
+
+  const cands = ffCandidateList();
+  let selectHtml = '';
+  if (cands.length) {
+    selectHtml = '<div style="margin-top:8px;font-size:12px">'
+      + '若匹配不对，可手动改选：<select onchange="ffOnCandidateChange(this.value)" style="max-width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px">'
+      + '<option value="__none__"' + (ffManualSel === 'NEW' ? ' selected' : '') + '>➕ 都不对，单独记录（不并入）</option>'
+      + cands.map(h => {
+          const sel = (target && String(target.id) === String(h.id)) ? ' selected' : '';
+          const label = (h.reporter || '') + ' · ' + locText(h) + ' · ' + (h.description || '').slice(0, 18);
+          return '<option value="' + h.id + '"' + sel + '>' + label + '</option>';
+        }).join('')
+      + '</select></div>';
+  }
+
+  if (target) {
+    const loc = locText(target);
+    const dt = target.reportDate ? '（上报 ' + target.reportDate + '）' : '';
+    box.style.background = '#ecfdf5';
+    box.style.borderColor = '#a7f3d0';
+    box.style.color = '#065f46';
+    box.innerHTML = (isAuto ? '&#9989; <strong>自动匹配到已报隐患</strong>' : '&#9989; <strong>已手动指定并入隐患</strong>')
+      + '：' + (target.reporter || '') + ' · ' + loc
+      + dt + '<br><span style="font-size:12px">' + (target.description || '').slice(0, 40) + '</span>'
+      + '<br><span style="font-size:12px;color:#059669">提交后将并入该隐患，完成闭环整改</span>'
+      + selectHtml;
+  } else {
+    box.style.background = '#fffbeb';
+    box.style.borderColor = '#fde68a';
+    box.style.color = '#92400e';
+    box.innerHTML = '&#128209; <strong>没有可靠的匹配</strong> — 默认单独记录为一条检修完成记录'
+      + '<br><span style="font-size:12px">（已加严格校验：房间号不符、内容无关都不会误并入）</span>'
+      + selectHtml;
+  }
+}
+
+function ffOnCandidateChange(val) {
+  ffManualSel = (val === '__none__') ? 'NEW' : val;
+  ffPreviewMatch();
 }
 
 function renderFFPhotos() {
@@ -2832,14 +2907,14 @@ async function submitFixFill() {
   const reportDate = dateStr.slice(5).replace('-', '-'); // MM-DD
   const reportTime = timeStr || '00:00';
 
-  // 重新计算匹配（以提交时刻为准）
+  // v6.4.20: 直接使用预览框维护的 ffMatchId（尊重自动匹配或用户手动改选），不再重新计算覆盖
   ffPreviewMatch();
-  const m = ffFindMatch();
+  const target = ffMatchId ? hazards.find(x => String(x.id) === String(ffMatchId)) : null;
   const nowIso = new Date().toISOString();
 
-  if (m) {
+  if (target) {
     // ===== 闭环：并入已报隐患 =====
-    const h = m.h;
+    const h = target;
     h.status = '已整改';
     h.handler = h.handler || '仇启仁';
     const oldNote = (h.rectificationNote || '').trim();
