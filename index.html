@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.20</title>
+<title>金田三中安全隐患排查整改系统 v6.4.21</title>
+<!-- v6.4.21: 检修填报勾选确认制 — 系统只给"建议匹配"，符合就勾选才并入闭环，不勾一律单独记录；输入变化自动清除勾选；下拉换选即视为确认 -->
 <!-- v6.4.20: 检修填报匹配修复 — 门牌号提取与冲突一票否决(205≠204不再误配)；楼栋楼层仅作辅助分，必须内容关键词≥2/门牌号相同/位置命中才算相关；新增手动改选下拉(可指定并入某隐患或改为单独记录)，提交尊重手动选择 -->
 <!-- v6.4.19: 检修填报 — 维修人员无需先上报，直接填检修日期/内容/位置/照片；系统自动匹配"已上报未整改"隐患(楼栋+楼层+位置+关键词打分)→并入闭环；匹配不上→单独建一条已整改记录。照片存 afterPhotos -->
 <!-- v6.4.18: 维修工作台新增「检修内容」tab — 按整改时间顺序（时间轴）展示所有已检修隐患（含未上报的），显示检修结果说明+整改照片+上报人/检修人 -->
@@ -296,7 +297,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.20</div>
+    <div class="sidebar-footer">v6.4.21</div>
   </div>
 </div>
 
@@ -690,7 +691,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <button class="modal-close" onclick="closeModal('fixFillModal')">&times;</button>
     </div>
     <div style="background:#f0fdf4;border-left:3px solid #10b981;border-radius:6px;padding:8px 12px;font-size:12px;color:#065f46;line-height:1.6;margin-bottom:14px">
-      直接填这次检修了什么。系统会<strong>自动匹配已上报且未整改的隐患</strong>——对得上就并入该隐患完成闭环；对不上就单独记一条检修记录。
+      直接填这次检修了什么。系统会给出<strong>建议匹配的已上报隐患</strong>——<strong>符合就勾选</strong>，提交后并入该隐患完成闭环；<strong>不勾选就单独</strong>记一条检修记录。
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group">
@@ -704,20 +705,20 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     </div>
     <div class="form-group" style="margin-top:10px">
       <label class="form-label">检修内容 <span class="req">*</span></label>
-      <textarea class="form-textarea" id="ff-content" rows="3" placeholder="例如：换教学楼一楼东走廊上吸顶灯共6盏" oninput="ffPreviewMatch()"></textarea>
+      <textarea class="form-textarea" id="ff-content" rows="3" placeholder="例如：换教学楼一楼东走廊上吸顶灯共6盏" oninput="ffResetAndPreview()"></textarea>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
       <div class="form-group">
         <label class="form-label">哪栋楼 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（选填，辅助匹配）</span></label>
-        <select class="form-select" id="ff-building" onchange="ffPreviewMatch()"><option value="">不选</option></select>
+        <select class="form-select" id="ff-building" onchange="ffResetAndPreview()"><option value="">不选</option></select>
       </div>
       <div class="form-group">
         <label class="form-label">哪层楼</label>
-        <select class="form-select" id="ff-floor" onchange="ffPreviewMatch()"><option value="">不选</option></select>
+        <select class="form-select" id="ff-floor" onchange="ffResetAndPreview()"><option value="">不选</option></select>
       </div>
       <div class="form-group">
         <label class="form-label">具体位置</label>
-        <input type="text" class="form-input" id="ff-room" placeholder="如：东走廊" oninput="ffPreviewMatch()">
+        <input type="text" class="form-input" id="ff-room" placeholder="如：东走廊" oninput="ffResetAndPreview()">
       </div>
     </div>
     <div id="ff-match-preview" style="margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.6;background:#f8fafc;border:1px dashed var(--border);color:var(--text-sub)">
@@ -837,7 +838,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.20</div>
+<div class="version-badge">v6.4.21</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2669,13 +2670,13 @@ function renderFixlogList(view, list) {
 
 // ===== 检修填报 (v6.4.19) — 维修人员直接填检修内容，自动匹配已报隐患闭环 =====
 let ffPhotos = [];
-let ffMatchId = null;    // 当前选中的隐患 id（null=单独新建）
-let ffManualSel = null;  // v6.4.20: null=自动匹配；'NEW'=手动单独记录；隐患id=手动指定并入
+let ffTargetId = null;   // v6.4.21: 当前建议/选中的目标隐患 id
+let ffSelectedId = null; // v6.4.21: 用户勾选确认要并入的隐患 id（null=不勾，单独记录）
 
 function showFixFillModal() {
   ffPhotos = [];
-  ffMatchId = null;
-  ffManualSel = null;
+  ffTargetId = null;
+  ffSelectedId = null;
   const d = new Date();
   const ds = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
   const dateEl = document.getElementById('ff-date');
@@ -2774,73 +2775,82 @@ function ffPreviewMatch() {
   if (!box) return;
   const content = (document.getElementById('ff-content').value || '').trim();
   if (!content) {
-    ffMatchId = null;
+    ffTargetId = null;
+    ffSelectedId = null;
     box.style.background = '#f8fafc';
     box.style.borderColor = 'var(--border)';
     box.style.color = 'var(--text-sub)';
-    box.innerHTML = '&#128269; 填写检修内容后，这里会显示自动匹配结果';
+    box.innerHTML = '&#128269; 填写检修内容后，这里会给出建议匹配 — 符合就勾选，不符合就不勾（单独记录）';
     return;
   }
 
-  // v6.4.20: ffManualSel 三态 — null=自动匹配；'NEW'=手动单独记录；隐患id=手动指定并入
-  if (ffManualSel === 'NEW') {
-    ffMatchId = null;
-    box.style.background = '#fffbeb';
-    box.style.borderColor = '#fde68a';
-    box.style.color = '#92400e';
-    box.innerHTML = '&#128209; <strong>已手动设为「单独记录」</strong> — 提交后将新建一条检修完成记录，不并入任何隐患'
-      + '<br><button type="button" onclick="ffManualSel=null;ffPreviewMatch()" style="margin-top:6px;padding:3px 10px;font-size:12px;color:#059669;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;cursor:pointer">↩ 恢复自动匹配</button>';
-    return;
-  }
-
-  let target = null;   // 最终选中的隐患
-  let isAuto = true;   // 是否自动匹配
-  if (ffManualSel) {
-    target = hazards.find(x => String(x.id) === String(ffManualSel)) || null;
-    isAuto = false;
-  } else {
-    const m = ffFindMatch();
-    target = m ? m.h : null;
-  }
-  ffMatchId = target ? target.id : null;
+  // 建议匹配（严格校验：门牌号冲突一票否决 + 内容相关性必达）
+  const m = ffFindMatch();
+  ffTargetId = m ? m.h.id : null;
+  const target = ffTargetId ? hazards.find(x => String(x.id) === String(ffTargetId)) : null;
+  // 用户之前下拉改选过其他隐患 → 保留该选择为目标
+  const selTarget = ffSelectedId ? hazards.find(x => String(x.id) === String(ffSelectedId)) : null;
 
   const cands = ffCandidateList();
   let selectHtml = '';
   if (cands.length) {
     selectHtml = '<div style="margin-top:8px;font-size:12px">'
-      + '若匹配不对，可手动改选：<select onchange="ffOnCandidateChange(this.value)" style="max-width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px">'
-      + '<option value="__none__"' + (ffManualSel === 'NEW' ? ' selected' : '') + '>➕ 都不对，单独记录（不并入）</option>'
+      + '建议不对？换一个：<select onchange="ffOnCandidateChange(this.value)" style="max-width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px">'
+      + '<option value="__none__"' + (!ffTargetId && !selTarget ? ' selected' : '') + '>不并入任何隐患（单独记录）</option>'
       + cands.map(h => {
-          const sel = (target && String(target.id) === String(h.id)) ? ' selected' : '';
+          const cur = selTarget || target;
+          const sel = (cur && String(cur.id) === String(h.id)) ? ' selected' : '';
           const label = (h.reporter || '') + ' · ' + locText(h) + ' · ' + (h.description || '').slice(0, 18);
           return '<option value="' + h.id + '"' + sel + '>' + label + '</option>';
         }).join('')
       + '</select></div>';
   }
 
-  if (target) {
-    const loc = locText(target);
-    const dt = target.reportDate ? '（上报 ' + target.reportDate + '）' : '';
+  const showTarget = selTarget || target;
+  if (showTarget) {
+    const checked = ffSelectedId ? ' checked' : '';
+    const dt = showTarget.reportDate ? '（上报 ' + showTarget.reportDate + '）' : '';
     box.style.background = '#ecfdf5';
     box.style.borderColor = '#a7f3d0';
     box.style.color = '#065f46';
-    box.innerHTML = (isAuto ? '&#9989; <strong>自动匹配到已报隐患</strong>' : '&#9989; <strong>已手动指定并入隐患</strong>')
-      + '：' + (target.reporter || '') + ' · ' + loc
-      + dt + '<br><span style="font-size:12px">' + (target.description || '').slice(0, 40) + '</span>'
-      + '<br><span style="font-size:12px;color:#059669">提交后将并入该隐患，完成闭环整改</span>'
+    box.innerHTML = (selTarget ? '&#9989; <strong>已选中隐患</strong>' : '&#128269; <strong>建议匹配</strong>')
+      + '：' + (showTarget.reporter || '') + ' · ' + locText(showTarget) + dt
+      + '<br><span style="font-size:12px">' + (showTarget.description || '').slice(0, 40) + '</span>'
+      + '<label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:8px 10px;background:#fff;border:1px solid #a7f3d0;border-radius:8px;cursor:pointer;font-weight:600;color:#065f46">'
+      + '<input type="checkbox"' + checked + ' onchange="ffOnConfirm(this.checked)" style="margin-top:2px;width:16px;height:16px;flex-shrink:0">'
+      + '<span>符合就勾选 — 提交后并入该隐患完成闭环整改<br><span style="font-weight:400;font-size:11px;color:#64748b">不勾选 = 不并入，单独记录为一条检修完成</span></span></label>'
       + selectHtml;
   } else {
+    ffSelectedId = null;
     box.style.background = '#fffbeb';
     box.style.borderColor = '#fde68a';
     box.style.color = '#92400e';
-    box.innerHTML = '&#128209; <strong>没有可靠的匹配</strong> — 默认单独记录为一条检修完成记录'
-      + '<br><span style="font-size:12px">（已加严格校验：房间号不符、内容无关都不会误并入）</span>'
+    box.innerHTML = '&#128209; <strong>没有可靠的匹配</strong> — 提交后将单独记录为一条检修完成记录'
+      + '<br><span style="font-size:12px">（已加严格校验：房间号不符、内容无关都不会建议）</span>'
       + selectHtml;
   }
 }
 
+// 勾选/取消勾选确认
+function ffOnConfirm(checked) {
+  ffSelectedId = checked ? ffTargetId : null;
+}
+
+// 输入变化 → 清除确认状态，重新给建议
+function ffResetAndPreview() {
+  ffSelectedId = null;
+  ffPreviewMatch();
+}
+
+// 下拉换选（换选即视为已勾选确认；选"不并入"则清除）
 function ffOnCandidateChange(val) {
-  ffManualSel = (val === '__none__') ? 'NEW' : val;
+  if (val === '__none__') {
+    ffTargetId = null;
+    ffSelectedId = null;
+  } else {
+    ffTargetId = val;
+    ffSelectedId = val;
+  }
   ffPreviewMatch();
 }
 
@@ -2907,9 +2917,8 @@ async function submitFixFill() {
   const reportDate = dateStr.slice(5).replace('-', '-'); // MM-DD
   const reportTime = timeStr || '00:00';
 
-  // v6.4.20: 直接使用预览框维护的 ffMatchId（尊重自动匹配或用户手动改选），不再重新计算覆盖
-  ffPreviewMatch();
-  const target = ffMatchId ? hazards.find(x => String(x.id) === String(ffMatchId)) : null;
+  // v6.4.21: 勾选确认制 — 只有用户勾选了（ffSelectedId）才并入闭环，未勾选一律单独记录
+  const target = ffSelectedId ? hazards.find(x => String(x.id) === String(ffSelectedId)) : null;
   const nowIso = new Date().toISOString();
 
   if (target) {
@@ -2927,7 +2936,7 @@ async function submitFixFill() {
     await saveData(h);
     closeModal('fixFillModal');
     renderWorker();
-    showToast('✅ 已并入已报隐患并完成闭环整改');
+    showToast('✅ 已并入勾选的隐患，完成闭环整改');
   } else {
     // ===== 单独新建：检修完成记录（未上报、已整改）=====
     const ts = dateStr.replace(/-/g, '') + '-' + String(hh).padStart(2,'0') + String(mm).padStart(2,'0') + '00';
@@ -2965,7 +2974,7 @@ async function submitFixFill() {
     tabs.forEach(t => t.classList.remove('active'));
     if (tabs[2]) tabs[2].classList.add('active');
     renderWorker();
-    showToast('📝 无匹配隐患，已单独记录为检修完成');
+    showToast('📝 未勾选并入，已单独记录为检修完成');
   }
 }
 
