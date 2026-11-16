@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.18</title>
+<title>金田三中安全隐患排查整改系统 v6.4.19</title>
+<!-- v6.4.19: 检修填报 — 维修人员无需先上报，直接填检修日期/内容/位置/照片；系统自动匹配"已上报未整改"隐患(楼栋+楼层+位置+关键词打分)→并入闭环；匹配不上→单独建一条已整改记录。照片存 afterPhotos -->
 <!-- v6.4.18: 维修工作台新增「检修内容」tab — 按整改时间顺序（时间轴）展示所有已检修隐患（含未上报的），显示检修结果说明+整改照片+上报人/检修人 -->
 <!-- v6.4.17: 已报隐患整改闭环 — 已上报汇总且已整改的隐患，整改图片/结果按整改时间节点自动并入审核汇报（即使该隐患不在勾选候选里）；仅闭环项也可成报 -->
 <!-- v6.4.16: 审核汇报每条隐患后自动附检修整改结果（有整改照片配图、无照片显示整改说明文字），按时间节点关联；维修整改照片改存 afterPhotos 以正确显示 -->
@@ -294,7 +295,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.18</div>
+    <div class="sidebar-footer">v6.4.19</div>
   </div>
 </div>
 
@@ -386,6 +387,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   <div class="tip-bar"><span>&#8505;</span><span>可填写整改说明、拍照确认，也可直接完成整改（照片非必选）</span></div>
   <div style="display:flex;gap:10px;margin-bottom:14px">
     <button class="btn btn-amber" style="flex:1" onclick="showPage('report')">+ 自查上报</button>
+    <button class="btn btn-green" style="flex:1" onclick="showFixFillModal()">&#128295; 检修填报</button>
     <button class="btn btn-outline" style="width:auto;padding:12px 16px" onclick="refreshAll()">&#8635; 刷新</button>
   </div>
   <div class="filter-row">
@@ -679,6 +681,64 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   </div>
 </div>
 
+<!-- Fix Fill Modal (v6.4.19) — 维修人员直接填报检修内容，自动匹配已报隐患闭环 -->
+<div class="modal" id="fixFillModal">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 class="modal-title" style="margin:0">&#128295; 检修填报（无需先上报）</h3>
+      <button class="modal-close" onclick="closeModal('fixFillModal')">&times;</button>
+    </div>
+    <div style="background:#f0fdf4;border-left:3px solid #10b981;border-radius:6px;padding:8px 12px;font-size:12px;color:#065f46;line-height:1.6;margin-bottom:14px">
+      直接填这次检修了什么。系统会<strong>自动匹配已上报且未整改的隐患</strong>——对得上就并入该隐患完成闭环；对不上就单独记一条检修记录。
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label class="form-label">检修日期 <span class="req">*</span></label>
+        <input type="date" class="form-input" id="ff-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">具体时间 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（选填）</span></label>
+        <input type="time" class="form-input" id="ff-time">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">检修内容 <span class="req">*</span></label>
+      <textarea class="form-textarea" id="ff-content" rows="3" placeholder="例如：换教学楼一楼东走廊上吸顶灯共6盏" oninput="ffPreviewMatch()"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+      <div class="form-group">
+        <label class="form-label">哪栋楼 <span style="font-weight:400;color:var(--text-muted);font-size:12px">（选填，辅助匹配）</span></label>
+        <select class="form-select" id="ff-building" onchange="ffPreviewMatch()"><option value="">不选</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">哪层楼</label>
+        <select class="form-select" id="ff-floor" onchange="ffPreviewMatch()"><option value="">不选</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">具体位置</label>
+        <input type="text" class="form-input" id="ff-room" placeholder="如：东走廊" oninput="ffPreviewMatch()">
+      </div>
+    </div>
+    <div id="ff-match-preview" style="margin-top:10px;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.6;background:#f8fafc;border:1px dashed var(--border);color:var(--text-sub)">
+      &#128269; 填写检修内容后，这里会显示自动匹配结果
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">整改照片 <span style="color:var(--text-muted);font-weight:400">（可选，最多4张，有图更好）</span></label>
+      <div class="rectify-photos" id="ff-photos"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="event.preventDefault();this.classList.remove('drag-over');handleFFDrop(event)">
+        <div class="rectify-photo-item" onclick="document.getElementById('ff-photo-input').click()"><span>+</span></div>
+      </div>
+      <input type="file" accept="image/*" id="ff-photo-input" style="display:none" onchange="addFFPhoto(this)">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-green btn-block" onclick="submitFixFill()">&#10003; 提交检修</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('fixFillModal')">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- Cloud Sync Modal -->
 <div class="modal" id="cloudModal">
   <div class="modal-box">
@@ -776,7 +836,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.18</div>
+<div class="version-badge">v6.4.19</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2604,6 +2664,234 @@ function renderFixlogList(view, list) {
     html += '</div>';
   });
   list.innerHTML = html;
+}
+
+// ===== 检修填报 (v6.4.19) — 维修人员直接填检修内容，自动匹配已报隐患闭环 =====
+let ffPhotos = [];
+let ffMatchId = null; // 当前自动匹配到的隐患 id（null=单独新建）
+
+function showFixFillModal() {
+  ffPhotos = [];
+  ffMatchId = null;
+  const d = new Date();
+  const ds = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  const dateEl = document.getElementById('ff-date');
+  if (dateEl) dateEl.value = ds;
+  const timeEl = document.getElementById('ff-time');
+  if (timeEl) timeEl.value = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  document.getElementById('ff-content').value = '';
+  document.getElementById('ff-room').value = '';
+  // 填充楼栋/楼层下拉
+  const bSel = document.getElementById('ff-building');
+  const fSel = document.getElementById('ff-floor');
+  bSel.innerHTML = '<option value="">不选</option>' + BUILDINGS.map(b => '<option value="' + b + '">' + b + '</option>').join('');
+  fSel.innerHTML = '<option value="">不选</option>' + FLOORS.map(f => '<option value="' + f + '">' + f + '</option>').join('');
+  renderFFPhotos();
+  ffPreviewMatch();
+  document.getElementById('fixFillModal').classList.add('show');
+}
+
+// 自动匹配：从"已上报汇总 + 未整改"的隐患里，按位置(楼栋/楼层)与内容关键词打分，取最佳
+function ffFindMatch() {
+  const content = (document.getElementById('ff-content').value || '').trim();
+  const b = document.getElementById('ff-building').value;
+  const f = document.getElementById('ff-floor').value;
+  const room = (document.getElementById('ff-room').value || '').trim();
+  if (!content) return null;
+
+  const candidates = hazards.filter(h =>
+    h.reviewReportedAt &&                       // 已上报汇总
+    h.status !== '已整改' &&                     // 尚未整改
+    h.status !== '无法整改'                       // 排除无法整改
+  );
+  if (!candidates.length) return null;
+
+  // 从检修内容里提取 2 字词作为关键词
+  const kws = [];
+  const clean = content.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, ' ');
+  clean.split(/\s+/).forEach(tok => {
+    if (tok.length >= 2) {
+      for (let i = 0; i <= tok.length - 2; i++) kws.push(tok.slice(i, i + 2));
+    }
+  });
+  const uniqKw = Array.from(new Set(kws));
+
+  let best = null, bestScore = 0;
+  candidates.forEach(h => {
+    let score = 0;
+    const hb = h.building || '';
+    const hf = h.floor || '';
+    const hr = h.room || '';
+    const htext = (hb + hf + hr + (h.description || '')).replace(/\s/g, '');
+
+    if (b && hb === b) score += 6;              // 楼栋完全一致 → 强信号
+    if (f && hf === f) score += 3;              // 楼层一致
+    if (room && (htext.indexOf(room) >= 0)) score += 3; // 具体位置文字命中
+    // 内容关键词命中隐患描述（每命中一个+1，最多+6）
+    let hit = 0;
+    uniqKw.forEach(k => { if ((h.description || '').indexOf(k) >= 0) hit++; });
+    score += Math.min(hit, 6);
+
+    if (score > bestScore) { bestScore = score; best = h; }
+  });
+  // 只有达到最低可信分才认为匹配
+  return bestScore >= 6 ? { h: best, score: bestScore } : null;
+}
+
+function ffPreviewMatch() {
+  const box = document.getElementById('ff-match-preview');
+  if (!box) return;
+  const content = (document.getElementById('ff-content').value || '').trim();
+  if (!content) {
+    ffMatchId = null;
+    box.style.background = '#f8fafc';
+    box.style.borderColor = 'var(--border)';
+    box.innerHTML = '&#128269; 填写检修内容后，这里会显示自动匹配结果';
+    return;
+  }
+  const m = ffFindMatch();
+  if (m) {
+    ffMatchId = m.h.id;
+    const loc = locText(m.h);
+    const dt = m.h.reportDate ? '（上报 ' + m.h.reportDate + '）' : '';
+    box.style.background = '#ecfdf5';
+    box.style.borderColor = '#a7f3d0';
+    box.style.color = '#065f46';
+    box.innerHTML = '&#9989; <strong>自动匹配到已报隐患</strong>：' + (m.h.reporter || '') + ' · ' + loc
+      + dt + '<br><span style="font-size:12px">' + (m.h.description || '').slice(0, 40) + '</span>'
+      + '<br><span style="font-size:12px;color:#059669">提交后将并入该隐患，完成闭环整改</span>';
+  } else {
+    ffMatchId = null;
+    box.style.background = '#fffbeb';
+    box.style.borderColor = '#fde68a';
+    box.style.color = '#92400e';
+    box.innerHTML = '&#128209; <strong>没有匹配的已报隐患</strong> — 提交后将单独记录为一条检修完成记录';
+  }
+}
+
+function renderFFPhotos() {
+  const container = document.getElementById('ff-photos');
+  if (!container) return;
+  let html = ffPhotos.map((p, i) =>
+    '<div class="rectify-photo-item has-photo"><img src="' + p + '" alt="">' +
+    '<button class="r-del" onclick="event.stopPropagation();removeFFPhoto(' + i + ')">&times;</button></div>'
+  ).join('');
+  if (ffPhotos.length < 4) {
+    html += '<div class="rectify-photo-item" onclick="document.getElementById(\'ff-photo-input\').click()"><span>+</span></div>';
+  }
+  container.innerHTML = html;
+}
+
+function addFFPhoto(input) {
+  const f = input.files[0];
+  if (!f) return;
+  if (ffPhotos.length >= 4) { showToast('最多上传4张照片'); input.value = ''; return; }
+  const r = new FileReader();
+  r.onload = async (e) => {
+    const compressed = await compressPhotoToLimit(e.target.result, PHOTO_MAX_KB);
+    ffPhotos.push(compressed);
+    renderFFPhotos();
+  };
+  r.readAsDataURL(f);
+  input.value = '';
+}
+
+function handleFFDrop(e) {
+  const files = e.dataTransfer.files;
+  for (let i = 0; i < files.length && ffPhotos.length < 4; i++) {
+    const f = files[i];
+    const r = new FileReader();
+    r.onload = async (ev) => {
+      const compressed = await compressPhotoToLimit(ev.target.result, PHOTO_MAX_KB);
+      if (ffPhotos.length < 4) { ffPhotos.push(compressed); renderFFPhotos(); }
+    };
+    r.readAsDataURL(f);
+  }
+}
+
+function removeFFPhoto(idx) {
+  ffPhotos.splice(idx, 1);
+  renderFFPhotos();
+}
+
+async function submitFixFill() {
+  const content = (document.getElementById('ff-content').value || '').trim();
+  const dateStr = document.getElementById('ff-date').value;
+  const timeStr = document.getElementById('ff-time').value;
+  if (!content) { showToast('请填写检修内容'); return; }
+  if (!dateStr) { showToast('请选择检修日期'); return; }
+
+  const b = document.getElementById('ff-building').value;
+  const f = document.getElementById('ff-floor').value;
+  const room = (document.getElementById('ff-room').value || '').trim();
+
+  // 组装日期时间
+  const hh = timeStr ? timeStr.split(':')[0] : '00';
+  const mm = timeStr ? timeStr.split(':')[1] : '00';
+  const fixTime = new Date(dateStr + 'T' + hh + ':' + mm + ':00').toISOString();
+  const reportDate = dateStr.slice(5).replace('-', '-'); // MM-DD
+  const reportTime = timeStr || '00:00';
+
+  // 重新计算匹配（以提交时刻为准）
+  ffPreviewMatch();
+  const m = ffFindMatch();
+  const nowIso = new Date().toISOString();
+
+  if (m) {
+    // ===== 闭环：并入已报隐患 =====
+    const h = m.h;
+    h.status = '已整改';
+    h.handler = h.handler || '仇启仁';
+    const oldNote = (h.rectificationNote || '').trim();
+    h.rectificationNote = oldNote ? (oldNote + '；' + content) : content;
+    if (!h.afterPhotos) h.afterPhotos = [];
+    h.afterPhotos = h.afterPhotos.concat(ffPhotos);
+    h.hasAfterPhotos = h.afterPhotos.length > 0;
+    h.fixedAt = fixTime;           // 记录实际检修时间（时间节点）
+    h.updatedAt = nowIso;
+    await saveData(h);
+    closeModal('fixFillModal');
+    renderWorker();
+    showToast('✅ 已并入已报隐患并完成闭环整改');
+  } else {
+    // ===== 单独新建：检修完成记录（未上报、已整改）=====
+    const ts = dateStr.replace(/-/g, '') + '-' + String(hh).padStart(2,'0') + String(mm).padStart(2,'0') + '00';
+    const rnd = Math.floor(Math.random() * 900 + 100);
+    const id = 'JT' + ts + '-' + rnd;
+    const rec = {
+      id: id,
+      reporter: '仇启仁',
+      building: b || '学校校园',
+      floor: f || '',
+      room: room || '',
+      description: content,
+      urgency: '一般',
+      urgencyRaw: '一般',
+      photos: [],
+      afterPhotos: [...ffPhotos],
+      hasAfterPhotos: ffPhotos.length > 0,
+      rectificationNote: content,
+      status: '已整改',
+      handler: '仇启仁',
+      semester: semesterOfDate(new Date(fixTime)),
+      hazardTime: fixTime,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      fixedAt: fixTime,
+      reportDate: reportDate,
+      reportTime: reportTime,
+      source: '检修填报'
+    };
+    hazards.push(rec);
+    await saveData(rec);
+    closeModal('fixFillModal');
+    workerTab = 'fixlog';
+    const tabs = document.querySelectorAll('#w-tabs .tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (tabs[2]) tabs[2].classList.add('active');
+    renderWorker();
+    showToast('📝 无匹配隐患，已单独记录为检修完成');
+  }
 }
 
 // ===== 隐患整改弹窗 =====
