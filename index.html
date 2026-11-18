@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.21</title>
+<title>金田三中安全隐患排查整改系统 v6.4.22</title>
+<!-- v6.4.22: 检修填报候选范围修复 — 从"仅已上报汇总"扩大到所有未整改隐患(待处理/处理中)，刚填报未上报的也能匹配上；已上报的加1分优先；勾选确认制与门牌号校验保持不变 -->
 <!-- v6.4.21: 检修填报勾选确认制 — 系统只给"建议匹配"，符合就勾选才并入闭环，不勾一律单独记录；输入变化自动清除勾选；下拉换选即视为确认 -->
 <!-- v6.4.20: 检修填报匹配修复 — 门牌号提取与冲突一票否决(205≠204不再误配)；楼栋楼层仅作辅助分，必须内容关键词≥2/门牌号相同/位置命中才算相关；新增手动改选下拉(可指定并入某隐患或改为单独记录)，提交尊重手动选择 -->
 <!-- v6.4.19: 检修填报 — 维修人员无需先上报，直接填检修日期/内容/位置/照片；系统自动匹配"已上报未整改"隐患(楼栋+楼层+位置+关键词打分)→并入闭环；匹配不上→单独建一条已整改记录。照片存 afterPhotos -->
@@ -297,7 +298,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.21</div>
+    <div class="sidebar-footer">v6.4.22</div>
   </div>
 </div>
 
@@ -691,7 +692,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <button class="modal-close" onclick="closeModal('fixFillModal')">&times;</button>
     </div>
     <div style="background:#f0fdf4;border-left:3px solid #10b981;border-radius:6px;padding:8px 12px;font-size:12px;color:#065f46;line-height:1.6;margin-bottom:14px">
-      直接填这次检修了什么。系统会给出<strong>建议匹配的已上报隐患</strong>——<strong>符合就勾选</strong>，提交后并入该隐患完成闭环；<strong>不勾选就单独</strong>记一条检修记录。
+      直接填这次检修了什么。系统会给出<strong>建议匹配的隐患</strong>（含刚填报、未上报的）——<strong>符合就勾选</strong>，提交后并入该隐患完成闭环；<strong>不勾选就单独</strong>记一条检修记录。
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group">
@@ -838,7 +839,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.21</div>
+<div class="version-badge">v6.4.22</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -2714,10 +2715,9 @@ function ffFindMatch() {
   const room = (document.getElementById('ff-room').value || '').trim();
   if (!content) return null;
 
+  // v6.4.22: 候选扩大到所有未整改隐患（待处理/处理中）——刚填报还没上报汇总的也要能匹配上；已上报的加优先分
   const candidates = hazards.filter(h =>
-    h.reviewReportedAt &&                       // 已上报汇总
-    h.status !== '已整改' &&                     // 尚未整改
-    h.status !== '无法整改'                       // 排除无法整改
+    (h.status === '待处理' || h.status === '处理中')
   );
   if (!candidates.length) return null;
 
@@ -2760,14 +2760,17 @@ function ffFindMatch() {
     if (!relevant) return;
 
     let score = (bMatch ? 3 : 0) + (fMatch ? 2 : 0)
-      + (numMatch ? 5 : 0) + (roomHit ? 3 : 0) + Math.min(hit, 6);
+      + (numMatch ? 5 : 0) + (roomHit ? 3 : 0) + Math.min(hit, 6)
+      + (h.reviewReportedAt ? 1 : 0); // v6.4.22: 已上报汇总的轻微优先（不改变相关性判定）
     if (score > bestScore) { bestScore = score; best = h; }
   });
   return bestScore >= 8 ? { h: best, score: bestScore } : null;
 }
 
+// v6.4.22: 候选列表同样扩大到所有未整改隐患（含刚填报未上报的），已上报的排前面
 function ffCandidateList() {
-  return hazards.filter(h => h.reviewReportedAt && h.status !== '已整改' && h.status !== '无法整改');
+  return hazards.filter(h => (h.status === '待处理' || h.status === '处理中'))
+    .sort((a, b) => (b.reviewReportedAt ? 1 : 0) - (a.reviewReportedAt ? 1 : 0));
 }
 
 function ffPreviewMatch() {
