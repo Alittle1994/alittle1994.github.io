@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.22</title>
+<title>金田三中安全隐患排查整改系统 v6.4.23</title>
+<!-- v6.4.23: 审核汇报候选列表整改 — 默认只显示「待审核上报」隐患(未上报汇总/未整改/非检修填报)，历史已整改、检修填报独立记录、已上报记录改为分组标签一键切换查看，不删除任何数据；解决候选列表堆满一大堆无关记录的问题 -->
 <!-- v6.4.22: 检修填报候选范围修复 — 从"仅已上报汇总"扩大到所有未整改隐患(待处理/处理中)，刚填报未上报的也能匹配上；已上报的加1分优先；勾选确认制与门牌号校验保持不变 -->
 <!-- v6.4.21: 检修填报勾选确认制 — 系统只给"建议匹配"，符合就勾选才并入闭环，不勾一律单独记录；输入变化自动清除勾选；下拉换选即视为确认 -->
 <!-- v6.4.20: 检修填报匹配修复 — 门牌号提取与冲突一票否决(205≠204不再误配)；楼栋楼层仅作辅助分，必须内容关键词≥2/门牌号相同/位置命中才算相关；新增手动改选下拉(可指定并入某隐患或改为单独记录)，提交尊重手动选择 -->
@@ -298,7 +299,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.22</div>
+    <div class="sidebar-footer">v6.4.23</div>
   </div>
 </div>
 
@@ -550,9 +551,11 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
         <button class="btn btn-primary" style="width:auto;padding:12px 20px" onclick="generateReviewReport()">生成汇报</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted);margin-top:6px">留空则默认为当日之前所有记录</div>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="rv-include-reported" onchange="refreshReviewCandidates()"> 包含已上报汇总的记录
-      </label>
+      <!-- v6.4.23: 候选范围分组 — 默认只显示「待审核」隐患，历史已整改/检修填报/已上报记录点标签切换查看，不丢数据 -->
+      <div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">候选范围（默认只列待审核隐患，点标签可切换查看其它记录）</div>
+        <div id="rv-scope-tabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
       <div style="border-top:1px dashed var(--border);margin-top:12px;padding-top:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
           <label style="font-size:13px;font-weight:600;color:var(--text)">勾选本次上报的记录（已选 <span id="rv-pick-count" style="color:var(--primary-mid)">0</span> 条）</label>
@@ -839,7 +842,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.22</div>
+<div class="version-badge">v6.4.23</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3692,6 +3695,7 @@ function printLedger() {
 // v6.4.3: 自由勾选分批上报 — 候选记录逐条勾选，只有勾选的进入汇报并被标记已上报
 let rvCandidates = [];   // 当前筛选条件下的候选记录
 let rvSelectedIds = {};  // 已勾选的记录 id
+let rvScope = 'pending'; // v6.4.23: 候选范围分组（默认只显示待审核隐患）
 
 function showReviewReport() {
   // 默认日期：当日
@@ -3699,7 +3703,7 @@ function showReviewReport() {
   const ds = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
   document.getElementById('rv-date-from').value = '';
   document.getElementById('rv-date-to').value = ds;
-  document.getElementById('rv-include-reported').checked = false;
+  rvScope = 'pending'; // v6.4.23: 默认只显示待审核隐患，避免历史已整改记录堆满列表
   reviewEditMode = false;
   rvSelectedIds = {}; // v6.4.3: 每次打开默认不勾选，由用户自由挑选
   refreshReviewCandidates();
@@ -3712,31 +3716,89 @@ function showReviewReport() {
   if (content) { content.contentEditable = 'false'; content.classList.remove('review-editing'); }
 }
 
-// 刷新候选记录勾选列表（按日期范围 + 是否包含已上报）
+// v6.4.23: 候选范围分组 — 「待审核」只列未上报、未整改、非检修填报的隐患（rvScope 声明见上方）
+const RV_SCOPES = [
+  { key: 'pending',  label: '待审核',     tip: '未上报汇总、且还没整改的隐患（默认）' },
+  { key: 'fixed',    label: '已整改待报', tip: '已经整改但还没上报汇总的隐患' },
+  { key: 'fixfill',  label: '检修填报',   tip: '维修人员单独填报的检修完成记录' },
+  { key: 'reported', label: '已上报',     tip: '已标记为上报汇总的记录' },
+  { key: 'all',      label: '全部',       tip: '范围内所有记录' }
+];
+
+// 判断某条记录是否属于某个候选范围
+function rvScopeMatch(h, scope) {
+  const isFix = h.source === '检修填报';
+  const reported = !!h.reviewReportedAt;
+  const fixed = isFixedHazard(h);
+  switch (scope) {
+    case 'pending':  return !reported && !isFix && !fixed;
+    case 'fixed':    return !reported && !isFix && fixed;
+    case 'fixfill':  return isFix;
+    case 'reported': return reported;
+    case 'all':      return true;
+    default:         return !reported && !isFix && !fixed;
+  }
+}
+
+function rvScopeLabel(key) {
+  const s = RV_SCOPES.filter(function(x){ return x.key === key; })[0];
+  return s ? s.label : '全部';
+}
+
+// 刷新候选记录勾选列表（按日期范围 + 候选范围分组）
 function refreshReviewCandidates() {
   const fromStr = document.getElementById('rv-date-from').value;
   const toStr = document.getElementById('rv-date-to').value;
-  const includeReported = document.getElementById('rv-include-reported').checked;
 
-  let records = [...hazards];
+  // 先按日期范围取基数，供分组标签统计数量
+  let base = [...hazards];
   if (fromStr) {
-    records = records.filter(h => new Date(h.createdAt) >= new Date(fromStr));
+    base = base.filter(h => new Date(h.createdAt) >= new Date(fromStr));
   }
   if (toStr) {
-    records = records.filter(h => new Date(h.createdAt) <= new Date(toStr + 'T23:59:59'));
+    base = base.filter(h => new Date(h.createdAt) <= new Date(toStr + 'T23:59:59'));
   }
-  if (!includeReported) {
-    records = records.filter(h => !h.reviewReportedAt);
-  }
+
+  let records = base.filter(h => rvScopeMatch(h, rvScope));
   records.sort((a, b) => String(b.id) > String(a.id) ? 1 : -1); // 新记录在前
   rvCandidates = records;
 
-  // 清理已不在候选中的勾选（如切换日期范围后）
+  renderRvScopeTabs(base);
+
+  // 清理已不在候选中的勾选（如切换日期范围/分组后）
   const valid = {};
   records.forEach(h => { if (rvSelectedIds[h.id]) valid[h.id] = true; });
   rvSelectedIds = valid;
 
   renderReviewPickList();
+}
+
+// 渲染候选范围标签（带数量）
+function renderRvScopeTabs(base) {
+  const box = document.getElementById('rv-scope-tabs');
+  if (!box) return;
+  const counts = {};
+  RV_SCOPES.forEach(function(s){
+    counts[s.key] = base.filter(function(h){ return rvScopeMatch(h, s.key); }).length;
+  });
+  box.innerHTML = RV_SCOPES.map(function(s){
+    const on = (s.key === rvScope);
+    return '<button type="button" title="' + s.tip + '" onclick="setRvScope(\'' + s.key + '\')" style="'
+      + 'padding:5px 11px;font-size:12px;border-radius:14px;cursor:pointer;line-height:1.4;font-family:inherit;'
+      + 'border:1px solid ' + (on ? 'var(--primary-mid)' : 'var(--border)') + ';'
+      + 'background:' + (on ? 'var(--primary-mid)' : '#fff') + ';'
+      + 'color:' + (on ? '#fff' : 'var(--text-sub)') + ';'
+      + 'font-weight:' + (on ? '700' : '400') + ';transition:all .15s">'
+      + s.label + ' <span style="opacity:.8">' + counts[s.key] + '</span></button>';
+  }).join('');
+}
+
+// 切换候选范围（切换后清空勾选，避免跨组残留）
+function setRvScope(key) {
+  if (rvScope === key) return;
+  rvScope = key;
+  rvSelectedIds = {};
+  refreshReviewCandidates();
 }
 
 // 渲染候选记录勾选列表
@@ -3784,7 +3846,6 @@ function rvPickAll(on) {
 function generateReviewReport() {
   const fromStr = document.getElementById('rv-date-from').value;
   const toStr = document.getElementById('rv-date-to').value;
-  const includeReported = document.getElementById('rv-include-reported').checked;
 
   // v6.4.3: 只用勾选的记录生成汇报（分批上报）
   let records = rvCandidates.filter(h => rvSelectedIds[h.id]);
@@ -3796,26 +3857,8 @@ function generateReviewReport() {
     return pa - pb;
   });
 
-  // v6.4.17: 已报隐患整改闭环 — 从全量 hazards 自动捞取「已上报汇总 + 已整改」的隐患（不在候选中被勾选也不丢）
-  const selectedIds = {};
-  records.forEach(function(h){ selectedIds[String(h.id)] = true; });
-  let closedLoop = hazards.filter(function(h){
-    if (selectedIds[String(h.id)]) return false;
-    if (!h.reviewReportedAt) return false;
-    const hasFix = (h.afterPhotos && h.afterPhotos.length > 0)
-      || (h.rectificationNote && h.rectificationNote.trim())
-      || h.status === '已整改';
-    if (!hasFix) return false;
-    const rt = new Date(h.updatedAt || h.createdAt);
-    if (fromStr && rt < new Date(fromStr)) return false;
-    if (toStr && rt > new Date(toStr + 'T23:59:59')) return false;
-    return true;
-  });
-  closedLoop.sort(function(a, b){
-    return new Date(a.updatedAt || 0) - new Date(b.updatedAt || 0); // 按整改时间升序（时间节点）
-  });
-
-  if (records.length === 0 && closedLoop.length === 0) {
+  // v6.4.23: 取消「已报隐患整改闭环」自动追加 — 汇报只呈现本次勾选的隐患，整改情况用（已整改）括号标注
+  if (records.length === 0) {
     showToast('请先勾选要本次上报的记录（可逐条挑选，分批上报）');
     const hint = document.getElementById('rv-report-hint');
     if (hint) hint.textContent = '尚未勾选任何记录 — 请勾选后再生成汇报';
@@ -3823,11 +3866,9 @@ function generateReviewReport() {
   }
 
   // 更新上报状态提示
-  const reportedCount = rvCandidates.filter(h => h.reviewReportedAt).length;
   const hint = document.getElementById('rv-report-hint');
   if (hint) {
-    hint.textContent = '本次上报 ' + records.length + ' 条 / 范围内候选 ' + rvCandidates.length + ' 条'
-      + (reportedCount > 0 && !includeReported ? '（已排除已上报 ' + reportedCount + ' 条）' : '')
+    hint.textContent = '本次上报 ' + records.length + ' 条 / 当前范围「' + rvScopeLabel(rvScope) + '」共 ' + rvCandidates.length + ' 条候选'
       + '，剩余 ' + (rvCandidates.length - records.length) + ' 条可下次再报';
   }
   
@@ -3840,10 +3881,7 @@ function generateReviewReport() {
     const t = new Date(hazardTimeOf(h)).getTime();
     if (!isNaN(t) && t > maxT) maxT = t;
   });
-  closedLoop.forEach(h => { // v6.4.17: 闭环记录同样纳入标题时间取值
-    const t = new Date(hazardTimeOf(h)).getTime();
-    if (!isNaN(t) && t > maxT) maxT = t;
-  });
+  // v6.4.23: 闭环区块已取消，标题时间只取本次勾选的隐患
   const maxD = maxT ? new Date(maxT) : nowExport;
   const titleDate = maxD.getFullYear() + '年' + pad(maxD.getMonth() + 1) + '月' + pad(maxD.getDate()) + '日';
   
@@ -3887,61 +3925,16 @@ function generateReviewReport() {
     records.forEach((h, i) => {
       const loc = h.building + ((h.floor || h.room) ? '，' + [h.floor, h.room].filter(Boolean).join('') : '');
       const photoRef = recordPhotoMap[h.id] ? '（图' + recordPhotoMap[h.id].join('、图') + '）' : '';
-      html += '<div class="rs-item">' + (i+1) + '. ' + h.reporter + '：' + loc + '，' + h.description + photoRef + '</div>';
-      // v6.4.16: 每条隐患后附检修整改结果 — 有整改照片就配图，没有就只显示整改结果文字；系统自动关联，无需手动
-      var rNote = (h.rectificationNote || '').trim();
-      var rAfter = (h.afterPhotos && h.afterPhotos.length)
-        ? h.afterPhotos.map(function(p){ return photoUrl(p); }).filter(Boolean) : [];
-      if (rNote || rAfter.length || h.status === '已整改') {
-        var rMeta = h.updatedAt ? h.updatedAt.slice(0, 10) : '';
-        html += '<div class="rs-rectify"><span class="rsr-label">✅ 检修整改结果：</span>';
-        if (rNote) html += rNote;
-        else if (!rAfter.length) html += '已完成整改';
-        if (rMeta) html += ' <span class="rsr-meta">（整改日期 ' + rMeta + '）</span>';
-        if (rAfter.length) {
-          html += '<div class="rsr-photos">';
-          rAfter.forEach(function(src){
-            html += '<img src="' + src + '" onclick="viewPhoto(this.src)" alt="整改照片" onerror="this.style.display=\'none\'">';
-          });
-          html += '</div>';
-        }
-        html += '</div>';
-      }
+      // v6.4.23: 只在隐患末尾用括号标注是否整改，不再另附整改结果明细（避免与隐患描述重复、占据版面）
+      const fixMark = isFixedHazard(h) ? '（已整改）' : '';
+      html += '<div class="rs-item">' + (i+1) + '. ' + h.reporter + '：' + loc + '，' + h.description + photoRef + fixMark + '</div>';
     });
     html += '</div>';
   } else {
     html += '<p style="color:#999;font-size:13px">暂无隐患记录</p>';
   }
 
-  // v6.4.17: 已报隐患整改闭环（closedLoop 已在上方计算并排序）— 按整改时间节点自动并入汇报
-  if (closedLoop.length) {
-    html += '<div class="review-closedloop">';
-    html += '<div class="rcl-title">&#128257; 已报隐患整改闭环（' + closedLoop.length + ' 项 · 按整改时间）</div>';
-    closedLoop.forEach(function(h, ci){
-      const loc = h.building + ((h.floor || h.room) ? '，' + [h.floor, h.room].filter(Boolean).join('') : '');
-      const rdate = h.updatedAt ? h.updatedAt.slice(0, 10) : '';
-      const note = (h.rectificationNote || '').trim();
-      const afters = (h.afterPhotos && h.afterPhotos.length)
-        ? h.afterPhotos.map(function(p){ return photoUrl(p); }).filter(Boolean) : [];
-      html += '<div class="rcl-item">';
-      html += '<div class="rcl-head">' + (ci+1) + '. <b>' + (h.reporter || '') + '</b>：' + loc + (rdate ? '<span class="rcl-date">整改 ' + rdate + '</span>' : '') + '</div>';
-      html += '<div class="rcl-desc">' + (h.description || '') + '</div>';
-      if (note) html += '<div class="rcl-note">&#9989; 整改结果：' + note + '</div>';
-      else if (!afters.length) html += '<div class="rcl-note">&#9989; 已完成整改</div>';
-      if (afters.length) {
-        html += '<div class="rsr-photos">';
-        afters.forEach(function(src){
-          html += '<img src="' + src + '" onclick="viewPhoto(this.src)" alt="整改图片" onerror="this.style.display=\'none\'">';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-    });
-    html += '</div>';
-    // 提示已报隐患整改数量
-    const hint2 = document.getElementById('rv-report-hint');
-    if (hint2) hint2.textContent += ' · 另自动纳入已报隐患整改闭环 ' + closedLoop.length + ' 项';
-  }
+  // v6.4.23: 「已报隐患整改闭环」区块已取消 — 整改情况只在隐患末尾以（已整改）标注，不再重复罗列
   html += '</div>';
   
   // 三、报告时间（以导出时间准）
