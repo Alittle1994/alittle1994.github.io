@@ -1,0 +1,3254 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="ASBC8s0lr5YHUhfQIZKxjt"><head data-page-node-id="e9A5lWat7M4YF8JSBVDjnm">
+<meta charset="utf-8" data-page-node-id="SDGrhmm763vmnFXz3PESj3">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" data-page-node-id="7A2xDAv4kzALE7LtUqY3EI">
+<meta name="theme-color" content="#1b5e9e" data-page-node-id="Hgatv6CfDIGKzdfT7hl5Ri">
+<meta name="description" content="金田三中每周安全教育材料收集、节假日专项与各班提交情况查询">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="安全教育收集">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json" id="appManifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>金田三中 · 安全教育材料收集</title>
+<style>
+  :root{
+    --ink:#16202c;
+    --muted:#6b7785;
+    --line:#e3e8ee;
+    --brand:#1b5e9e;
+    --brand-dark:#144a7d;
+    --brand-soft:#eaf2fa;
+    --accent:#e08a2e;
+    --ok:#2e8b62;
+    --ok-soft:#e8f5ee;
+    --warn:#c2410c;
+    --bg:#f2f5f9;
+    --card:#ffffff;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(16,32,48,.05), 0 6px 20px rgba(16,32,48,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-size:15px; line-height:1.55;
+    min-height:100dvh;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  button{font-family:inherit}
+  .hidden{display:none !important}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    background:linear-gradient(135deg,#1b5e9e 0%,#2a7bc4 100%);
+    color:#fff;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 14px;
+    display:flex; align-items:center; gap:12px;
+    position:sticky; top:0; z-index:30;
+    box-shadow:0 2px 10px rgba(20,74,125,.18);
+  }
+  .topbar .logo{font-size:16px; font-weight:600; letter-spacing:.3px; flex:1; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .topbar .logo small{display:block; font-size:11px; opacity:.75; font-weight:400; letter-spacing:.5px; margin-top:2px}
+  .topbar button{
+    background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.28);
+    border-radius:9px; padding:7px 13px; font-size:13px; cursor:pointer; backdrop-filter:blur(4px);
+    transition:.15s; white-space:nowrap;
+  }
+  .topbar button:hover{background:rgba(255,255,255,.26)}
+
+  main{max-width:760px; margin:0 auto; padding:16px 14px 60px}
+
+  .card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px; margin-bottom:14px; border:1px solid rgba(227,232,238,.7);
+  }
+  .step-title{display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; margin:2px 0 12px}
+  .step-title .idx{
+    width:22px; height:22px; border-radius:50%; background:var(--brand-soft); color:var(--brand);
+    font-size:12px; display:flex; align-items:center; justify-content:center; font-weight:700; flex:0 0 auto;
+  }
+  .step-title .hint{font-size:12px; font-weight:400; color:var(--muted); margin-left:auto}
+
+  /* ---------- 周次条 ---------- */
+  .week-banner{
+    background:linear-gradient(135deg,#123f6b,#1b5e9e); color:#fff; border:none;
+    display:flex; align-items:center; gap:10px; padding:14px 16px;
+  }
+  .week-banner .wb-main{min-width:0; flex:1}
+  .week-banner .wb-label{font-size:12px; opacity:.72; letter-spacing:.6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .week-banner .wb-range{font-size:15.5px; font-weight:600; margin-top:2px; letter-spacing:.2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .week-banner .wb-select{
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+    margin-left:10px;
+  }
+  .week-banner .wb-sel-label{font-size:11px; opacity:.78; white-space:nowrap}
+  .week-banner .wb-select select{
+    appearance:none; -webkit-appearance:none; border:none; border-radius:9px;
+    background:#fff; color:var(--brand-dark); font-size:13px; font-weight:600;
+    padding:7px 28px 7px 10px; cursor:pointer; max-width:52vw; min-width:128px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23144a7d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position:right 9px center; background-size:12px;
+  }
+  /* 窄屏：下拉框独占一行，避免长周次文案挤压标题 */
+  @media(max-width:520px){
+    .week-banner{flex-wrap:wrap}
+    .week-banner .wb-main{flex:1 1 100%}
+    .week-banner .wb-select{flex:1 1 100%; align-items:stretch; margin-left:0; margin-top:9px}
+    .week-banner .wb-sel-label{align-self:flex-start}
+    .week-banner .wb-select select{max-width:100%; width:100%; min-width:0; font-size:12.5px; padding-right:24px}
+  }
+
+  /* ---------- 年级 ---------- */
+  .grade-tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+  .grade-tabs button{
+    border:1.5px solid var(--line); background:#fff; border-radius:11px; padding:11px 4px;
+    font-size:14.5px; font-weight:500; color:var(--ink); cursor:pointer; transition:.15s;
+  }
+  .grade-tabs button:active{transform:scale(.98)}
+  .grade-tabs button.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark); font-weight:600}
+
+  /* ---------- 班级 ---------- */
+  .class-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:4px}
+  @media(min-width:560px){ .class-grid{grid-template-columns:repeat(6,1fr)} }
+  .class-grid button{
+    position:relative; border:1.5px solid var(--line); background:#fff; border-radius:11px;
+    padding:13px 2px 11px; font-size:15px; font-weight:600; color:var(--ink);
+    cursor:pointer; transition:.15s; font-variant-numeric:tabular-nums;
+  }
+  .class-grid button:active{transform:scale(.97)}
+  .class-grid button.on{border-color:var(--brand); background:var(--brand); color:#fff}
+  .class-grid button.done::after{
+    content:""; position:absolute; top:6px; right:6px; width:7px; height:7px;
+    border-radius:50%; background:var(--ok); box-shadow:0 0 0 2px #fff;
+  }
+  .class-grid button.on.done::after{box-shadow:0 0 0 2px var(--brand)}
+  .class-empty{color:var(--muted); font-size:13.5px; padding:14px 2px; text-align:center}
+  .class-grid button.partial::after{
+    content:""; position:absolute; top:6px; right:6px; width:7px; height:7px;
+    border-radius:50%; background:var(--accent); box-shadow:0 0 0 2px #fff;
+  }
+  .class-grid button.on.partial::after{box-shadow:0 0 0 2px var(--brand)}
+
+  /* ---------- 首页完成情况看板 ---------- */
+  .ws-head{display:flex; align-items:center; gap:10px}
+  .ws-title{flex:1; min-width:0; font-size:15px; font-weight:600; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
+  .ws-week{font-size:11.5px; font-weight:400; color:var(--muted)}
+  .ws-refresh{
+    border:1px solid var(--line); background:#fff; color:var(--brand-dark);
+    border-radius:9px; padding:5px 11px; font-size:12.5px; cursor:pointer; white-space:nowrap;
+  }
+  .ws-refresh:active{transform:scale(.97)}
+  .ws-sum{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 2px}
+  .ws-stat{border-radius:11px; padding:9px 6px; text-align:center; border:1px solid var(--line); background:#fafcfe}
+  .ws-stat b{display:block; font-size:19px; font-weight:700; line-height:1.15; font-variant-numeric:tabular-nums}
+  .ws-stat span{font-size:11.5px; color:var(--muted)}
+  .ws-stat.done{background:var(--ok-soft); border-color:#bfe3cf}
+  .ws-stat.done b{color:var(--ok)}
+  .ws-stat.partial{background:#fff5e8; border-color:#f0cfa4}
+  .ws-stat.partial b{color:#b4650f}
+  .ws-stat.none{background:#fdecea; border-color:#f2c4be}
+  .ws-stat.none b{color:#c0392b}
+  .ws-grade{margin-top:13px}
+  .ws-grade-name{
+    font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:6px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .ws-gcnt{font-weight:400; font-variant-numeric:tabular-nums}
+  .ws-gcnt.all{color:var(--ok)}
+  .ws-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:7px}
+  @media(min-width:560px){ .ws-grid{grid-template-columns:repeat(8,1fr)} }
+  .ws-chip{
+    border:1px solid var(--line); background:#fff; border-radius:9px;
+    padding:7px 2px 6px; text-align:center; cursor:pointer; transition:.15s; overflow:hidden;
+  }
+  .ws-chip:active{transform:scale(.97)}
+  .ws-chip .ws-cls{display:block; font-size:13.5px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums}
+  .ws-chip .ws-tag{display:block; font-size:10px; margin-top:2px; color:var(--muted); white-space:nowrap}
+  .ws-chip.done{background:var(--ok-soft); border-color:#bfe3cf}
+  .ws-chip.done .ws-cls{color:#1f6b4a}
+  .ws-chip.done .ws-tag{color:var(--ok)}
+  .ws-chip.partial{background:#fff5e8; border-color:#f0cfa4}
+  .ws-chip.partial .ws-cls{color:#8a4b12}
+  .ws-chip.partial .ws-tag{color:#b4650f}
+  .ws-chip.none{background:#fdecea; border-color:#f2c4be}
+  .ws-chip.none .ws-cls{color:#a5342a}
+  .ws-chip.none .ws-tag{color:#c0392b}
+  .ws-legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11.5px; color:var(--muted)}
+  .ws-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle}
+  .ws-dot.done{background:var(--ok)}
+  .ws-dot.partial{background:var(--accent)}
+  .ws-dot.none{background:#e05a4d}
+  .ws-tips{margin-top:9px; font-size:12.5px; line-height:1.75; color:var(--muted)}
+  .ws-tips b{color:var(--ink)}
+  .ws-tips .ws-n{color:#c0392b; font-weight:600; word-break:break-all}
+  .ws-retry{text-align:center; color:#8a4b12; background:#fff5e8; border-radius:10px; padding:16px 14px; font-size:13px; line-height:1.7}
+  .ws-retry button{
+    margin-top:9px; border:none; border-radius:9px; padding:8px 18px; font-size:13px; font-weight:600;
+    color:#fff; background:linear-gradient(135deg,#1b5e9e,#2a7bc4); cursor:pointer;
+  }
+  .ws-retry button:disabled{opacity:.6; cursor:not-allowed}
+  /* ---------- 本机草稿 ---------- */
+  .draft-bar{background:linear-gradient(135deg,#fff8ec,#fffdf8); border:1px solid #f0d9b0}
+  .draft-head{font-size:13.5px; color:#8a4b12; font-weight:600; line-height:1.6}
+  .draft-head b{color:#c0392b; font-size:15px}
+  .draft-head span{font-weight:400; font-size:12px; color:#a9743c}
+  .draft-list{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  .draft-item{
+    border:1px solid #f0cfa4; background:#fff; color:#8a4b12; border-radius:9px;
+    padding:8px 11px; font-size:12.5px; font-weight:600; cursor:pointer; line-height:1.4;
+  }
+  .draft-item span{display:block; font-weight:400; font-size:11.5px; color:#a9743c}
+  .draft-item:active{transform:scale(.98)}
+  /* ---------- 自检弹窗 ---------- */
+  .check-body{padding:2px 2px 6px; font-size:13.5px; line-height:2; color:var(--ink); word-break:break-all}
+  .check-body .ck-ok{color:#1f6b4a}
+  .check-body .ck-bad{color:#c0392b}
+  .check-body .ck-dim{color:#6b7785}
+  .ws-stale{margin-bottom:6px; color:#8a4b12}
+  .ws-stale-btn{
+    border:none; background:#fff; color:#8a4b12; border:1px solid #f0cfa4;
+    border-radius:7px; padding:3px 9px; font-size:12px; font-weight:600; cursor:pointer; margin-left:4px;
+  }
+  .ws-stale-btn:disabled{opacity:.6; cursor:not-allowed}
+  .adm-retry{text-align:center; padding:16px 10px; font-size:13px; color:#8a4b12}
+  .adm-retry button{
+    margin-top:8px; border:none; border-radius:9px; padding:8px 18px; font-size:13px; font-weight:600;
+    color:#fff; background:linear-gradient(135deg,#1b5e9e,#2a7bc4); cursor:pointer;
+  }
+
+  /* ---------- 上传 ---------- */
+  .upload-row{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+  .upload-box{
+    position:relative; border:1.5px dashed #c6d2e0; border-radius:12px; background:#fafcfe;
+    aspect-ratio:3/4; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden; transition:.15s; text-align:center; padding:8px;
+  }
+  .upload-box:active{transform:scale(.99)}
+  .upload-box.filled{border-style:solid; border-color:var(--brand); background:#fff}
+  .upload-box .ub-icon{font-size:26px; line-height:1; margin-bottom:8px; opacity:.45}
+  .upload-box.filled .ub-icon{display:none}
+  .upload-box .ub-label{font-size:13.5px; font-weight:600; color:#3c4b5c}
+  .upload-box .ub-sub{font-size:11.5px; color:var(--muted); margin-top:4px; padding:0 4px; line-height:1.35}
+  .upload-box img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+  .upload-box .ub-clear{
+    position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%;
+    background:rgba(0,0,0,.55); color:#fff; border:none; font-size:15px; line-height:1;
+    display:none; align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  }
+  .upload-box.filled .ub-clear{display:flex}
+  .upload-box .ub-badge{
+    position:absolute; left:0; bottom:0; right:0; background:rgba(27,94,158,.92); color:#fff;
+    font-size:11.5px; padding:5px 8px; text-align:center; font-weight:500; z-index:1;
+  }
+
+  /* ---------- 输入 ---------- */
+  .field{margin-top:4px}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+  .field input{
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-size:15px; color:var(--ink); background:#fff; outline:none; transition:.15s;
+  }
+  .field input:focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(27,94,158,.1)}
+
+  .btn-primary{
+    width:100%; border:none; border-radius:12px; padding:15px; font-size:16px; font-weight:600;
+    color:#fff; background:linear-gradient(135deg,#1b5e9e,#2a7bc4); cursor:pointer;
+    box-shadow:0 4px 14px rgba(27,94,158,.28); transition:.15s; margin-top:14px;
+  }
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-primary:disabled{opacity:.55; box-shadow:none; cursor:not-allowed}
+  .btn-ghost{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink); border-radius:10px;
+    padding:11px 16px; font-size:14px; font-weight:500; cursor:pointer; transition:.15s;
+  }
+  .btn-ghost:hover{border-color:#c6d2e0}
+  .btn-ghost:disabled{opacity:.5; cursor:not-allowed}
+
+  .status-line{
+    margin-top:12px; font-size:13px; padding:10px 12px; border-radius:10px;
+    background:var(--ok-soft); color:#1f6b4a; display:flex; gap:8px; align-items:flex-start;
+  }
+  .status-line.warn{background:#fff5e8; color:#8a4b12}
+
+  /* ---------- 后台 ---------- */
+  .admin-head{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+  .admin-head select{
+    flex:1; min-width:180px; border:1.5px solid var(--line); border-radius:10px; padding:11px 12px;
+    font-size:14px; background:#fff; color:var(--ink); outline:none;
+  }
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:14px}
+  @media(max-width:420px){ .stat-row{grid-template-columns:repeat(2,1fr)} }
+  .stat{
+    background:#fff; border-radius:12px; padding:12px 8px; text-align:center;
+    border:1px solid rgba(227,232,238,.8); box-shadow:var(--shadow);
+  }
+  .stat .n{font-size:21px; font-weight:700; color:var(--brand); font-variant-numeric:tabular-nums; line-height:1.2}
+  .stat .n small{font-size:12px; color:var(--muted); font-weight:500}
+  .stat .l{font-size:11.5px; color:var(--muted); margin-top:3px}
+  .stat.ok .n{color:var(--ok)}
+  .ready-banner{background:linear-gradient(135deg,#1f8a5b,#2e8b62); color:#fff; border-radius:12px; padding:13px 15px; margin-bottom:14px; font-size:13.5px; line-height:1.5; box-shadow:0 4px 14px rgba(46,139,98,.25)}
+  .ready-banner b{font-size:15px}
+  .ready-banner .rb-btn{display:inline-block; margin-top:9px; background:#fff; color:#1f8a5b; border:none; border-radius:9px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer}
+  .btn-primary.ready{background:linear-gradient(135deg,#1f8a5b,#2e8b62); box-shadow:0 4px 14px rgba(46,139,98,.28)}
+
+  .grade-block{margin-bottom:16px}
+  .grade-block .gb-head{display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:14px; font-weight:600}
+  .grade-block .gb-head .cnt{font-size:12px; color:var(--muted); font-weight:400; margin-left:auto}
+  .adm-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  @media(min-width:560px){ .adm-grid{grid-template-columns:repeat(6,1fr)} }
+  .adm-cell{
+    border-radius:10px; padding:11px 4px 9px; text-align:center; font-size:14px; font-weight:600;
+    border:1.5px solid var(--line); background:#fff; color:#9aa6b3; cursor:pointer;
+    font-variant-numeric:tabular-nums; transition:.15s; position:relative;
+  }
+  .adm-cell.done{background:var(--ok-soft); border-color:#a8d7bf; color:#1f6b4a}
+  .adm-cell.partial{background:#fff5e8; border-color:#f0cfa4; color:#8a4b12}
+  .adm-cell:active{transform:scale(.97)}
+
+  .export-panel{background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; border:1px solid rgba(227,232,238,.7)}
+  .export-panel .row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px}
+  .export-panel .row.one{grid-template-columns:1fr}
+  .export-panel label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:5px}
+  .export-panel input, .export-panel select{
+    width:100%; border:1.5px solid var(--line); border-radius:9px; padding:10px 11px;
+    font-size:14px; color:var(--ink); background:#fff; outline:none;
+  }
+  .export-panel input:focus,.export-panel select:focus{border-color:var(--brand)}
+  .exp-actions{display:flex; gap:9px; margin-top:8px; align-items:stretch}
+  .exp-actions .btn-primary{margin-top:0; flex:1 1 auto; padding:14px 10px}
+  .exp-actions .btn-ghost{flex:0 0 auto; padding:0 15px; font-size:13.5px; white-space:nowrap}
+
+  /* ---------- 打印预览 ---------- */
+  .pv{position:fixed; inset:0; z-index:95; background:#e8ecf1; display:flex; flex-direction:column}
+  .pv-bar{flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:9px 12px; background:#fff; border-bottom:1px solid var(--line); box-shadow:0 2px 10px rgba(16,32,48,.07); z-index:2}
+  .pv-bar .pv-t{min-width:0; flex:1 1 auto}
+  .pv-bar .pv-t b{display:block; font-size:14px; line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .pv-bar .pv-t small{display:block; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .pv-bar .pv-a{flex:0 0 auto; display:flex; gap:7px}
+  .pv-btn{border:none; border-radius:10px; padding:10px 14px; font-size:13.5px; font-weight:600; cursor:pointer; white-space:nowrap}
+  .pv-btn.pri{background:linear-gradient(135deg,#1b5e9e,#2a7bc4); color:#fff; box-shadow:0 3px 10px rgba(27,94,158,.26)}
+  .pv-btn.gh{border:1.5px solid var(--line); background:#fff; color:var(--ink)}
+  .pv-btn:active{transform:translateY(1px)}
+  .pv-btn:disabled{opacity:.55; cursor:not-allowed}
+  .pv-body{flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 10px 40px}
+  .pv-stage{margin:0 auto; width:680px}
+  .pv-page{
+    width:180mm; min-height:261mm; box-sizing:border-box; background:#fff; margin:0 auto 12px;
+    padding:0; box-shadow:0 3px 14px rgba(16,32,48,.16); border-radius:2px; overflow:hidden;
+  }
+  .pv-page.flow{min-height:0}
+  .pv-doc-title{text-align:center; font-size:15pt; font-weight:700; line-height:1.3; margin:0 0 1.5mm}
+  .pv-doc-date{text-align:center; font-size:9.5pt; color:#333; margin:0 0 3mm}
+  .pv-grade{font-size:11pt; font-weight:700; margin:0 0 1.5mm}
+  .pv-cls{font-size:9pt; font-weight:700; margin:0 0 1mm}
+  .pv-grid{width:100%; border-collapse:collapse; table-layout:fixed}
+  .pv-grid td{width:50%; border:0.3mm solid #808080; padding:0.7mm; text-align:center; vertical-align:middle}
+  .pv-grid img{display:block; margin:0 auto; max-width:100%; max-height:101mm}
+  .pv-grid .miss{display:block; padding:5mm 0; color:#bfbfbf; font-size:8pt}
+  .pv-hgrid{width:100%; border-collapse:collapse; table-layout:fixed}
+  .pv-hgrid td{border:0.3mm solid #808080; padding:0.7mm; text-align:center; vertical-align:middle; word-break:break-all}
+  .pv-hgrid td.c{font-size:8.5pt}
+  .pv-hgrid img{display:block; margin:0 auto; max-width:100%}
+  .pv-hgrid .miss{display:block; padding:4mm 0; color:#bfbfbf; font-size:8pt}
+  .pv-hgrid tr{page-break-inside:avoid; break-inside:avoid}
+  .pv-gap{height:3mm}
+  .pv-empty{padding:80px 20px; text-align:center; color:var(--muted); font-size:14px}
+  /* 窄屏：标题独占一行，按钮放到第二行右对齐，避免文字被挤掉 */
+  @media(max-width:560px){
+    .pv-bar{flex-wrap:wrap; padding:8px 10px 9px; gap:6px}
+    .pv-bar .pv-t{flex:1 1 100%}
+    .pv-bar .pv-a{flex:1 1 100%; justify-content:flex-end; gap:6px; margin-left:0}
+    .pv-btn{padding:9px 13px; font-size:13px}
+    .pv-body{padding-top:9px}
+  }
+
+  @media print{
+    @page{ size:A4 portrait; margin:18mm 15mm; }
+    html,body{background:#fff !important; margin:0 !important; padding:0 !important}
+    body > *:not(#previewOverlay){display:none !important}
+    #previewOverlay{position:static !important; display:block !important; inset:auto !important; background:#fff !important; z-index:auto !important}
+    .pv-bar{display:none !important}
+    .pv-body{overflow:visible !important; padding:0 !important; height:auto !important; display:block !important}
+    .pv-stage{zoom:1 !important; width:auto !important; margin:0 !important}
+    .pv-page{width:auto !important; min-height:0 !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; overflow:visible !important; page-break-after:always; break-after:page}
+    .pv-page:last-child{page-break-after:auto; break-after:auto}
+    .pv-grid img{max-height:101mm}
+    .pv-grid td,.pv-hgrid td{border:0.3mm solid #666 !important}
+  }
+
+  /* ---------- 弹窗 ---------- */
+  .modal{
+    position:fixed; inset:0; background:rgba(12,22,34,.72); z-index:80;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+    backdrop-filter:blur(3px);
+  }
+  .modal-inner{
+    background:#fff; border-radius:16px; width:100%; max-width:720px; max-height:90dvh;
+    overflow:auto; padding:16px; position:relative;
+  }
+  .modal-inner .m-head{display:flex; align-items:center; margin-bottom:12px}
+  .modal-inner .m-head h3{margin:0; font-size:16px}
+  .modal-inner .m-close{
+    margin-left:auto; width:30px; height:30px; border-radius:50%; border:none;
+    background:#f0f3f7; color:#44515f; font-size:17px; cursor:pointer;
+  }
+  .m-imgs{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media(max-width:520px){ .m-imgs{grid-template-columns:1fr} }
+  .m-imgs figure{margin:0}
+  .m-imgs figcaption{font-size:12px; color:var(--muted); margin-bottom:5px}
+  .m-imgs img{width:100%; border-radius:10px; display:block; border:1px solid var(--line)}
+  .m-imgs .none{padding:34px 0; text-align:center; color:#b0b9c4; font-size:13px;
+    border:1.5px dashed var(--line); border-radius:10px}
+  /* ---------- 后台纠错操作 ---------- */
+  .m-help{grid-column:1/-1; background:#f4f8fd; border:1px solid #dce7f3; border-radius:10px; padding:10px 12px; font-size:12.5px; color:#4a5b6e; line-height:1.6}
+  .m-fig-act{margin-top:6px; text-align:right}
+  .m-fig-act button{font-size:12px; padding:4px 10px; border:1px solid #e0b4b4; color:#b23b3b; background:#fff; border-radius:7px; cursor:pointer}
+  .m-fig-act button:disabled{opacity:.4; cursor:default}
+  .m-foot{grid-column:1/-1; border-top:1px solid var(--line); padding-top:12px; margin-top:4px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+  .m-foot .info{font-size:12px; color:var(--muted)}
+  .m-foot button{font-size:12.5px; padding:7px 12px; border:1px solid #e0b4b4; color:#b23b3b; background:#fff; border-radius:8px; cursor:pointer}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed; left:50%; bottom:34px; transform:translateX(-50%) translateY(20px);
+    background:rgba(22,32,44,.94); color:#fff; padding:11px 20px; border-radius:11px;
+    font-size:14px; z-index:120; opacity:0; pointer-events:none; transition:.25s;
+    max-width:88vw; text-align:center; line-height:1.45;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  #toast.err{background:rgba(160,44,32,.96)}
+
+  .loading-dots::after{content:"..."; animation:dots 1.2s steps(4,end) infinite}
+  @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+
+  .footnote{text-align:center; color:#9aa6b3; font-size:12px; padding:10px 0 0; line-height:1.7}
+
+  /* ---------- 底部选择器 ---------- */
+  .sheet{
+    position:fixed; inset:0; background:rgba(12,22,34,.45); z-index:90;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:12px; gap:8px; padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+  .sheet-inner{background:#fff; border-radius:14px; overflow:hidden}
+  .sheet-btn{
+    background:#fff; padding:16px; text-align:center; font-size:16px;
+    color:var(--brand); cursor:pointer; border-bottom:1px solid var(--line); font-weight:500;
+  }
+  .sheet-inner .sheet-btn:last-child{border-bottom:none}
+  .sheet-cancel{border-radius:14px; color:var(--ink); font-weight:600}
+
+  .pw-gate{max-width:340px; margin:60px auto; text-align:center}
+  .pw-gate .lock{font-size:34px; margin-bottom:10px; opacity:.35}
+  .pw-gate h2{font-size:17px; margin:0 0 4px}
+  .pw-gate p{color:var(--muted); font-size:13px; margin:0 0 18px}
+
+  /* ---------- 模式切换 segmented ---------- */
+  .seg{display:flex; background:#eef2f7; border-radius:11px; padding:4px; gap:4px; margin-bottom:14px}
+  .seg button{flex:1; border:none; background:transparent; border-radius:8px; padding:10px; font-size:14px; font-weight:500; color:var(--muted); cursor:pointer; transition:.15s}
+  .seg button.on{background:#fff; color:var(--brand-dark); font-weight:600; box-shadow:0 1px 3px rgba(16,32,48,.12)}
+
+  /* ---------- 节假日横幅 ---------- */
+  .holiday-banner{background:linear-gradient(135deg,#a45c00,#c97a16); color:#fff; border:none; display:flex; align-items:center; gap:10px; padding:14px 16px}
+  .holiday-banner .hb-main{min-width:0; flex:1}
+  .holiday-banner .hb-label{font-size:12px; opacity:.78; letter-spacing:.6px}
+  .holiday-banner .hb-select{flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin-left:10px}
+  .holiday-banner .hb-sel-label{font-size:11px; opacity:.82; white-space:nowrap}
+  .holiday-banner .hb-select select{appearance:none; -webkit-appearance:none; border:none; border-radius:9px; background:#fff; color:#a45c00; font-size:13px; font-weight:600; padding:7px 28px 7px 10px; cursor:pointer; max-width:54vw; min-width:150px; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23a45c00' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat:no-repeat; background-position:right 9px center; background-size:12px}
+
+  /* ---------- 节假日材料项卡片 ---------- */
+  .hitem{border:1.5px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px}
+  .hitem .hi-head{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; margin-bottom:10px}
+  .hitem .hi-head .hi-dot{width:9px; height:9px; border-radius:50%; background:#c9d3df; flex:0 0 auto}
+  .hitem.done .hi-head .hi-dot{background:var(--ok)}
+  .hitem.partial .hi-head .hi-dot{background:var(--accent)}
+  .hitem .hi-slots{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .hitem .hi-slots.one{grid-template-columns:1fr}
+
+  /* ---------- 后台：节假日 ---------- */
+  .camp-form{background:#fafcfe; border:1.5px solid var(--line); border-radius:12px; padding:14px; margin-bottom:4px}
+  .camp-form .cf-title{font-size:13px; color:var(--muted); margin:4px 0 8px}
+  .camp-presets{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 12px}
+  .camp-presets label{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); border-radius:9px; padding:8px 11px; font-size:13px; cursor:pointer; background:#fff}
+  .camp-presets label.on{border-color:var(--accent); background:#fff6e8; color:#a45c00; font-weight:600}
+  .camp-presets input{width:16px; height:16px; accent-color:var(--accent)}
+  .camp-pick{display:flex; gap:8px; margin-top:4px}
+  .camp-pick input{flex:1}
+  .camp-pick .btn-ghost{flex:0 0 auto; white-space:nowrap}
+  .camp-stat{display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin-bottom:14px}
+
+  /* ---------- 微信内打开 / 添加到桌面引导 ---------- */
+  .wx-tip{
+    display:flex; align-items:center; gap:10px;
+    margin:10px 14px 0; padding:10px 12px;
+    background:#fff8e8; border:1px solid #f3d9a5; border-radius:12px;
+    color:#7a4b06;
+  }
+  .wx-tip .wt-body{flex:1; min-width:0}
+  .wx-tip .wt-body b{display:block; font-size:13px; line-height:1.4}
+  .wx-tip .wt-body span{display:block; font-size:11.5px; color:#956c2b; line-height:1.45; margin-top:1px}
+  .wx-tip button{
+    flex:0 0 auto; border:1px solid #e2ad4d; background:#fff; color:#8a5605;
+    border-radius:8px; font-size:12px; font-weight:600; padding:6px 10px; cursor:pointer;
+  }
+  .wx-tip .wt-x{border:none; background:transparent; color:#a98551; font-size:20px; line-height:1; padding:2px 4px}
+  .wx-guide{padding:2px 2px 4px}
+  .wx-guide .wg-lead{font-size:13px; color:var(--muted); margin:0 0 12px}
+  .wx-guide .wg-step{
+    position:relative; background:#f7fafd; border:1px solid var(--line);
+    border-radius:11px; padding:10px 12px 10px 42px; margin-bottom:9px;
+  }
+  .wx-guide .wg-step b{
+    position:absolute; left:12px; top:11px;
+    width:22px; height:22px; border-radius:50%; background:var(--brand);
+    color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;
+  }
+  .wx-guide .wg-step strong{display:block; font-size:13.5px; color:var(--ink)}
+  .wx-guide .wg-step span{display:block; font-size:12.5px; color:#526273; line-height:1.6; margin-top:2px}
+  .wx-guide .wg-note{
+    font-size:12px; color:#8a5605; background:#fff8e8; border:1px solid #f3d9a5;
+    border-radius:10px; padding:9px 11px; margin:10px 0 12px; line-height:1.6;
+  }
+  .topbar .btn-install{
+    background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.45);
+    font-size:12px; padding:6px 10px;
+  }
+</style>
+<style id="__dm_no_drag_style__">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<body data-page-node-id="VbFZV8EUsbPWkPrtOEsl3l" style="">
+
+<div class="topbar" data-page-node-id="mBLSjnAp66PMzbfmCJ4HTZ">
+  <div class="logo" data-page-node-id="0yyWycOYsE8abrcJRfiK2U">金田三中 · 安全教育材料收集<small data-page-node-id="EQ5U7g49G34x6QvmpfCS6u">WEEKLY SAFETY EDUCATION ARCHIVE</small></div>
+  <button class="btn-install hidden" id="btnInstall">安装</button>
+  <button id="btnAdmin" data-page-node-id="5f6FRzUoclaBrYdc09xJoD">后台</button>
+</div>
+
+<div class="wx-tip hidden" id="wxTip">
+  <div class="wt-body"><b>在微信里传图容易卡住？</b><span>点右上角「···」→「在浏览器中打开」，上传更稳定</span></div>
+  <button id="wxTipMore">添加到桌面</button>
+  <button class="wt-x" id="wxTipClose" aria-label="关闭">×</button>
+</div>
+
+<main data-page-node-id="w21wtVyEfu98iFaP58cYH3">
+  <!-- ============ 提交视图 ============ -->
+  <section id="viewSubmit" data-page-node-id="RGR7dqaY3Gvfi21pcb4ESL">
+    <div class="seg" id="submitModeSeg">
+      <button type="button" data-mode="weekly" class="on">周次收集</button>
+      <button type="button" data-mode="holiday">节假日专项</button>
+    </div>
+
+    <div class="card week-banner" data-page-node-id="HKbHcNsuJ0wbO2oM87wSJm" id="weekBannerCard">
+      <div class="wb-main" data-page-node-id="UKOMU6pxwaSDHLroM5hxdX">
+        <div class="wb-label" id="wbLabel" data-page-node-id="s18r4cxd33sxFN3QEljIA7">本周收集期 · 第09周</div>
+        <div class="wb-range" id="weekRange" data-page-node-id="7zWlePKTRSWW7YsHqlyGGd">2026年10月26日 — 11月1日</div>
+      </div>
+      <div class="wb-select" data-page-node-id="HG58rjpQKsAABezMAyzDuf">
+        <label class="wb-sel-label" for="weekSelectTeacher">选择收集周</label>
+        <select id="weekSelectTeacher" data-page-node-id="sFinixKppwSxEaWZoKvAqa"></select>
+      </div>
+    </div>
+
+    <div class="card ws-card" id="weekStatusCard">
+      <div class="ws-head">
+        <div class="ws-title">各班材料提交情况<span class="ws-week" id="wsWeekText"></span></div>
+        <button type="button" class="ws-refresh" id="btnRefreshWs">刷新</button>
+      </div>
+      <div class="ws-sum" id="wsSummary"></div>
+      <div id="wsGrades"></div>
+      <div class="ws-legend">
+        <span><i class="ws-dot done"></i>四项齐全</span>
+        <span><i class="ws-dot partial"></i>材料不完整</span>
+        <span><i class="ws-dot none"></i>未上传</span>
+      </div>
+      <div class="ws-tips" id="wsTips"></div>
+    </div>
+
+    <div class="card holiday-banner hidden" id="holidayBannerCard">
+      <div class="hb-main">
+        <div class="hb-label">节假日安全材料收集</div>
+        <div class="hb-select">
+          <label class="hb-sel-label" for="holidayCampaignSelect">选择收集任务</label>
+          <select id="holidayCampaignSelect"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-page-node-id="vgFfDNgnaBvisS0gMgRh0z">
+      <div class="step-title" data-page-node-id="K5FHd7DvdJW60r7EDZc9OS"><span class="idx" data-page-node-id="JBpk7xZZZqkwobw3ZTbVlT">1</span>选择年级</div>
+      <div class="grade-tabs" id="gradeTabs" data-page-node-id="EFsBjlutOOiIHj3BWFBhfX"><button type="button" class="on">七年级</button><button type="button" class="">八年级</button><button type="button" class="">九年级</button></div>
+      <div class="step-title" style="margin-top:18px" data-page-node-id="d7q1Xc0rwAKRHoZfBTcB7r"><span class="idx" data-page-node-id="0vFtO1cTtvrxZRcl1WTLCx">2</span>选择班级</div>
+      <div class="class-grid" id="classGrid" data-page-node-id="Oy9TomjT6McSc974d1cJ1H"><button type="button" class="">261</button><button type="button" class="">262</button><button type="button" class="">263</button><button type="button" class="">264</button><button type="button" class="">265</button><button type="button" class="">266</button><button type="button" class="">267</button></div>
+    </div>
+
+    <div class="card draft-bar hidden" id="draftBar">
+      <div class="draft-head">📦 本机还有 <b id="draftN">0</b> 份没传成功的材料<span>（只存在这台手机里，换设备或清缓存会丢失，请尽快补传）</span></div>
+      <div class="draft-list" id="draftList"></div>
+    </div>
+
+    <div class="card" data-page-node-id="EzrtCtNH4gTnt3mTcepS6s" id="weekUploadCard">
+      <div class="step-title" data-page-node-id="EIuNtdIAR47Xu5HydTOCvO"><span class="idx" data-page-node-id="FP8Ea33Xne7mZr0o7Dcxx2">3</span>上传四项材料<span class="hint" data-page-node-id="BsJvrHrAGYTWbhhG1nH6Bo">教育内容截图 · 班会照片 · 学生签名表 · 班会记录</span></div>
+      <div class="upload-row" data-page-node-id="LW7LKnyl39QUHJs772LedV">
+        <div class="upload-box" id="boxContent" data-kind="content">
+          <div class="ub-icon">🖼️</div>
+          <div class="ub-label">① 教育内容截图</div>
+          <div class="ub-sub">点击拍摄或选择</div>
+          <button class="ub-clear" data-clear="content">×</button>
+          <div class="ub-badge hidden">教育内容截图</div>
+        </div>
+        <div class="upload-box" id="boxPhoto" data-kind="photo" data-page-node-id="wNVrpy8mf7FmB7XSEf0Uk1">
+          <div class="ub-icon" data-page-node-id="dNL3LFUuH8UfJis1aELYym">📷</div>
+          <div class="ub-label" data-page-node-id="HumpItbslUiLspaGsV5bA0">② 班会照片</div>
+          <div class="ub-sub" data-page-node-id="IbOxCtCZqbZgGJNYzAAIOd">点击拍摄或选择</div>
+          <button class="ub-clear" data-clear="photo" data-page-node-id="ZtX6VKtcFYHwSRypQJ1IRS">×</button>
+          <div class="ub-badge hidden" data-page-node-id="Xnkmjzy8gjaIjW0PHVPU1O">班会照片</div>
+        </div>
+        <div class="upload-box" id="boxSign" data-kind="sign">
+          <div class="ub-icon">✍️</div>
+          <div class="ub-label">③ 学生签名表</div>
+          <div class="ub-sub">点击拍摄或选择</div>
+          <button class="ub-clear" data-clear="sign">×</button>
+          <div class="ub-badge hidden">学生签名表</div>
+        </div>
+        <div class="upload-box" id="boxRecord" data-kind="record" data-page-node-id="bk1PtpwDHwQJViACyJA9sR">
+          <div class="ub-icon" data-page-node-id="vs3kFzFyD0LHEWZfXakTGk">📄</div>
+          <div class="ub-label" data-page-node-id="zve3QBFKfEh3M6iHdWXAfL">④ 班会记录</div>
+          <div class="ub-sub" data-page-node-id="FD1vCQSOodlB4kXhe6tyvD">点击拍摄或选择</div>
+          <button class="ub-clear" data-clear="record" data-page-node-id="EXjbLYfAEG14yiyue7CqQI">×</button>
+          <div class="ub-badge hidden" data-page-node-id="ghzMBmP7oME7f3a8QWEEf4">班会记录</div>
+        </div>
+      </div>
+      <input type="file" accept="image/*" id="fileInput" class="hidden" data-page-node-id="MiP4CiwbFkEAUGiyuM7mJM">
+      <input type="file" accept="image/*" capture="environment" id="fileInputCam" class="hidden" data-page-node-id="md0fjZPah4e1kSS1pbuWcH">
+    </div>
+
+    <div class="card hidden" id="holidayItemsCard">
+      <div class="step-title" data-page-node-id="EIuNtdIAR47Xu5HydTOCvO"><span class="idx" data-page-node-id="FP8Ea33Xne7mZr0o7Dcxx2">3</span>上传材料<span class="hint" id="holidayItemHint">按任务要求逐项上传</span></div>
+      <div id="holidayItems"></div>
+    </div>
+
+    <div class="card" data-page-node-id="oWurGVZ5nMPDwcP4FHzPwO">
+      <div class="step-title" data-page-node-id="yR4r3v9AE7G4dF881HkByj"><span class="idx" data-page-node-id="ubPblDp5Q2ex76Y9G9noGI">4</span>确认提交</div>
+      <div class="field" data-page-node-id="nsHsTxg84H2dB2YwKEdUqk">
+        <label data-page-node-id="QmwQeAAb2DbAdDNePh86Qx">提交人（选填，便于追溯）</label>
+        <input id="submitter" placeholder="如：黄德锋" autocomplete="name" data-page-node-id="sqdmmuXY9Chqvh50Tz8tny">
+      </div>
+      <div id="submitStatus" class="status-line hidden" data-page-node-id="MRgDMLKE12gspC7gjUs76l"></div>
+      <button class="btn-primary" id="btnSubmit" data-page-node-id="miND019AclfWLrhVHAQUTC">提交材料</button>
+    </div>
+
+    <div class="footnote" data-page-node-id="ahxxy4qYuz49tbCnNlFnoK" id="submitFootnote">
+      照片会自动压缩后上传，原图不必另行发送。<br data-page-node-id="OdfsogFoEb9XrWbkemmw4G">
+      提交后发现传错，重新选择该班级上传即可覆盖。<br>
+      数据长期保留，可补传往周材料；所选周四项齐全（教育内容截图＋班会照片＋学生签名表＋班会记录）后，后台才会标记“已齐全”可下载。
+    </div>
+  </section>
+
+  <!-- ============ 后台视图 ============ -->
+  <section id="viewAdmin" class="hidden" data-page-node-id="zZcJvaf3FSG0aAoFwMlH3e">
+    <div id="adminGate" class="pw-gate" data-page-node-id="DIJKsbRfpdTNXgGnW3SBgL">
+      <div class="lock" data-page-node-id="uwyeFZjsTGXIFEgxR9N434">🔒</div>
+      <h2 data-page-node-id="oSxtrKLHtWvPhi6On7bBom">后台管理</h2>
+      <p data-page-node-id="qMYwLxhfGkMXGXUp7B3mPE">请输入管理密码</p>
+      <div class="field" data-page-node-id="tXV0KNd32BC6Xf04DDjVdW"><input id="pwInput" type="password" placeholder="管理密码" autocomplete="current-password" data-page-node-id="sOFYoqNXVCNiVLDthYE0N9"></div>
+      <button class="btn-primary" id="btnPw" data-page-node-id="0I91Igszxa6SMXQuynRz9E">进入后台</button>
+    </div>
+
+    <div id="adminBody" class="hidden" data-page-node-id="jC8P6OkD5JgMnhuMfHABVt">
+      <div class="seg" id="adminModeSeg">
+        <button type="button" data-mode="weekly" class="on">周次收集</button>
+        <button type="button" data-mode="holiday">节假日专项</button>
+      </div>
+      <div id="weeklyAdmin">
+      <div class="admin-head" data-page-node-id="DeN6O1xYUYJeocUlWGYqAQ">
+        <select id="weekSelect" data-page-node-id="BeGzzFFjQxXhse0jFoGN2X"></select>
+        <button class="btn-ghost" id="btnSelfCheck">自检</button>
+        <button class="btn-ghost" id="btnRefresh" data-page-node-id="NggVqJ6hXRqVAEXomLYtDM">刷新</button>
+      </div>
+
+      <div class="stat-row" data-page-node-id="3lqDk6HvYMg2E2bnvkcJah">
+        <div class="stat ok" data-page-node-id="UwH1VBXWVunKs6d4SXddLn"><div class="n" id="statDone" data-page-node-id="BB6Cdbl7Gz5NbuQMNDlcXp">0<small data-page-node-id="5Zw637KBX36n6MmFo2CIfP">/23</small></div><div class="l" data-page-node-id="Nsqzu5L5bzSwLpVS6uMpSK">已交班级</div></div>
+        <div class="stat"><div class="n" id="statContent">0</div><div class="l">教育内容</div></div>
+        <div class="stat" data-page-node-id="MH4oc2KGOFzh1sf6N7JEOQ"><div class="n" id="statPhoto" data-page-node-id="7ONcyEGgZXZQrGescaYunk">0</div><div class="l" data-page-node-id="nCFVIF28BSaJKBOZHH0xvT">班会照片</div></div>
+        <div class="stat" data-page-node-id="EIZYkjiTayBBDktWg8yORF"><div class="n" id="statRecord" data-page-node-id="IPbuDXPuPURpTG7yMxs1be">0</div><div class="l" data-page-node-id="oLTrVHDrDRWxIeGpYcIix9">班会记录</div></div>
+        <div class="stat"><div class="n" id="statSign">0</div><div class="l">学生签名表</div></div>
+        <div class="stat ok" data-page-node-id="U5eO5V5l7FBlV4XZ3584M7"><div class="n" id="statReady" data-page-node-id="eVljV5ait00vTeaYlc4FP1">0<small data-page-node-id="5Zw637KBX36n6MmFo2CIfP">/23</small></div><div class="l" data-page-node-id="B7JP6AJa0mGOZJU1C9nolg">四项齐全</div></div>
+      </div>
+
+      <div id="readyBanner" class="ready-banner hidden" data-page-node-id="rdybnr001"></div>
+
+      <div class="card" id="adminGridWrap" data-page-node-id="Ha4fi6L5iLVCZh3SwOhME8">
+        <div style="text-align:center; color:var(--muted); font-size:13.5px; padding:20px 0" id="adminLoading" data-page-node-id="LACf1tiqGUtGqGTuCvZPq9">加载中…</div>
+      </div>
+
+      <div class="export-panel" data-page-node-id="PpPryCZxr00vSYElDSZsB8">
+        <div class="step-title" style="margin-top:0" data-page-node-id="0B2eBOvL3w4Z4cxNYgDL2n"><span class="idx" data-page-node-id="pZgM9LcsP39WwnSABd9X7R">⬇</span>汇总成 Word 文档</div>
+        <div class="row one" data-page-node-id="Jqwcggh85iGVxu1UzwUxEb">
+          <div data-page-node-id="W9N1m6yHsfUmEJtEc2gKpe"><label data-page-node-id="ksM7eAdWa8HyBxvkpn1RmD">材料标题</label><input id="docTitle" data-page-node-id="uR7ko0sdTGHkJeStJfyAdP"></div>
+        </div>
+        <div class="row" data-page-node-id="IwC2qylp9iShFhOE8PKibT">
+          <div data-page-node-id="B5Txqttstdwf0liMJ1j7qJ"><label data-page-node-id="hSdNHtx1otqbK9o47tht0G">文档日期</label><input id="docDate" type="date" data-page-node-id="hjOTGXjOUDj5SJCrR4T8Hb"></div>
+          <div data-page-node-id="TraiGk5P6HADM4aNqJNBwI"><label data-page-node-id="CHnETEvu1RBmURFYvd7QQv">导出范围</label>
+            <select id="docScope" data-page-node-id="B3Oy3utLhrg1cPcEKgZXGs">
+              <option value="all" data-page-node-id="dEH1qB1Vt34xOtS0N211gm">全部年级</option>
+              <option value="七年级" data-page-node-id="zlwKzBl4Hz1nm5aXKwWj1X">仅七年级</option>
+              <option value="八年级" data-page-node-id="gg3AOBx6QHc874WcidkjZT">仅八年级</option>
+              <option value="九年级" data-page-node-id="9wExzID7nZFNypbRHbvm6Q">仅九年级</option>
+            </select>
+          </div>
+        </div>
+        <div class="exp-actions">
+          <button class="btn-primary" id="btnPreview">预览 / 打印</button>
+          <button class="btn-ghost" id="btnExport">下载 Word</button>
+        </div>
+        <div class="footnote" style="padding-top:10px" data-page-node-id="BcOXtM4UQKZtHElJHAcgoo">按“年级 → 班级号”顺序，每班一页、2×2 排列四张大图。先点「预览 / 打印」核对，满意再直接打印或下载 Word。</div>
+      </div>
+      </div><!-- /weeklyAdmin -->
+
+      <div id="holidayAdmin" class="hidden">
+        <div class="card">
+          <div class="step-title"><span class="idx">＋</span>新建收集任务</div>
+          <div class="camp-form">
+            <div class="field"><label>任务名称（如：2027年寒假安全材料）</label><input id="campName" placeholder="如：2027年寒假安全材料"></div>
+            <div class="field"><label>时段说明（选填）</label><input id="campPeriod" placeholder="如：2027.1.15 — 2.12"></div>
+            <div class="cf-title">勾选本次需要收集的材料项</div>
+            <div class="camp-presets" id="campPresets"></div>
+            <div class="camp-pick"><input id="campCustom" placeholder="或自定义单项名称（如：承诺书）"><button class="btn-ghost" id="btnAddCustom">添加</button></div>
+            <button class="btn-primary" id="btnCreateCamp" style="margin-top:12px">创建任务</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="admin-head">
+            <select id="holidayCampSelect"></select>
+            <button class="btn-ghost" id="btnRefreshH">刷新</button>
+          </div>
+          <div class="camp-stat">
+            <div class="stat ok"><div class="n" id="hStatReady">0<small>/23</small></div><div class="l">齐全班级</div></div>
+            <div class="stat"><div class="n" id="hStatPart">0</div><div class="l">部分提交</div></div>
+          </div>
+          <div id="holidayGridWrap"></div>
+        </div>
+
+        <div class="export-panel">
+          <div class="step-title" style="margin-top:0"><span class="idx">⬇</span>汇总成 Word 文档</div>
+          <div class="row one"><div><label>材料标题</label><input id="hDocTitle"></div></div>
+          <div class="row"><div><label>文档日期</label><input id="hDocDate" type="date"></div><div><label>导出范围</label><select id="hDocScope"><option value="all">全部年级</option><option value="七年级">仅七年级</option><option value="八年级">仅八年级</option><option value="九年级">仅九年级</option></select></div></div>
+          <div class="exp-actions">
+            <button class="btn-primary" id="btnHPreview">预览 / 打印</button>
+            <button class="btn-ghost" id="btnHExport">下载 Word</button>
+          </div>
+          <div class="footnote" style="padding-top:10px">按“材料项 → 年级 → 班级”分组排版。先点「预览 / 打印」核对，满意再直接打印或下载 Word。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal hidden" id="checkModal">
+  <div class="modal-inner" style="max-width:min(440px,94vw)">
+    <div class="m-head"><h3>运行自检</h3><button class="m-close" id="checkClose">×</button></div>
+    <div id="checkBody" class="check-body"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="wxGuideModal">
+  <div class="modal-inner" style="max-width:min(480px,94vw)">
+    <div class="m-head"><h3>像小程序一样打开</h3><button class="m-close" id="wxGuideClose">×</button></div>
+    <div class="wx-guide">
+      <p class="wg-lead">不用下载 App、不用重新注册，还是原来这条链接，数据都在。</p>
+      <div class="wg-step"><b>1</b><strong>先在浏览器中打开</strong><span>点微信右上角「···」→「在浏览器中打开」</span></div>
+      <div class="wg-step"><b>2</b><strong>添加到手机桌面</strong><span>iPhone：Safari 底部「分享」→「添加到主屏幕」<br>安卓：浏览器菜单 →「添加到主屏幕 / 安装应用」</span></div>
+      <div class="wg-step"><b>3</b><strong>以后点桌面图标进入</strong><span>全屏打开、和小程序一样；提交、看板、后台数据完全一样。</span></div>
+      <div class="wg-note">即使网络不好，提交失败的材料会自动存为本机草稿，恢复网络后点「草稿」即可继续上传。</div>
+      <button class="btn-primary" id="wxGuideOk" style="width:100%">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="modal" data-page-node-id="7NOiGnWHo3Qbx1LzEbaD94">
+  <div class="modal-inner" data-page-node-id="S4DyaroZtU10EUe9RI2CFU">
+    <div class="m-head" data-page-node-id="54imUUewPFtFcmyaLEKQYK"><h3 id="modalTitle" data-page-node-id="v4lCSE0gsCQsJpybeaEfCn">照片</h3><button class="m-close" id="modalClose" data-page-node-id="1JAbUktQGzY9ZAfHnQI1Qv">×</button></div>
+    <div class="m-imgs" id="modalImgs" data-page-node-id="Qc0AjyGb9Y9AW3tM0y2sff"></div>
+  </div>
+</div>
+
+<div class="pv hidden" id="previewOverlay">
+  <div class="pv-bar">
+    <div class="pv-t"><b id="pvTitleText">打印预览</b><small id="pvTitleSub"></small></div>
+    <div class="pv-a">
+      <button class="pv-btn gh" id="pvClose">关闭</button>
+      <button class="pv-btn gh" id="pvDownload">下载 Word</button>
+      <button class="pv-btn pri" id="pvPrint">打印</button>
+    </div>
+  </div>
+  <div class="pv-body" id="pvBody"><div class="pv-stage" id="pvStage"></div></div>
+</div>
+
+<div id="toast" data-page-node-id="yJ0lCrIfriCqE3U97q3W5n"></div>
+
+<div class="sheet hidden" id="sheet" data-page-node-id="tTu3D9qZfkZkJXysNBpzo6">
+  <div class="sheet-inner" data-page-node-id="bexFHc3GHvrakzM55oXLHL">
+    <div class="sheet-btn" id="sheetCamera" data-page-node-id="MYneH1iAF7LlZaMy9BzxZQ">📷 拍照</div>
+    <div class="sheet-btn" id="sheetAlbum" data-page-node-id="nZszaOzrenX2IJ46gtZXwm">🖼 从相册选择</div>
+  </div>
+  <div class="sheet-btn sheet-cancel" id="sheetCancel" data-page-node-id="Cmo7GmwtFJFBdtPRbcBYVE">取消</div>
+</div>
+
+<!-- docx 生成库：优先本地，失败回退 CDN -->
+<script src="vendor/docx.umd.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js';document.head.appendChild(s);"></script>
+<!-- WorkBuddy 云服务 SDK：随站点本地部署，避免外部 CDN 在校园网 / 微信内置浏览器被拦截 -->
+<script src="vendor/workbuddy-cloud-sdk.js"></script>
+<script>
+(function () {
+  if (window.WorkBuddyCloud) return;
+  // 本地脚本异常时的兜底：依次尝试多个外部源（异步加载，主逻辑会等待就绪）
+  var sources = [
+    'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js',
+    'https://registry.npmmirror.com/@tencent-ai/workbuddy-cloud-sdk/latest/files/lib/index.global.js'
+  ];
+  var i = 0;
+  (function next() {
+    if (window.WorkBuddyCloud || i >= sources.length) return;
+    var s = document.createElement('script');
+    s.src = sources[i++];
+    s.onerror = next;
+    document.head.appendChild(s);
+  })();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     0. 配置
+     ========================================================= */
+  // 云服务 publicConfig（由 WorkBuddy 云服务开通时下发，用于初始化客户端）
+  const PUBLIC_CONFIG = {
+    endpoint: 'https://safety-edu-collector.app.workbuddy.host',
+    oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth',
+    publishableKey: 'wbpk_N4XLGALyYAyGJRZwROnoVk_lOgdWAeVsuENPBSqaf1CWqTmbRfquuSK'
+  };
+
+  const TABLE = 'safety_submissions';
+  const ADMIN_PASSWORD = '8888';              // 后台密码，可自行修改
+
+  /* ---------------------------------------------------------
+     云服务请求兜底：每个 /.cloud/ 请求 7 秒超时。
+     没有这层保护时，云服务偶发“不响应”会让后台永远停在“加载中…”，
+     首页看板也会一片空白（请求既不成功也不失败，界面无从判断）。
+     7 秒超时后由界面给出“加载失败 + 点击重试”，不再无限等待。
+     --------------------------------------------------------- */
+  (function guardCloudFetch() {
+    if (!window.fetch || window.__cloudFetchGuarded) return;
+    window.__cloudFetchGuarded = true;
+    const orig = window.fetch.bind(window);
+    const TIMEOUT = 7000;
+
+    window.fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.indexOf('/.cloud/') < 0) return orig(input, init);
+      const opts = init ? Object.assign({}, init) : {};
+      const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, TIMEOUT) : 0;
+      if (ctrl) {
+        if (opts.signal) { try { opts.signal.addEventListener('abort', () => ctrl.abort()); } catch (e) {} }
+        opts.signal = ctrl.signal;
+      }
+      return orig(input, opts).then(r => { if (timer) clearTimeout(timer); return r; },
+        err => { if (timer) clearTimeout(timer); throw err; });
+    };
+  })();
+
+  // 年级 / 班级（顺序即文档排版顺序）
+  const GRADES = [
+    { name: '七年级', classes: ['261','262','263','264','265','266','267'] },
+    { name: '八年级', classes: ['251','252','253','254','255','256','257','258'] },
+    { name: '九年级', classes: ['241','242','243','244','245','246','247','248'] }
+  ];
+  const TOTAL_CLASSES = GRADES.reduce((n, g) => n + g.classes.length, 0);
+
+  const CAMP_TABLE = 'safety_campaigns';        // 节假日收集任务
+  const HOLIDAY_TABLE = 'safety_holiday_subs';  // 每班每任务材料
+
+  // 节假日预设材料项（后台建任务时勾选；slots 为该项需要的上传位：单图项长度1，主题班会长度2）
+  const HOLIDAY_ITEM_PRESETS = [
+    { key: 'letter', label: '致家长一封信', slots: ['家长群转发截图/信件扫描'] },
+    { key: 'meeting', label: '主题班会', slots: ['现场照片', '会议记录表'] },
+    { key: 'group', label: '微信家长群安全提醒截图', slots: ['截图'] },
+    { key: 'forward', label: '节日安全提醒转发截图', slots: ['截图'] }
+  ];
+
+  const MAX_SIDE = 1500;      // 上传前压缩：长边像素
+  const JPEG_Q = 0.78;
+
+  /* =========================================================
+     1. 小工具
+     ========================================================= */
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+
+  function toast(msg, isErr) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.className = 'show' + (isErr ? ' err' : '');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { el.className = isErr ? 'err' : ''; }, isErr ? 4200 : 2200);
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  function mondayOf(base) {
+    const d = new Date(base.getTime());
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function addDays(d, n) {
+    const x = new Date(d.getTime());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+
+  function humanRange(mon) {
+    const sun = addDays(mon, 6);
+    const crossYear = sun.getFullYear() !== mon.getFullYear();
+    return mon.getFullYear() + '年' + (mon.getMonth() + 1) + '月' + mon.getDate() + '日 — '
+      + (crossYear ? sun.getFullYear() + '年' : '')
+      + (sun.getMonth() + 1) + '月' + sun.getDate() + '日';
+  }
+
+  /* 学年周次：以 9 月 1 日（学校正式开学）所在的自然周为第 1 周，之后依次排序。
+     1—8 月属于上一学年（起始年为去年 9 月）。 */
+  function termStartMonday(y) { return mondayOf(new Date(y, 8, 1)); }
+
+  function termInfo(mon) {
+    const y = mon.getFullYear();
+    let ay = y;
+    let start = termStartMonday(y);
+    if (mon.getTime() < start.getTime()) { ay = y - 1; start = termStartMonday(y - 1); }
+    return {
+      ay: ay,                                                    // 学年起始年份
+      start: start,                                              // 本学年第 1 周的周一
+      week: Math.round((mon.getTime() - start.getTime()) / 604800000) + 1
+    };
+  }
+
+  // 紧凑日期区间（下拉选项用，避免原生 select 截断文字）
+  function shortRange(mon) {
+    const sun = addDays(mon, 6);
+    return (mon.getMonth() + 1) + '/' + mon.getDate() + '—' + (sun.getMonth() + 1) + '/' + sun.getDate();
+  }
+
+  function weekIndexOf(mon) { return termInfo(mon).week; }
+
+  function termName(mon) {
+    const t = termInfo(mon);
+    return t.ay + '—' + (t.ay + 1) + '学年';
+  }
+
+  function gradeClasses(name) {
+    const g = GRADES.filter(x => x.name === name)[0];
+    return g ? g.classes : [];
+  }
+
+  /* =========================================================
+     2. 云服务初始化
+     ========================================================= */
+  let cloud = null;
+  let cloudError = null;
+
+  function initCloud() {
+    if (cloud) return cloud;
+    try {
+      if (!window.WorkBuddyCloud || !window.WorkBuddyCloud.createWorkBuddyCloud) {
+        throw new Error('云服务组件未加载，请检查网络后刷新页面');
+      }
+      cloud = window.WorkBuddyCloud.createWorkBuddyCloud({
+        endpoint: PUBLIC_CONFIG.endpoint,
+        oauthRelayBaseUrl: PUBLIC_CONFIG.oauthRelayBaseUrl,
+        publishableKey: PUBLIC_CONFIG.publishableKey
+      });
+      cloudError = null;
+    } catch (e) {
+      cloudError = e;
+    }
+    return cloud;
+  }
+
+  // 等待 SDK 就绪：应对 CDN 慢加载或异步兜底脚本，最多等 8 秒
+  async function waitCloud(ms) {
+    const deadline = Date.now() + (ms || 8000);
+    while (Date.now() < deadline) {
+      if (initCloud()) return true;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    return false;
+  }
+
+  initCloud();  // 本地 SDK 正常情况下此时已就绪
+
+  function db() {
+    const c = initCloud();
+    if (!c) throw new Error(cloudError ? cloudError.message : '云服务未初始化');
+    return c.database;
+  }
+
+  /* ---------- 最近一次成功数据的快照 ----------
+     云服务偶尔整体无响应（不是报错，是一直不返回），
+     有快照时先把上次的数据显示出来，并标注“缓存”，不至于一片空白。 */
+  function snapKey(kind, week) { return 'wb_snap|' + kind + '|' + week; }
+  function saveSnapshot(kind, week, rows) {
+    try {
+      if (!week || !Array.isArray(rows)) return;
+      localStorage.setItem(snapKey(kind, week), JSON.stringify({ t: Date.now(), rows: rows }));
+    } catch (e) { /* 超配额就算了，不影响主流程 */ }
+  }
+  function loadSnapshot(kind, week) {
+    try {
+      if (!week) return null;
+      const raw = localStorage.getItem(snapKey(kind, week));
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      // 注意：本周 0 条也是有意义的快照（= 全部未上传），不能因为空数组就当没有
+      if (!o || !Array.isArray(o.rows)) return null;
+      return o;
+    } catch (e) { return null; }
+  }
+  function snapTimeText(t) {
+    const d = new Date(t);
+    const p = n => (n < 10 ? '0' : '') + n;
+    const sameDay = ymd(d) === ymd(new Date());
+    return (sameDay ? '' : (d.getMonth() + 1) + '月' + d.getDate() + '日 ') + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function explainErr(err) {
+    if (!err) return '未知错误';
+    const msg = err.message || String(err);
+    if (/Failed to fetch|NetworkError|network/i.test(msg)) return '网络连接失败，请检查网络后重试';
+    if (err.code === '42P01') return '数据表不存在，请联系管理员';
+    if (err.code === '42501') return '没有操作权限';
+    if (err.code === '23505') return '该班级本周已存在记录';
+    return msg;
+  }
+
+  /* =========================================================
+     3. 状态
+     ========================================================= */
+  const state = {
+    mode: 'weekly',
+    weekStart: ymd(mondayOf(new Date())),
+    grade: GRADES[0].name,
+    classNo: null,
+    content: null,
+    photo: null,
+    record: null,
+    sign: null,
+    existing: null,
+    weekRows: [],
+    adminWeek: null,
+    holiday: {
+      campaignId: null,
+      items: [],        // 当前任务材料项 [{key,label,slots}]
+      draft: {},        // 当前班级未提交的编辑：itemKey -> { slotLabel: dataUrl|null }
+      subs: [],         // 当前任务全部提交行（用于完成度/网格）
+      campaignName: ''
+    }
+  };
+
+  function weeksAgoOf(mon) {
+    const nowMon = mondayOf(new Date());
+    return Math.round((nowMon - mon) / 86400000) / 7;
+  }
+
+  function relLabel(mon) {
+    const n = weeksAgoOf(mon);
+    if (n <= 0) return '本周';
+    if (n === 1) return '上周';
+    if (n === 2) return '上上周';
+    return n + '周前';
+  }
+
+  // 统一显示为“第N周”（从 9 月 1 日开学那周算第 1 周）
+  function weekLabel(mon) {
+    return '第' + weekIndexOf(mon) + '周';
+  }
+
+  /* =========================================================
+     4. 提交视图
+     ========================================================= */
+  function renderWeekBanner() {
+    const mon = new Date(state.weekStart + 'T00:00:00');
+    $('#weekRange').textContent = humanRange(mon);
+    $('#wbLabel').textContent = weekLabel(mon) + '收集期 · ' + relLabel(mon);
+  }
+
+  function buildTeacherWeekOptions() {
+    const sel = $('#weekSelectTeacher');
+    sel.innerHTML = '';
+    const nowMon = mondayOf(new Date());
+    const start = termInfo(nowMon).start;
+    // 只列本学年内的周次：本周 → 第 1 周（9 月 1 日开学那一周）
+    const total = Math.min(60, Math.max(1, Math.round((nowMon.getTime() - start.getTime()) / 604800000) + 1));
+    for (let i = 0; i < total; i++) {
+      const mon = addDays(nowMon, -7 * i);
+      const opt = document.createElement('option');
+      opt.value = ymd(mon);
+      opt.textContent = weekLabel(mon) + '（' + relLabel(mon) + '） · ' + shortRange(mon);      sel.appendChild(opt);
+    }
+    // 若当前选中的周早于本学年（历史周），单独补到最前面
+    if (state.weekStart) {
+      const selMon = new Date(state.weekStart + 'T00:00:00');
+      if (selMon.getTime() < start.getTime()) {
+        const opt = document.createElement('option');
+        opt.value = state.weekStart;
+        opt.textContent = weekLabel(selMon) + '（' + relLabel(selMon) + '） · ' + shortRange(selMon);
+        sel.insertBefore(opt, sel.firstChild);
+      }
+    }
+    sel.value = state.weekStart;
+  }
+
+  function renderGrades() {
+    const wrap = $('#gradeTabs');
+    wrap.innerHTML = '';
+    GRADES.forEach(g => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = g.name;
+      b.className = g.name === state.grade ? 'on' : '';
+      b.addEventListener('click', () => {
+        state.grade = g.name;
+        state.classNo = null;
+        state.existing = null;
+        renderGrades();
+        renderClasses();
+        updateStatusLine();
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderClasses() {
+    const wrap = $('#classGrid');
+    wrap.innerHTML = '';
+    const list = gradeClasses(state.grade);
+    if (!list.length) {
+      wrap.innerHTML = '<div class="class-empty">该年级暂无班级</div>';
+      return;
+    }
+    const doneSet = {};
+    if (state.mode === 'holiday') {
+      list.forEach(cls => { const st = holidayClassStatus(cls); if (st) doneSet[cls] = st; });
+    } else {
+      state.weekRows.forEach(r => { if (r.grade === state.grade) doneSet[r.class_no] = r; });
+    }
+
+    list.forEach(cls => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = cls;
+      let cls2 = (cls === state.classNo ? 'on ' : '');
+      if (state.mode === 'holiday') {
+        const st = doneSet[cls];
+        if (st === 'done') cls2 += 'done';
+        else if (st === 'partial') cls2 += 'partial';
+      } else {
+        const st = weekRowState(doneSet[cls]);
+        if (st === 'done') cls2 += 'done';
+        else if (st === 'partial') cls2 += 'partial';
+      }
+      b.className = cls2;
+      b.addEventListener('click', () => selectClass(cls));
+      wrap.appendChild(b);
+    });
+  }
+
+  /* ---------- 首页：本周各班材料完成情况看板 ---------- */
+  const WEEK_ITEMS = [
+    { key: 'has_content', label: '教育内容截图' },
+    { key: 'has_photo', label: '班会照片' },
+    { key: 'has_sign', label: '学生签名表' },
+    { key: 'has_record', label: '班会记录' }
+  ];
+
+  function weekRowState(r) {
+    if (!r) return 'none';
+    const n = WEEK_ITEMS.filter(it => !!r[it.key]).length;
+    if (!n) return 'none';
+    return n === 4 ? 'done' : 'partial';
+  }
+
+  function missingOf(r) {
+    return WEEK_ITEMS.filter(it => !(r && r[it.key])).map(it => it.label);
+  }
+
+  function renderWeekStatus() {
+    const card = $('#weekStatusCard');
+    if (!card) return;
+    const mon = new Date(state.weekStart + 'T00:00:00');
+    $('#wsWeekText').textContent = weekLabel(mon) + ' · ' + termName(mon);
+
+    // 读取失败：给出明确提示与重试入口，不要用“0/0/0”假装没提交
+    if (state.weekRowsError) {
+      $('#wsSummary').innerHTML = '';
+      $('#wsTips').textContent = '';
+      $('#wsGrades').innerHTML = '<div class="ws-retry">⚠️ 读取提交情况失败（' + escapeHtml(explainErr(state.weekRowsError))
+        + '）<br><button type="button" id="wsRetry">点击重试</button></div>';
+      const b = $('#wsRetry');
+      if (b) b.addEventListener('click', () => { b.textContent = '正在重试…'; b.disabled = true; loadWeekRows(); });
+      return;
+    }
+
+    const byClass = {};
+    state.weekRows.forEach(r => { byClass[r.grade + '|' + r.class_no] = r; });
+
+    let done = 0, part = 0, none = 0;
+    const noneList = [], partList = [];
+
+    const wrap = $('#wsGrades');
+    wrap.innerHTML = '';
+    GRADES.forEach(g => {
+      const box = document.createElement('div');
+      box.className = 'ws-grade';
+
+      const gDone = g.classes.filter(c => weekRowState(byClass[g.name + '|' + c]) === 'done').length;
+      const h = document.createElement('div');
+      h.className = 'ws-grade-name';
+      h.innerHTML = '<span>' + g.name + '</span><span class="ws-gcnt' + (gDone === g.classes.length ? ' all' : '') + '">'
+        + gDone + '/' + g.classes.length + ' 班齐全</span>';
+      box.appendChild(h);
+
+      const grid = document.createElement('div');
+      grid.className = 'ws-grid';
+      g.classes.forEach(cls => {
+        const r = byClass[g.name + '|' + cls];
+        const st = weekRowState(r);
+        if (st === 'done') done++;
+        else if (st === 'partial') { part++; partList.push(cls + '（缺' + missingOf(r).join('、') + '）'); }
+        else { none++; noneList.push(cls); }
+
+        const chip = document.createElement('div');
+        chip.className = 'ws-chip ' + st;
+        chip.setAttribute('role', 'button');
+        chip.title = st === 'none' ? (cls + ' 本周未上传任何材料')
+          : st === 'done' ? (cls + ' 四项材料齐全')
+            : (cls + ' 缺少：' + missingOf(r).join('、'));
+        chip.innerHTML = '<span class="ws-cls">' + cls + '</span><span class="ws-tag">'
+          + (st === 'done' ? '齐全' : st === 'partial' ? '缺' + missingOf(r).length + '项' : '未传') + '</span>';
+        chip.addEventListener('click', () => pickClass(g.name, cls));
+        grid.appendChild(chip);
+      });
+      box.appendChild(grid);
+      wrap.appendChild(box);
+    });
+
+    $('#wsSummary').innerHTML =
+      '<div class="ws-stat done"><b>' + done + '</b><span>四项齐全</span></div>' +
+      '<div class="ws-stat partial"><b>' + part + '</b><span>材料不完整</span></div>' +
+      '<div class="ws-stat none"><b>' + none + '</b><span>未上传</span></div>';
+
+    const tips = [];
+    if (noneList.length) {
+      tips.push('<div>❗ <b>未上传（' + noneList.length + ' 班）</b>：<span class="ws-n">' + noneList.join('、') + '</span></div>');
+    }
+    if (partList.length) {
+      tips.push('<div>⚠️ <b>材料不完整（' + partList.length + ' 班）</b>：' + partList.join('；') + '</div>');
+    }
+    if (!noneList.length && !partList.length) {
+      tips.push('<div>🎉 ' + TOTAL_CLASSES + ' 个班级四项材料全部齐全，可以导出汇总了</div>');
+    }
+    tips.push('<div style="opacity:.75">点班级可快速跳转补传；共 ' + TOTAL_CLASSES + ' 班</div>');
+    if (state.weekRowsStaleAt) {
+      tips.unshift('<div class="ws-stale">⚠️ 云服务暂时没响应，下面是 ' + snapTimeText(state.weekRowsStaleAt)
+        + ' 缓存的情况，可能不是最新。<button type="button" class="ws-stale-btn" id="wsRetry2">重新获取</button></div>');
+    }
+    $('#wsTips').innerHTML = tips.join('');
+    const rb = $('#wsRetry2');
+    if (rb) rb.addEventListener('click', () => { rb.textContent = '获取中…'; rb.disabled = true; loadWeekRows(); });
+  }
+
+  async function pickClass(gradeName, cls) {
+    state.grade = gradeName;
+    state.classNo = cls;
+    state.existing = null;
+    state.holiday.draft = {};
+    renderGrades();
+    renderClasses();
+    updateStatusLine();
+    const target = $('#classGrid');
+    if (target) {
+      const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+    if (state.mode === 'weekly') await checkExisting();
+  }
+
+  async function selectClass(cls) {
+    state.classNo = cls;
+    if (state.mode === 'holiday') {
+      state.holiday.draft = {};
+      renderClasses();
+      updateStatusLine();
+      renderHolidayItems();
+      return;
+    }
+    state.existing = null;
+    renderClasses();
+    updateStatusLine();
+    await checkExisting();
+  }
+
+  async function loadWeekRows() {
+    try {
+      const { data, error } = await db()
+        .from(TABLE)
+        .select('id,grade,class_no,submitter,has_content,has_photo,has_sign,has_record,updated_at')
+        .eq('week_start', state.weekStart);
+      if (error) throw error;
+      state.weekRows = data || [];
+      state.weekRowsError = null;
+      state.weekRowsStaleAt = 0;
+      saveSnapshot('week', state.weekStart, state.weekRows);
+    } catch (e) {
+      console.warn('加载本周记录失败', e);
+      const snap = loadSnapshot('week', state.weekStart);
+      if (snap) {                       // 云端抖动：先用上次的缓存把看板撑起来
+        state.weekRows = snap.rows;
+        state.weekRowsError = null;
+        state.weekRowsStaleAt = snap.t;
+      } else {
+        state.weekRows = [];
+        state.weekRowsError = e;
+        state.weekRowsStaleAt = 0;
+      }
+    }
+    renderClasses();
+    renderWeekStatus();
+  }
+
+  async function checkExisting() {
+    if (!state.classNo) return;
+    try {
+      const { data, error } = await db()
+        .from(TABLE)
+        .select('id,has_photo,has_record,has_sign,has_content,submitter,updated_at')
+        .eq('week_start', state.weekStart)
+        .eq('class_no', state.classNo)
+        .maybeSingle();
+      if (error) throw error;
+      state.existing = data || null;
+    } catch (e) {
+      state.existing = null;
+    }
+    updateStatusLine();
+  }
+
+  function updateStatusLine() {
+    const el = $('#submitStatus');
+    if (state.mode === 'holiday') return updateHolidayStatus();
+    if (!state.classNo) { el.className = 'status-line hidden'; return; }
+    const wk = weekLabel(new Date(state.weekStart + 'T00:00:00'));
+
+    if (state.existing) {
+      const has = [];
+      if (state.existing.has_content) has.push('教育内容');
+      if (state.existing.has_photo) has.push('班会照片');
+      if (state.existing.has_sign) has.push('签名表');
+      if (state.existing.has_record) has.push('班会记录');
+      const t = state.existing.updated_at ? new Date(state.existing.updated_at) : null;
+      const when = t ? (t.getMonth() + 1) + '月' + t.getDate() + '日 ' + pad2(t.getHours()) + ':' + pad2(t.getMinutes()) : '';
+      el.className = 'status-line';
+      el.innerHTML = '✅ <span><b>' + state.classNo + '</b> ' + wk + '已提交' +
+        (has.length ? '（' + has.join('、') + '）' : '') +
+        (when ? '　' + when : '') +
+        (state.existing.submitter ? '　提交人：' + escapeHtml(state.existing.submitter) : '') +
+        '<br><span style="opacity:.8">传错了？重新选择本班，只上传传错的那一格再提交即可覆盖，其余材料自动保留</span></span>';
+      return;
+    }
+
+    el.className = 'status-line warn';
+    el.innerHTML = '⏳ <span><b>' + state.grade + ' ' + state.classNo + '</b> ' + wk + '还未提交，请上传四项材料（教育内容截图、班会照片、学生签名表、班会记录）后提交。</span>';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  /* ---------- 图片处理 ---------- */
+  function loadImageEl(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('图片读取失败，可能是格式不支持（如 iPhone 的 HEIC 原图）。建议改用「拍照」拍摄，或选择 JPG 照片上传'));
+      img.src = src;
+    });
+  }
+
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(new Error('文件读取失败'));
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function compressToDataUrl(file) {
+    const t = (file.type || '').toLowerCase();
+    if (!/^image\//.test(t)) throw new Error('这不是图片文件，请重新选择照片');
+    if (/heic|heif|avif/.test(t)) throw new Error('该图片为 HEIC/HEIF 格式，手机暂不支持。请点「拍照」直接拍，或在相册里选 JPG 照片后再上传');
+
+    // 浏览器加载图片时默认已按 EXIF 方向校正，直接绘制即可（避免手动旋转导致双重旋转）
+    const raw = await readAsDataURL(file);
+    const img = await loadImageEl(raw);
+    let w = img.naturalWidth || img.width;
+    let h = img.naturalHeight || img.height;
+    if (!w || !h) throw new Error('图片尺寸异常');
+
+    const scale = Math.min(1, MAX_SIDE / Math.max(w, h));
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+
+    let out = canvas.toDataURL('image/jpeg', JPEG_Q);
+    if (out.length > 900 * 1024) out = canvas.toDataURL('image/jpeg', 0.6);
+    if (out.length > 1400 * 1024) throw new Error('图片过大，请选择清晰度较低的图片');
+    return { dataUrl: out, w: w, h: h };
+  }
+
+  let pendingCtx = null;
+
+  function onUploadBoxClick(box, ev) {
+    if (ev.target.dataset && ev.target.dataset.clear) return;
+    if (box.dataset.htarget === 'holiday') {
+      pendingCtx = { type: 'holiday', item: box.dataset.item, slot: box.dataset.slot };
+    } else {
+      pendingCtx = { type: 'weekly', kind: box.dataset.kind };
+    }
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    if (isTouch) $('#sheet').classList.remove('hidden');
+    else $('#fileInput').click();
+  }
+
+  function bindUpload() {
+    $$('.upload-box').forEach(box => {
+      box.addEventListener('click', ev => onUploadBoxClick(box, ev));
+    });
+
+    $('#sheetCamera').addEventListener('click', () => { $('#sheet').classList.add('hidden'); $('#fileInputCam').click(); });
+    $('#sheetAlbum').addEventListener('click', () => { $('#sheet').classList.add('hidden'); $('#fileInput').click(); });
+    $('#sheetCancel').addEventListener('click', () => $('#sheet').classList.add('hidden'));
+    $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') $('#sheet').classList.add('hidden'); });
+
+    async function handleFile(file) {
+      if (!file || !pendingCtx) return;
+      const ctx = pendingCtx;
+      const WK_LABELS = { content: '教育内容截图', photo: '班会照片', record: '班会记录', sign: '学生签名表' };
+      const box = ctx.type === 'weekly'
+        ? (ctx.kind === 'photo' ? $('#boxPhoto') : ctx.kind === 'record' ? $('#boxRecord') : ctx.kind === 'sign' ? $('#boxSign') : $('#boxContent'))
+        : null;
+      try {
+        toast('正在处理图片…');
+        const res = await compressToDataUrl(file);
+        if (ctx.type === 'weekly') {
+          if (ctx.kind === 'photo') state.photo = res;
+          else if (ctx.kind === 'record') state.record = res;
+          else if (ctx.kind === 'sign') state.sign = res;
+          else state.content = res;
+          paintBox(box, res.dataUrl, WK_LABELS[ctx.kind] || '');
+          toast('图片已就绪');
+        } else {
+          if (!state.holiday.draft[ctx.item]) state.holiday.draft[ctx.item] = {};
+          state.holiday.draft[ctx.item][ctx.slot] = res.dataUrl;
+          renderHolidayItems();
+          updateStatusLine();
+          renderClasses();
+          toast('图片已就绪');
+        }
+      } catch (e) {
+        toast(e.message || '图片处理失败', true);
+      }
+    }
+
+    ['#fileInput', '#fileInputCam'].forEach(sel => {
+      $(sel).addEventListener('change', function () {
+        const f = this.files && this.files[0];
+        this.value = '';
+        handleFile(f);
+      });
+    });
+
+    $$('.ub-clear').forEach(btn => {
+      btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        const kind = btn.dataset.clear;
+        if (kind === 'photo') { state.photo = null; resetBox($('#boxPhoto')); }
+        else if (kind === 'record') { state.record = null; resetBox($('#boxRecord')); }
+        else if (kind === 'sign') { state.sign = null; resetBox($('#boxSign')); }
+        else { state.content = null; resetBox($('#boxContent')); }
+      });
+    });
+  }
+
+  function bindHolidayUpload() {
+    $$('.upload-box[data-htarget="holiday"]').forEach(box => {
+      box.addEventListener('click', ev => onUploadBoxClick(box, ev));
+    });
+    $$('.upload-box[data-htarget="holiday"] .ub-clear').forEach(btn => {
+      btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        const item = btn.dataset.item, slot = btn.dataset.slot;
+        if (state.holiday.draft[item]) state.holiday.draft[item][slot] = null;
+        renderHolidayItems();
+        updateStatusLine();
+        renderClasses();
+      });
+    });
+  }
+
+  function paintBox(box, dataUrl, label) {
+    let img = box.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      box.insertBefore(img, box.firstChild);
+    }
+    img.src = dataUrl;
+    box.classList.add('filled');
+    const badge = box.querySelector('.ub-badge');
+    badge.textContent = label;
+    badge.classList.remove('hidden');
+  }
+
+  function resetBox(box) {
+    const img = box.querySelector('img');
+    if (img) img.remove();
+    box.classList.remove('filled');
+    box.querySelector('.ub-badge').classList.add('hidden');
+  }
+
+  /* =========================================================
+     4.6 本机草稿：提交失败（网络断/云服务卡住）也不白传
+     ========================================================= */
+  const DRAFT_DB = 'jtsz_drafts', DRAFT_STORE = 'items';
+  const FIELD_BOX = { content: '#boxContent', photo: '#boxPhoto', sign: '#boxSign', record: '#boxRecord' };
+  const FIELD_LABEL = { content: '教育内容截图', photo: '班会照片', sign: '学生签名表', record: '班会记录' };
+  let draftCache = [];
+
+  function draftOpen() {
+    return new Promise((res, rej) => {
+      if (!window.indexedDB) return rej(new Error('浏览器不支持本地存储'));
+      const req = indexedDB.open(DRAFT_DB, 1);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains(DRAFT_STORE)) d.createObjectStore(DRAFT_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  async function draftPut(item) {
+    try {
+      const d = await draftOpen();
+      await new Promise((res, rej) => {
+        const tx = d.transaction(DRAFT_STORE, 'readwrite');
+        tx.objectStore(DRAFT_STORE).put(item);
+        tx.oncomplete = res;
+        tx.onerror = () => rej(tx.error);
+      });
+      renderDraftBar();
+      return true;
+    } catch (e) { console.warn('草稿保存失败', e); return false; }
+  }
+
+  async function draftAll() {
+    try {
+      const d = await draftOpen();
+      return await new Promise((res, rej) => {
+        const tx = d.transaction(DRAFT_STORE, 'readonly');
+        const r = tx.objectStore(DRAFT_STORE).getAll();
+        r.onsuccess = () => res(r.result || []);
+        r.onerror = () => rej(r.error);
+      });
+    } catch (e) { return []; }
+  }
+
+  async function draftDel(id) {
+    try {
+      const d = await draftOpen();
+      await new Promise(res => {
+        const tx = d.transaction(DRAFT_STORE, 'readwrite');
+        tx.objectStore(DRAFT_STORE).delete(id);
+        tx.oncomplete = res; tx.onerror = res;
+      });
+      renderDraftBar();
+    } catch (e) {}
+  }
+
+  async function renderDraftBar() {
+    const bar = $('#draftBar');
+    if (!bar) return;
+    draftCache = await draftAll();
+    if (!draftCache.length) { bar.classList.add('hidden'); return; }
+    bar.classList.remove('hidden');
+    $('#draftN').textContent = draftCache.length;
+    const list = $('#draftList');
+    list.innerHTML = '';
+    draftCache.sort((a, b) => b.t - a.t).forEach(d => {
+      const n = ['content', 'photo', 'sign', 'record'].filter(k => d.fields && d.fields[k]).length;
+      const el = document.createElement('div');
+      el.className = 'draft-item';
+      el.innerHTML = d.grade + ' ' + d.cls + '<span>' + weekLabel(new Date(d.week + 'T00:00:00'))
+        + ' · ' + n + ' 项 · ' + snapTimeText(d.t) + '</span>';
+      el.addEventListener('click', () => loadDraft(d));
+      list.appendChild(el);
+    });
+  }
+
+  async function loadDraft(d) {
+    if (state.mode !== 'weekly') setSubmitMode('weekly');
+    state.weekStart = d.week;
+    state.grade = d.grade;
+    state.classNo = d.cls;
+    state.existing = null;
+    state.content = state.photo = state.sign = state.record = null;
+    Object.keys(FIELD_BOX).forEach(k => {
+      const box = $(FIELD_BOX[k]);
+      if (!box) return;
+      if (d.fields && d.fields[k]) {
+        state[k] = { dataUrl: d.fields[k] };
+        paintBox(box, d.fields[k], FIELD_LABEL[k]);
+      } else {
+        resetBox(box);
+      }
+    });
+    if (d.submitter && $('#submitter') && !$('#submitter').value.trim()) $('#submitter').value = d.submitter;
+    renderWeekBanner();
+    buildTeacherWeekOptions();
+    renderGrades();
+    renderClasses();
+    updateStatusLine();
+    await checkExisting();
+    const t = $('#weekUploadCard');
+    if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.pageYOffset - 70, behavior: 'smooth' });
+    toast('已载入草稿，确认无误后点“提交”');
+  }
+
+  /* =========================================================
+     4.7 后台一键自检
+     ========================================================= */
+  async function runSelfCheck() {
+    const box = $('#checkBody');
+    $('#checkModal').classList.remove('hidden');
+    box.innerHTML = '<div class="ck-dim">正在检测…</div>';
+    const lines = [];
+
+    // 1. 云服务连通性 + 延迟（轻量查询，不算数据量）
+    const t0 = performance.now();
+    let cloudOk = false, errMsg = '';
+    try {
+      const { error } = await db().from(TABLE).select('id').limit(1);
+      if (error) throw error;
+      cloudOk = true;
+    } catch (e) { errMsg = explainErr(e); }
+    const lat = Math.round(performance.now() - t0);
+    lines.push(cloudOk
+      ? '<div class="ck-ok">✅ 云服务连接正常（' + lat + ' ms）</div>'
+      : '<div class="ck-bad">❌ 云服务无响应（' + lat + ' ms 后失败）：' + escapeHtml(errMsg) + '</div>');
+
+    // 2. 当前周次数据
+    if (cloudOk) {
+      try {
+        const { data, error } = await db().from(TABLE)
+          .select('grade,class_no,has_content,has_photo,has_sign,has_record,updated_at')
+          .eq('week_start', state.adminWeek);
+        if (error) throw error;
+        const rows = data || [];
+        const full = rows.filter(r => r.has_content && r.has_photo && r.has_sign && r.has_record).length;
+        let latest = '';
+        rows.forEach(r => { if (r.updated_at && r.updated_at > latest) latest = r.updated_at; });
+        const mon2 = new Date(state.adminWeek + 'T00:00:00');
+        lines.push('<div>📄 ' + weekLabel(mon2) + '：已交 ' + rows.length + ' 班，四项齐全 ' + full + ' 班</div>');
+        lines.push('<div>🕒 该周最近一次提交：' + (latest ? new Date(latest).toLocaleString('zh-CN') : '暂无') + '</div>');
+      } catch (e) {
+        lines.push('<div class="ck-bad">⚠️ 读取本周数据失败：' + escapeHtml(explainErr(e)) + '</div>');
+      }
+    }
+
+    // 3. 本地缓存与草稿
+    const s1 = loadSnapshot('admin', state.adminWeek);
+    const s2 = loadSnapshot('week', state.weekStart);
+    lines.push('<div class="ck-dim">💾 本地缓存：后台 ' + (s1 ? snapTimeText(s1.t) : '无') + '　看板 ' + (s2 ? snapTimeText(s2.t) : '无') + '</div>');
+    const drafts = await draftAll();
+    lines.push('<div class="ck-dim">📦 本机草稿：' + (drafts.length ? drafts.length + ' 份待补传' : '无') + '</div>');
+
+    // 4. 环境
+    const wechat = /MicroMessenger/i.test(navigator.userAgent);
+    lines.push('<div class="ck-dim">🌐 网络：' + (navigator.onLine ? '在线' : '离线') + '　浏览器：' + (wechat ? '微信内置' : '系统浏览器')
+      + '　时间：' + new Date().toLocaleString('zh-CN') + '</div>');
+    box.innerHTML = lines.join('');
+  }
+
+  /* ---------- 提交 ---------- */
+  async function submit() {
+    if (state.mode === 'holiday') return submitHoliday();
+    if (!state.classNo) return toast('请先选择班级', true);
+    const needBoth = !state.existing;
+    if (needBoth && (!state.content || !state.photo || !state.sign || !state.record)) {
+      return toast('请上传四项材料：教育内容截图、班会照片、学生签名表、班会记录', true);
+    }
+    if (!state.content && !state.photo && !state.record && !state.sign) {
+      return toast('没有新的图片可提交', true);
+    }
+
+    const submitter = $('#submitter').value.trim() || null;
+
+    // 先把这次的图片落到本机草稿：断网、云服务卡住、页面被杀都不至于白传一遍
+    const draftId = state.weekStart + '|' + state.grade + '|' + state.classNo;
+    const draftFields = {};
+    ['content', 'photo', 'sign', 'record'].forEach(k => { if (state[k] && state[k].dataUrl) draftFields[k] = state[k].dataUrl; });
+    const hasDraft = Object.keys(draftFields).length > 0;
+    if (hasDraft) {
+      await draftPut({ id: draftId, week: state.weekStart, grade: state.grade, cls: state.classNo, submitter: submitter, t: Date.now(), fields: draftFields });
+    }
+
+    if (!(await waitCloud(6000))) {
+      return toast('云服务未就绪：图片已存本机，网络恢复后点顶部“补传”即可', true);
+    }
+
+    const btn = $('#btnSubmit');
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = '正在上传';
+    btn.classList.add('loading-dots');
+
+    try {
+      const payload = { updated_at: new Date().toISOString() };
+      if (state.content) payload.content_data = state.content.dataUrl;
+      if (state.photo) payload.photo_data = state.photo.dataUrl;
+      if (state.record) payload.record_data = state.record.dataUrl;
+      if (state.sign) payload.sign_data = state.sign.dataUrl;
+      if (submitter) payload.submitter = submitter;
+
+      let error = null;
+      if (state.existing) {
+        const r = await db().from(TABLE).update(payload).eq('id', state.existing.id).select('id');
+        if (r.error) error = r.error;
+        else if (!r.data || !r.data.length) error = new Error('更新未生效，请重试');
+      } else {
+        payload.week_start = state.weekStart;
+        payload.grade = state.grade;
+        payload.class_no = state.classNo;
+        const r = await db().from(TABLE).insert(payload).select('id');
+        if (r.error) error = r.error;
+      }
+      if (error) throw error;
+
+      if (submitter) localStorage.setItem('jtsz_submitter', submitter);
+      localStorage.setItem('jtsz_last_class', state.classNo);
+      if (hasDraft) await draftDel(draftId);
+      toast('提交成功，感谢！');
+      state.content = null;
+      state.photo = null;
+      state.record = null;
+      state.sign = null;
+      resetBox($('#boxContent'));
+      resetBox($('#boxPhoto'));
+      resetBox($('#boxSign'));
+      resetBox($('#boxRecord'));
+      await loadWeekRows();
+      await checkExisting();
+    } catch (e) {
+      toast('提交失败：' + explainErr(e) + (hasDraft ? '（图片已存在本机，网络恢复后点顶部“补传”即可）' : ''), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      btn.classList.remove('loading-dots');
+    }
+  }
+
+  /* =========================================================
+     5. 后台视图
+     ========================================================= */
+  function isAdmin() {
+    return sessionStorage.getItem('jtsz_admin') === '1';
+  }
+
+  function openAdmin() {
+    $('#viewSubmit').classList.add('hidden');
+    $('#viewAdmin').classList.remove('hidden');
+    $('#btnAdmin').textContent = '返回';
+    window.scrollTo(0, 0);
+    if (isAdmin()) {
+      $('#adminGate').classList.add('hidden');
+      $('#adminBody').classList.remove('hidden');
+      initAdmin();
+    } else {
+      $('#adminGate').classList.remove('hidden');
+      $('#adminBody').classList.add('hidden');
+    }
+  }
+
+  function closeAdmin() {
+    $('#viewAdmin').classList.add('hidden');
+    $('#viewSubmit').classList.remove('hidden');
+    $('#btnAdmin').textContent = '后台';
+    window.scrollTo(0, 0);
+  }
+
+  async function initAdmin() {
+    await loadWeekList();
+    initExportForm();
+    await loadAdminData();
+  }
+
+  async function loadWeekList() {
+    const sel = $('#weekSelect');
+    const thisMon = ymd(mondayOf(new Date()));
+    let weeks = [];
+    const completeMap = {};
+    try {
+      const { data } = await db().from(TABLE)
+        .select('week_start,has_photo,has_record,has_sign,has_content')
+        .order('week_start', { ascending: false });
+      const seen = {};
+      (data || []).forEach(r => {
+        if (!r.week_start || seen[r.week_start]) return;
+        seen[r.week_start] = 1;
+        weeks.push(r.week_start);
+        if (r.has_photo && r.has_record && r.has_sign && r.has_content) completeMap[r.week_start] = (completeMap[r.week_start] || 0) + 1;
+      });
+    } catch (e) { /* 忽略，仍显示本周 */ }
+
+    if (weeks.indexOf(thisMon) < 0) weeks.unshift(thisMon);
+    if (!state.adminWeek || weeks.indexOf(state.adminWeek) < 0) state.adminWeek = thisMon;
+
+    sel.innerHTML = '';
+    weeks.forEach(w => {
+      const d = new Date(w + 'T00:00:00');
+      const ready = completeMap[w] >= TOTAL_CLASSES;
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = '第' + weekIndexOf(d) + '周 · ' + humanRange(d) + (ready ? ' · ✅已齐全' : '');
+      sel.appendChild(opt);
+    });
+    sel.value = state.adminWeek;
+  }
+
+  async function loadAdminData() {
+    const wrap = $('#adminGridWrap');
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13.5px;padding:20px 0">加载中…</div>';
+    let rows = [];
+    let staleAt = 0;
+    try {
+      const { data, error } = await db()
+        .from(TABLE)
+        .select('id,grade,class_no,submitter,has_photo,has_record,has_sign,has_content,updated_at')
+        .eq('week_start', state.adminWeek);
+      if (error) throw error;
+      rows = data || [];
+      saveSnapshot('admin', state.adminWeek, rows);
+    } catch (e) {
+      const snap = loadSnapshot('admin', state.adminWeek);
+      if (snap) {
+        rows = snap.rows; staleAt = snap.t;      // 云端抖动：先用缓存撑住
+      } else {
+        wrap.innerHTML = '<div class="adm-retry">⚠️ 加载失败：' + escapeHtml(explainErr(e))
+          + '<br><button type="button" id="admRetry">点击重试</button></div>';
+        const b = $('#admRetry');
+        if (b) b.addEventListener('click', () => { b.textContent = '正在重试…'; b.disabled = true; loadAdminData(); });
+        return;
+      }
+    }
+
+    const byClass = {};
+    rows.forEach(r => { byClass[r.grade + '|' + r.class_no] = r; });
+
+    let done = 0, photoN = 0, recordN = 0, signN = 0, contentN = 0, completeN = 0;
+    rows.forEach(r => {
+      const hp = !!r.has_photo;   // 数据库生成列，随 photo_data/record_data/sign_data/content_data 自动维护
+      const hr = !!r.has_record;
+      const hs = !!r.has_sign;
+      const hc = !!r.has_content;
+      if (hp || hr || hs || hc) done++;
+      if (hp) photoN++;
+      if (hr) recordN++;
+      if (hs) signN++;
+      if (hc) contentN++;
+      if (hp && hr && hs && hc) completeN++;
+    });
+
+    $('#statDone').innerHTML = done + '<small>/' + TOTAL_CLASSES + '</small>';
+    $('#statContent').textContent = contentN;
+    $('#statPhoto').textContent = photoN;
+    $('#statRecord').textContent = recordN;
+    $('#statSign').textContent = signN;
+    $('#statReady').innerHTML = completeN + '<small>/' + TOTAL_CLASSES + '</small>';
+
+    renderReadyBanner(completeN);
+
+    wrap.innerHTML = '';
+    if (staleAt) {
+      const n = document.createElement('div');
+      n.className = 'ws-stale';
+      n.style.padding = '0 2px 8px';
+      n.innerHTML = '⚠️ 云服务暂时没响应，显示的是 ' + snapTimeText(staleAt) + ' 缓存的数据，可能不是最新。'
+        + '<button type="button" class="ws-stale-btn" id="admRetry2">重新获取</button>';
+      wrap.appendChild(n);
+      const rb2 = $('#admRetry2');
+      if (rb2) rb2.addEventListener('click', () => { rb2.textContent = '获取中…'; rb2.disabled = true; loadAdminData(); });
+    }
+    GRADES.forEach(g => {
+      const block = document.createElement('div');
+      block.className = 'grade-block';
+
+      const gDone = g.classes.filter(c => byClass[g.name + '|' + c] &&
+        (byClass[g.name + '|' + c].has_photo || byClass[g.name + '|' + c].has_record || byClass[g.name + '|' + c].has_sign || byClass[g.name + '|' + c].has_content)).length;
+
+      const head = document.createElement('div');
+      head.className = 'gb-head';
+      head.innerHTML = '<span>' + g.name + '</span><span class="cnt">' +
+        (gDone === g.classes.length ? '<span style="color:var(--ok)">✓ 齐了 ' : '') +
+        gDone + '/' + g.classes.length +
+        (gDone === g.classes.length ? '</span>' : '') + '</span>';
+      block.appendChild(head);
+
+      const grid = document.createElement('div');
+      grid.className = 'adm-grid';
+      g.classes.forEach(cls => {
+        const rec = byClass[g.name + '|' + cls];
+        const cell = document.createElement('div');
+        let cls2 = 'adm-cell';
+        if (rec && rec.has_photo && rec.has_record && rec.has_sign && rec.has_content) cls2 += ' done';
+        else if (rec) cls2 += ' partial';
+        cell.className = cls2;
+        cell.textContent = cls;
+        cell.addEventListener('click', () => openPhotos(g.name, cls, rec));
+        grid.appendChild(cell);
+      });
+      block.appendChild(grid);
+      wrap.appendChild(block);
+    });
+
+    const note = document.createElement('div');
+    note.className = 'footnote';
+    note.style.paddingTop = '6px';
+    note.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e8b62;vertical-align:middle"></span> 四项齐全　'
+      + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a34f;vertical-align:middle"></span> 缺材料　'
+      + '灰色 = 未提交（点击查看）';
+    wrap.appendChild(note);
+  }
+
+  function renderReadyBanner(completeN) {
+    const banner = $('#readyBanner');
+    if (completeN >= TOTAL_CLASSES) {
+      const mon = new Date(state.adminWeek + 'T00:00:00');
+      banner.classList.remove('hidden');
+      banner.innerHTML = '✅ <b>' + weekLabel(mon) + '（' + humanRange(mon) + '）</b> 材料已齐全，'
+        + TOTAL_CLASSES + '/' + TOTAL_CLASSES + ' 班四项齐全（教育内容截图＋班会照片＋学生签名表＋班会记录），可预览打印或下载汇总 Word。'
+        + '<button class="rb-btn" id="rbDownload">🖨 预览并打印</button>';
+      $('#rbDownload').addEventListener('click', previewWeek);
+      const pv = $('#btnPreview');
+      pv.textContent = '✅ 预览 / 打印（已齐全）';
+      pv.classList.add('ready');
+    } else {
+      banner.classList.add('hidden');
+      banner.innerHTML = '';
+      const pv = $('#btnPreview');
+      pv.textContent = '预览 / 打印';
+      pv.classList.remove('ready');
+    }
+  }
+
+  async function openPhotos(grade, cls, rec) {
+    const modal = $('#modal');
+    $('#modalTitle').textContent = grade + ' ' + cls + ' 班';
+    const box = $('#modalImgs');
+    box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0">加载中…</div>';
+    modal.classList.remove('hidden');
+
+    try {
+      const { data, error } = await db()
+        .from(TABLE)
+        .select('content_data,photo_data,sign_data,record_data,submitter,updated_at')
+        .eq('week_start', state.adminWeek)
+        .eq('class_no', cls)
+        .maybeSingle();
+      if (error) throw error;
+
+      if (!data) {
+        box.innerHTML = '<div style="grid-column:1/-1" class="none">该班本周尚未提交</div>';
+        return;
+      }
+
+      const items = [
+        { label: '① 教育内容截图', field: 'content_data', src: data.content_data },
+        { label: '② 班会照片', field: 'photo_data', src: data.photo_data },
+        { label: '③ 学生签名表', field: 'sign_data', src: data.sign_data },
+        { label: '④ 班会记录', field: 'record_data', src: data.record_data }
+      ];
+
+      const help = '<div class="m-help">传错材料？让班主任<b>重新选择本班，只上传传错的那一格再提交</b>即可覆盖，其余三项自动保留。<br>管理员可在此逐项清空，或删除整条错误提交（如传错班级 / 选错周次）。</div>';
+      const figs = items.map(it => {
+        const inner = it.src
+          ? '<img src="' + it.src + '" alt="' + it.label + '">'
+          : '<div class="none">未上传</div>';
+        return '<figure><figcaption>' + it.label + '</figcaption>' + inner
+          + '<div class="m-fig-act"><button type="button" data-clear-field="' + it.field + '" data-label="' + escapeAttr(it.label) + '"'
+          + (it.src ? '' : ' disabled') + '>清空此项</button></div></figure>';
+      }).join('');
+      const foot = '<div class="m-foot"><span class="info">提交人：' + escapeHtml(data.submitter || '未填') + '</span>'
+        + '<button type="button" id="btnDelWeekSub">删除本班本次全部提交</button></div>';
+
+      box.innerHTML = help + figs + foot;
+
+      $$('#modalImgs [data-clear-field]').forEach(btn => {
+        btn.addEventListener('click', () => clearWeekField(grade, cls, btn.dataset.clearField, btn.dataset.label, items, btn));
+      });
+      const del = $('#btnDelWeekSub');
+      if (del) del.addEventListener('click', () => deleteWeekSub(grade, cls));
+    } catch (e) {
+      box.innerHTML = '<div style="grid-column:1/-1" class="none">加载失败：' + escapeHtml(explainErr(e)) + '</div>';
+    }
+  }
+
+  // 管理员纠错：清空某一项材料
+  async function clearWeekField(grade, cls, field, label, items, btn) {
+    const othersEmpty = items.filter(i => i.field !== field).every(i => !i.src);
+    const tip = othersEmpty
+      ? '确定清空「' + label + '」吗？\n\n这是该班唯一有内容的材料，清空后整条提交记录会被删除。'
+      : '确定清空 ' + grade + ' ' + cls + ' 班本次提交的「' + label + '」吗？\n\n清空后此项变为未提交，需班主任重新上传；其余三项不受影响。';
+    if (!confirm(tip)) return;
+    btn.disabled = true;
+    try {
+      let r;
+      if (othersEmpty) {
+        r = await db().from(TABLE).delete().eq('week_start', state.adminWeek).eq('grade', grade).eq('class_no', cls);
+      } else {
+        r = await db().from(TABLE).update({ [field]: null, updated_at: new Date().toISOString() })
+          .eq('week_start', state.adminWeek).eq('grade', grade).eq('class_no', cls).select('id');
+        if (!r.error && (!r.data || !r.data.length)) r.error = new Error('未找到该记录，请刷新后重试');
+      }
+      if (r.error) throw r.error;
+      toast(othersEmpty ? '已删除该班本次提交' : '已清空「' + label + '」');
+      $('#modal').classList.add('hidden');
+      await loadAdminData();
+    } catch (e) {
+      toast('操作失败：' + explainErr(e), true);
+      btn.disabled = false;
+    }
+  }
+
+  // 管理员纠错：删除整条提交（传错班级 / 选错周次）
+  async function deleteWeekSub(grade, cls) {
+    const tip = '⚠️ 确定删除 ' + grade + ' ' + cls + ' 班\n【' + state.adminWeek + ' 这一周】的全部提交记录吗？\n\n四项材料会一起删除，且不可恢复。此操作用于清理传错班级 / 选错周次产生的多余记录。';
+    if (!confirm(tip)) return;
+    const btn = $('#btnDelWeekSub'); if (btn) btn.disabled = true;
+    try {
+      const r = await db().from(TABLE).delete().eq('week_start', state.adminWeek).eq('grade', grade).eq('class_no', cls);
+      if (r.error) throw r.error;
+      toast('已删除该班本次提交');
+      $('#modal').classList.add('hidden');
+      await loadAdminData();
+    } catch (e) {
+      toast('删除失败：' + explainErr(e), true);
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  /* ---------- 导出 Word ---------- */
+  // 导出名称：金田三中2026年秋第11周安全教育主题班会（周次取自所选收集周）
+  function docNameFor(mon) {
+    const m = mon.getMonth() + 1;
+    const spring = (m >= 2 && m <= 8);           // 2—8 月为春季学期，9—1 月为秋季学期
+    const y = (m === 1) ? mon.getFullYear() - 1 : mon.getFullYear();
+    return '金田三中' + y + '年' + (spring ? '春' : '秋') + weekLabel(mon) + '安全教育主题班会';
+  }
+
+  // 自动填充标题：用户手动改过就不再覆盖
+  function applyAutoDocTitle(force) {
+    const inp = $('#docTitle');
+    if (!inp) return;
+    if (!force && inp.dataset.touched === '1' && inp.value.trim()) return;
+    const w = state.adminWeek || ymd(mondayOf(new Date()));
+    inp.value = docNameFor(new Date(w + 'T00:00:00'));
+    inp.dataset.touched = '0';
+  }
+
+  function initExportForm() {
+    const d = new Date();
+    $('#docDate').value = ymd(d);
+    applyAutoDocTitle(true);
+  }
+
+  function dataUrlToBytes(dataUrl) {
+    const idx = dataUrl.indexOf(',');
+    const base64 = dataUrl.slice(idx + 1);
+    const bin = atob(base64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  // 拉取某一周的导出数据（预览与 Word 共用）
+  async function collectWeekData(weekStart, scope) {
+    const grades = scope === 'all' ? GRADES : GRADES.filter(g => g.name === scope);
+    if (!grades.length) throw new Error('导出范围无效');
+    const map = {};
+    for (const g of grades) {
+      const { data, error } = await db()
+        .from(TABLE)
+        .select('grade,class_no,content_data,photo_data,sign_data,record_data')
+        .eq('week_start', weekStart)
+        .eq('grade', g.name);
+      if (error) throw error;
+      (data || []).forEach(r => { map[r.grade + '|' + r.class_no] = r; });
+    }
+    return { grades: grades, map: map };
+  }
+
+  async function buildDocx(weekStart, scope, titleText, dateText, preloaded) {
+    const D = window.docx;
+    if (!D) throw new Error('文档生成组件未加载，请刷新页面重试');
+
+    // 拉取数据
+    const pre = preloaded || await collectWeekData(weekStart, scope);
+    const grades = pre.grades;
+    const map = pre.map;
+
+    const children = [];
+
+    // 标题
+    children.push(new D.Paragraph({
+      alignment: D.AlignmentType.CENTER,
+      spacing: { after: 100 },
+      children: [new D.TextRun({ text: titleText, bold: true, size: 40, font: '黑体' })]
+    }));
+    // 日期
+    const dd = dateText ? new Date(dateText + 'T00:00:00') : new Date();
+    children.push(new D.Paragraph({
+      alignment: D.AlignmentType.CENTER,
+      spacing: { after: 120 },
+      children: [new D.TextRun({
+        text: dd.getFullYear() + '.' + (dd.getMonth() + 1) + '.' + dd.getDate(),
+        size: 20, font: '宋体'
+      })]
+    }));
+
+    // 每个班级一个小节：只留一行小字班级号 + 2×2 四张图，不写材料名称，图尽量放大
+    const COL = [5103, 5103];       // twips：两列各约 9cm
+    const PAD = 40;                 // 单元格左右内边距（twips）
+    const IMG_MAX_W = Math.floor((COL[0] - PAD * 2) / 15);   // 约 335px，正好撑满单元格
+    const IMG_MAX_H = 410;          // 每班独占一页，两行图各约 10.8cm，纵向照片能放满
+    const bd = { style: D.BorderStyle.SINGLE, size: 4, color: '808080' };
+    const KEYS = ['content_data', 'photo_data', 'sign_data', 'record_data'];
+
+    // 单个图片格：只有图（缺图时给一个极小的灰色提示）
+    async function itemCell(key, rec) {
+      const src = rec ? rec[key] : null;
+      const kids = [];
+      if (src) {
+        try {
+          const bytes = dataUrlToBytes(src);
+          const mime = src.slice(5, src.indexOf(';'));
+          const imgType = mime === 'image/png' ? 'png' : 'jpg';
+          const img = await loadImageEl(src);
+          const iw = img.naturalWidth, ih = img.naturalHeight;
+          const sc = Math.min(IMG_MAX_W / iw, IMG_MAX_H / ih);
+          kids.push(new D.Paragraph({
+            alignment: D.AlignmentType.CENTER,
+            spacing: { before: 0, after: 0 },
+            children: [new D.ImageRun({ data: bytes, type: imgType, transformation: { width: Math.round(iw * sc), height: Math.round(ih * sc) } })]
+          }));
+        } catch (e) {
+          kids.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: '（图片读取失败）', size: 18, color: '999999', font: '宋体' })] }));
+        }
+      } else {
+        kids.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: '未提交', size: 18, color: 'BFBFBF', font: '宋体' })] }));
+      }
+      return new D.TableCell({
+        width: { size: COL[0], type: D.WidthType.DXA },
+        verticalAlign: D.VerticalAlign.CENTER,
+        margins: { top: PAD, bottom: PAD, left: PAD, right: PAD },
+        children: kids
+      });
+    }
+
+    let firstPage = true;
+    for (const g of grades) {
+      // 年级标题（跨页时另起一页）
+      children.push(new D.Paragraph({
+        spacing: { before: 120, after: 60 },
+        pageBreakBefore: !firstPage,
+        keepNext: true,
+        children: [new D.TextRun({ text: g.name + '：', bold: true, size: 24, font: '宋体' })]
+      }));
+      firstPage = false;
+
+      let firstInGrade = true;
+      for (const cls of g.classes) {
+        const rec = map[g.name + '|' + cls];
+        // 班级号：一行小字，独占一页的开头，紧跟表格
+        children.push(new D.Paragraph({
+          spacing: { before: 100, after: 40 },
+          pageBreakBefore: !firstInGrade,
+          keepNext: true,
+          children: [new D.TextRun({ text: cls, bold: true, size: 20, font: '宋体' })]
+        }));
+        firstInGrade = false;
+        const rows = [];
+        rows.push(new D.TableRow({ children: [await itemCell(KEYS[0], rec), await itemCell(KEYS[1], rec)] }));
+        rows.push(new D.TableRow({ children: [await itemCell(KEYS[2], rec), await itemCell(KEYS[3], rec)] }));
+
+        children.push(new D.Table({
+          width: { size: COL[0] + COL[1], type: D.WidthType.DXA },
+          columnWidths: COL,
+          borders: {
+            top: bd, bottom: bd, left: bd, right: bd,
+            insideHorizontal: bd, insideVertical: bd
+          },
+          rows: rows
+        }));
+      }
+    }
+
+    const doc = new D.Document({
+      styles: {
+        default: {
+          document: { run: { font: '宋体', size: 24 } }
+        }
+      },
+      sections: [{
+        properties: {
+          page: {
+            size: { width: D.convertMillimetersToTwip(210), height: D.convertMillimetersToTwip(297) },
+            margin: {
+              top: D.convertMillimetersToTwip(18),
+              bottom: D.convertMillimetersToTwip(18),
+              left: D.convertMillimetersToTwip(15),
+              right: D.convertMillimetersToTwip(15)
+            }
+          }
+        },
+        children: children
+      }]
+    });
+
+    return await D.Packer.toBlob(doc);
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  async function doExport() {
+    const btn = $('#btnExport');
+    btn.disabled = true;
+    const old = btn.textContent;
+    btn.textContent = '正在生成';
+    btn.classList.add('loading-dots');
+
+    try {
+      const title = $('#docTitle').value.trim() || docNameFor(new Date(state.adminWeek + 'T00:00:00'));
+      const dateText = $('#docDate').value || ymd(new Date());
+      const scope = $('#docScope').value;
+
+      const chk = await db().from(TABLE).select('id').eq('week_start', state.adminWeek).limit(1);
+      if (chk.error) throw chk.error;
+      if (!chk.data || !chk.data.length) {
+        toast('该收集期还没有任何提交记录', true);
+        return;
+      }
+
+      const blob = await buildDocx(state.adminWeek, scope, title, dateText);
+      downloadBlob(blob, title + '.docx');
+      toast('文档已生成，请查看下载文件夹');
+    } catch (e) {
+      toast('生成失败：' + (e.message || e), true);
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old;
+      btn.classList.remove('loading-dots');
+    }
+  }
+
+  /* =========================================================
+     4.5 打印预览（先预览，满意再打印 / 下载）
+     ========================================================= */
+  let pvCtx = null;
+
+  function pvEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+  function pvDateText(dateText) {
+    const dd = dateText ? new Date(dateText + 'T00:00:00') : new Date();
+    return dd.getFullYear() + '.' + (dd.getMonth() + 1) + '.' + dd.getDate();
+  }
+
+  // 每周汇总：每班一页，2×2 四张图，只留班级号
+  function weekPreviewHtml(pre, titleText, dateText) {
+    const KEYS = ['content_data', 'photo_data', 'sign_data', 'record_data'];
+    let html = '';
+    let firstPage = true;
+    const dateStr = pvDateText(dateText);
+    for (const g of pre.grades) {
+      let firstInGrade = true;
+      for (const cls of g.classes) {
+        const rec = pre.map[g.name + '|' + cls];
+        html += '<div class="pv-page">';
+        if (firstPage) {
+          html += '<div class="pv-doc-title">' + pvEsc(titleText) + '</div>'
+            + '<div class="pv-doc-date">' + dateStr + '</div>';
+          firstPage = false;
+        }
+        if (firstInGrade) {
+          html += '<div class="pv-grade">' + pvEsc(g.name) + '：</div>';
+          firstInGrade = false;
+        }
+        html += '<div class="pv-cls">' + pvEsc(cls) + '</div>';
+        html += '<table class="pv-grid"><tbody>';
+        for (let r = 0; r < 2; r++) {
+          html += '<tr>';
+          for (let c = 0; c < 2; c++) {
+            const src = rec ? rec[KEYS[r * 2 + c]] : null;
+            html += '<td>' + (src ? '<img src="' + src + '" alt="">' : '<span class="miss">未提交</span>') + '</td>';
+          }
+          html += '</tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+    }
+    return html;
+  }
+
+  // 节假日专项：按 材料项 → 年级 → 班级 的连续表格
+  function holidayPreviewHtml(pre, titleText, dateText) {
+    const dateStr = pvDateText(dateText);
+    let html = '<div class="pv-page flow">'
+      + '<div class="pv-doc-title">' + pvEsc(titleText) + '</div>'
+      + '<div class="pv-doc-date">' + dateStr + '</div>';
+    for (const g of pre.grades) {
+      html += '<div class="pv-grade">' + pvEsc(g.name) + '：</div>';
+      for (const it of pre.items) {
+        const ncol = (it.slots || []).length || 1;
+        const head = ncol === 1 ? '<col style="width:8.8%"><col style="width:91.2%">'
+          : '<col style="width:8.8%"><col style="width:45.6%"><col style="width:45.6%">';
+        const maxH = ncol === 1 ? '84mm' : '68mm';
+        html += '<table class="pv-hgrid"><colgroup>' + head + '</colgroup><tbody>';
+        for (const cls of g.classes) {
+          const rec = pre.subsMap[g.name + '|' + cls];
+          const m = rec ? (rec.materials || {}) : {};
+          html += '<tr><td class="c">' + pvEsc(cls) + '</td>';
+          for (const s of (it.slots || [])) {
+            const src = (m[it.key] && m[it.key][s]) ? m[it.key][s] : null;
+            html += '<td>' + (src
+              ? '<img src="' + src + '" alt="" style="max-height:' + maxH + '">'
+              : '<span class="miss">未提交</span>') + '</td>';
+          }
+          html += '</tr>';
+        }
+        html += '</tbody></table><div class="pv-gap"></div>';
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function fitPreview() {
+    const stage = $('#pvStage'), body = $('#pvBody');
+    if (!stage || !stage.firstElementChild) return;
+    stage.style.zoom = '1';
+    const pw = stage.firstElementChild.getBoundingClientRect().width || 680;
+    const avail = Math.max(200, body.clientWidth - 20);
+    const z = Math.min(1, avail / pw);
+    stage.style.zoom = z;
+    stage.style.width = '100%';
+  }
+
+  function openPreview(ctx) {
+    pvCtx = ctx;
+    const stage = $('#pvStage');
+    stage.innerHTML = ctx.html || '<div class="pv-empty">没有可预览的内容</div>';
+    $('#pvTitleText').textContent = ctx.title || '打印预览';
+    $('#pvTitleSub').textContent = ctx.sub || '';
+    $('#previewOverlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    $('#pvBody').scrollTop = 0;
+    fitPreview();
+  }
+
+  function closePreview() {
+    $('#previewOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
+    $('#pvStage').innerHTML = '';
+    pvCtx = null;
+  }
+
+  function printPreview() {
+    if (!pvCtx) return;
+    if (typeof window.print !== 'function') {
+      toast('当前浏览器不支持直接打印，请下载 Word 后打印', true);
+      return;
+    }
+    const stage = $('#pvStage');
+    const z = stage.style.zoom;
+    stage.style.zoom = '1';       // 打印前复位缩放，保证按 A4 分页
+    try { window.print(); } catch (e) { toast('调起打印失败：' + (e.message || e), true); }
+    setTimeout(() => { stage.style.zoom = z; fitPreview(); }, 300);
+  }
+
+  function pvBusy(btn, on, text) {
+    if (on) { btn.dataset.old = btn.textContent; btn.textContent = text; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.old || '下载 Word'; btn.disabled = false; }
+  }
+
+  async function previewWeek() {
+    const btn = $('#btnPreview');
+    pvBusy(btn, true, '正在加载');
+    try {
+      const weekStart = state.adminWeek;
+      const title = $('#docTitle').value.trim() || docNameFor(new Date(weekStart + 'T00:00:00'));
+      const dateText = $('#docDate').value || ymd(new Date());
+      const scope = $('#docScope').value;
+
+      const chk = await db().from(TABLE).select('id').eq('week_start', weekStart).limit(1);
+      if (chk.error) throw chk.error;
+      if (!chk.data || !chk.data.length) { toast('该收集期还没有任何提交记录', true); return; }
+
+      const pre = await collectWeekData(weekStart, scope);
+      const pages = pre.grades.reduce((n, g) => n + g.classes.length, 0);
+      const mon = new Date(weekStart + 'T00:00:00');
+      openPreview({
+        kind: 'week',
+        html: weekPreviewHtml(pre, title, dateText),
+        title: title,
+        sub: weekLabel(mon) + '（' + termName(mon) + '） · ' + humanRange(mon) + ' · 共 ' + pages + ' 页（每班一页）',
+        params: { weekStart: weekStart, scope: scope, title: title, dateText: dateText },
+        pre: pre
+      });
+    } catch (e) {
+      toast('预览失败：' + (e.message || e), true);
+      console.error(e);
+    } finally { pvBusy(btn, false); }
+  }
+
+  async function previewHoliday() {
+    const cid = state.holiday.campaignId;
+    if (!cid) return toast('请选择收集任务', true);
+    const btn = $('#btnHPreview');
+    pvBusy(btn, true, '正在加载');
+    try {
+      const title = $('#hDocTitle').value.trim() || (state.holiday.campaignName || '金田三中节假日安全材料');
+      const dateText = $('#hDocDate').value || ymd(new Date());
+      const scope = $('#hDocScope').value;
+      const chk = await db().from(HOLIDAY_TABLE).select('class_no').eq('campaign_id', cid).limit(1);
+      if (chk.error) throw chk.error;
+      if (!chk.data || !chk.data.length) { toast('该任务还没有任何提交记录', true); return; }
+
+      const pre = await collectHolidayData(cid, scope);
+      const nItems = pre.items.length;
+      const nCls = pre.grades.reduce((n, g) => n + g.classes.length, 0);
+      openPreview({
+        kind: 'holiday',
+        html: holidayPreviewHtml(pre, title, dateText),
+        title: title,
+        sub: (state.holiday.campaignName || '节假日专项') + ' · ' + nItems + ' 个材料项 × ' + nCls + ' 个班',
+        params: { cid: cid, scope: scope, title: title, dateText: dateText },
+        pre: pre
+      });
+    } catch (e) {
+      toast('预览失败：' + (e.message || e), true);
+      console.error(e);
+    } finally { pvBusy(btn, false); }
+  }
+
+  async function previewDownload() {
+    if (!pvCtx) return;
+    const btn = $('#pvDownload');
+    pvBusy(btn, true, '生成中');
+    try {
+      let blob;
+      if (pvCtx.kind === 'week') {
+        blob = await buildDocx(pvCtx.params.weekStart, pvCtx.params.scope, pvCtx.params.title, pvCtx.params.dateText, pvCtx.pre);
+      } else {
+        blob = await buildHolidayDocx(pvCtx.params.cid, pvCtx.params.scope, pvCtx.params.title, pvCtx.params.dateText, pvCtx.pre);
+      }
+      downloadBlob(blob, pvCtx.params.title + '.docx');
+      toast('文档已生成，请查看下载文件夹');
+    } catch (e) {
+      toast('生成失败：' + (e.message || e), true);
+      console.error(e);
+    } finally { pvBusy(btn, false); }
+  }
+
+
+  /* =========================================================
+     5.5 节假日专项
+     ========================================================= */
+  function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+
+  function mergeMaterials(saved, draft) {
+    const out = {};
+    Object.keys(saved || {}).forEach(k => { out[k] = Object.assign({}, saved[k]); });
+    Object.keys(draft || {}).forEach(k => { out[k] = Object.assign(out[k] || {}, draft[k]); });
+    return out;
+  }
+
+  // 某班完成情况：done=所有项所有位都已传；partial=部分；''=无
+  function holidayClassStatus(cls) {
+    const rec = state.holiday.subs.find(s => s.class_no === cls && s.grade === state.grade);
+    const saved = rec ? (rec.materials || {}) : {};
+    const merged = mergeMaterials(saved, cls === state.classNo ? state.holiday.draft : {});
+    let allDone = state.holiday.items.length > 0;
+    let anyDone = false;
+    for (const it of state.holiday.items) {
+      const complete = it.slots.every(s => merged[it.key] && merged[it.key][s]);
+      if (complete) anyDone = true; else allDone = false;
+    }
+    if (allDone) return 'done';
+    if (anyDone) return 'partial';
+    return '';
+  }
+
+  /* ---------- 教师端模式切换 ---------- */
+  function setSubmitMode(mode) {
+    state.mode = mode;
+    $$('#submitModeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+    const weekly = mode === 'weekly';
+    $('#weekBannerCard').classList.toggle('hidden', !weekly);
+    $('#weekStatusCard').classList.toggle('hidden', !weekly);
+    $('#weekUploadCard').classList.toggle('hidden', !weekly);
+    $('#holidayBannerCard').classList.toggle('hidden', weekly);
+    $('#holidayItemsCard').classList.toggle('hidden', weekly);
+    $('#submitFootnote').innerHTML = weekly
+      ? '照片会自动压缩后上传，原图不必另行发送。<br>提交后发现传错，重新选择该班级上传即可覆盖。<br>数据长期保留，可补传往周材料；所选周四项齐全（教育内容截图＋班会照片＋学生签名表＋班会记录）后，后台才会标记“已齐全”可下载。'
+      : '照片会自动压缩后上传。<br>提交后发现传错，重新进入该班级上传即可覆盖。<br>所选任务 23 班全部材料项传齐后，后台标记“已齐全”可下载。';
+    if (!weekly) initHolidayTeacher();
+    renderGrades();
+    renderClasses();
+    if (weekly) renderWeekStatus();
+    updateStatusLine();
+  }
+
+  async function loadCampaignOptions(selId) {
+    const sel = $('#' + selId);
+    sel.innerHTML = '';
+    try {
+      const { data, error } = await db().from(CAMP_TABLE).select('id,name,period,items').order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!data || !data.length) {
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '（暂无任务，请到后台创建）';
+        sel.appendChild(opt);
+        return;
+      }
+      data.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name + (c.period ? '（' + c.period + '）' : '');
+        sel.appendChild(opt);
+      });
+      if (!state.holiday.campaignId && data.length) state.holiday.campaignId = data[0].id;
+      sel.value = state.holiday.campaignId || '';
+    } catch (e) {
+      sel.innerHTML = '<option value="">加载失败</option>';
+    }
+  }
+
+  async function initHolidayTeacher() {
+    await loadCampaignOptions('holidayCampaignSelect');
+    if (state.holiday.campaignId) await loadHolidayCampaign(state.holiday.campaignId);
+    else renderHolidayItems();
+  }
+
+  async function loadHolidayCampaign(campaignId) {
+    state.holiday.campaignId = campaignId;
+    state.holiday.draft = {};
+    state.holiday.items = [];
+    state.holiday.subs = [];
+    try {
+      const { data, error } = await db().from(CAMP_TABLE).select('name,items').eq('id', campaignId).maybeSingle();
+      if (error) throw error;
+      if (data) {
+        state.holiday.campaignName = data.name || '';
+        state.holiday.items = Array.isArray(data.items) ? data.items : [];
+      }
+      const r2 = await db().from(HOLIDAY_TABLE).select('grade,class_no,materials,submitter,updated_at').eq('campaign_id', campaignId);
+      if (r2.error) throw r2.error;
+      state.holiday.subs = r2.data || [];
+    } catch (e) {
+      toast('加载任务失败：' + explainErr(e), true);
+    }
+    renderHolidayItems();
+    renderClasses();
+  }
+
+  function renderHolidayItems() {
+    const wrap = $('#holidayItems');
+    if (!state.holiday.campaignId) { wrap.innerHTML = '<div class="class-empty">请先在上方选择收集任务</div>'; return; }
+    if (!state.holiday.items.length) { wrap.innerHTML = '<div class="class-empty">该任务未配置材料项，请到后台编辑</div>'; return; }
+
+    const rec = state.holiday.subs.find(s => s.class_no === state.classNo && s.grade === state.grade);
+    const saved = rec ? (rec.materials || {}) : {};
+    const merged = mergeMaterials(saved, state.classNo ? state.holiday.draft : {});
+
+    wrap.innerHTML = '';
+    state.holiday.items.forEach(it => {
+      const slotVals = merged[it.key] || {};
+      const itemDone = it.slots.every(s => slotVals[s]);
+      const itemPartial = !itemDone && it.slots.some(s => slotVals[s]);
+      const card = document.createElement('div');
+      card.className = 'hitem' + (itemDone ? ' done' : (itemPartial ? ' partial' : ''));
+      const slotsHtml = it.slots.map(s => {
+        const v = slotVals[s];
+        return ''
+          + '<div class="upload-box' + (v ? ' filled' : '') + '" data-htarget="holiday" data-item="' + escapeAttr(it.key) + '" data-slot="' + escapeAttr(s) + '">'
+          + (v ? '<img src="' + v + '">' : '')
+          + '<div class="ub-icon">📷</div>'
+          + '<div class="ub-label">' + escapeHtml(s) + '</div>'
+          + '<div class="ub-sub">点击拍摄或选择</div>'
+          + '<button class="ub-clear" data-hclear="1" data-item="' + escapeAttr(it.key) + '" data-slot="' + escapeAttr(s) + '">×</button>'
+          + (v ? '<div class="ub-badge">' + escapeHtml(s) + '</div>' : '')
+          + '</div>';
+      }).join('');
+      card.innerHTML = '<div class="hi-head"><span class="hi-dot"></span>' + escapeHtml(it.label) + '</div>'
+        + '<div class="hi-slots ' + (it.slots.length === 1 ? 'one' : '') + '">' + slotsHtml + '</div>';
+      wrap.appendChild(card);
+    });
+
+    bindHolidayUpload();
+  }
+
+  function updateHolidayStatus() {
+    const el = $('#submitStatus');
+    if (!state.classNo) { el.className = 'status-line hidden'; return; }
+    if (!state.holiday.campaignId) {
+      el.className = 'status-line warn';
+      el.innerHTML = '⏳ <span>请先在上方选择收集任务</span>';
+      return;
+    }
+    const rec = state.holiday.subs.find(s => s.class_no === state.classNo && s.grade === state.grade);
+    const saved = rec ? (rec.materials || {}) : {};
+    const merged = mergeMaterials(saved, state.holiday.draft);
+    const status = holidayClassStatus(state.classNo);
+    const total = state.holiday.items.length;
+    let filled = 0;
+    state.holiday.items.forEach(it => { if (it.slots.every(s => merged[it.key] && merged[it.key][s])) filled++; });
+    const t = rec ? (rec.updated_at ? new Date(rec.updated_at) : null) : null;
+    const when = t ? (t.getMonth() + 1) + '月' + t.getDate() + '日 ' + pad2(t.getHours()) + ':' + pad2(t.getMinutes()) : '';
+    if (status === 'done') {
+      el.className = 'status-line';
+      el.innerHTML = '✅ <span><b>' + state.classNo + '</b> 本任务材料已齐全'
+        + (when ? '　' + when : '') + (rec && rec.submitter ? '　提交人：' + escapeHtml(rec.submitter) : '')
+        + '<br><span style="opacity:.8">重新上传可覆盖原有内容</span></span>';
+    } else if (status === 'partial') {
+      el.className = 'status-line warn';
+      el.innerHTML = '⏳ <span><b>' + state.classNo + '</b> 已传 ' + filled + '/' + total + ' 项材料，继续上传剩余项</span>';
+    } else {
+      el.className = 'status-line warn';
+      el.innerHTML = '⏳ <span><b>' + state.grade + ' ' + state.classNo + '</b> 本任务尚未提交任何材料</span>';
+    }
+  }
+
+  async function submitHoliday() {
+    if (!state.classNo) return toast('请先选择班级', true);
+    if (!state.holiday.campaignId) return toast('请先选择收集任务', true);
+    const rec = state.holiday.subs.find(s => s.class_no === state.classNo && s.grade === state.grade);
+    const saved = rec ? (rec.materials || {}) : {};
+    const merged = mergeMaterials(saved, state.holiday.draft);
+    let any = false;
+    for (const it of state.holiday.items) for (const s of it.slots) if (merged[it.key] && merged[it.key][s]) any = true;
+    if (!any) return toast('请至少上传一项材料', true);
+
+    const btn = $('#btnSubmit'); btn.disabled = true; const oldText = btn.textContent; btn.textContent = '正在上传'; btn.classList.add('loading-dots');
+    const submitter = $('#submitter').value.trim() || null;
+    try {
+      const payload = {
+        campaign_id: state.holiday.campaignId, grade: state.grade, class_no: state.classNo,
+        materials: merged, submitter: submitter, updated_at: new Date().toISOString()
+      };
+      let error = null;
+      if (rec) {
+        const r = await db().from(HOLIDAY_TABLE).update(payload).eq('campaign_id', state.holiday.campaignId).eq('grade', state.grade).eq('class_no', state.classNo).select('class_no');
+        if (r.error) error = r.error;
+      } else {
+        const r = await db().from(HOLIDAY_TABLE).insert(payload).select('class_no');
+        if (r.error) error = r.error;
+      }
+      if (error) throw error;
+      if (submitter) localStorage.setItem('jtsz_submitter', submitter);
+      toast('提交成功，感谢！');
+      state.holiday.draft = {};
+      await loadHolidayCampaign(state.holiday.campaignId);
+      renderHolidayItems();
+      updateStatusLine();
+      renderClasses();
+    } catch (e) {
+      toast('提交失败：' + explainErr(e), true);
+    } finally {
+      btn.disabled = false; btn.textContent = oldText; btn.classList.remove('loading-dots');
+    }
+  }
+
+  /* ---------- 后台端模式切换 ---------- */
+  function setAdminMode(mode) {
+    $$('#adminModeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+    $('#weeklyAdmin').classList.toggle('hidden', mode !== 'weekly');
+    $('#holidayAdmin').classList.toggle('hidden', mode !== 'holiday');
+    if (mode === 'holiday') { initHolidayExportForm(); initHolidayAdmin(); }
+  }
+
+  function initHolidayExportForm() {
+    const d = new Date();
+    const m = d.getMonth() + 1;
+    const term = (m >= 8 || m === 1) ? '秋季学期' : '春季学期';
+    const y = (m === 1) ? d.getFullYear() - 1 : d.getFullYear();
+    $('#hDocTitle').value = '金田三中 ' + y + ' 年' + (state.holiday.campaignName || (term + '节假日')) + '安全材料';
+    $('#hDocDate').value = ymd(d);
+  }
+
+  function renderCampPresets() {
+    const wrap = $('#campPresets');
+    wrap.innerHTML = '';
+    HOLIDAY_ITEM_PRESETS.forEach(p => {
+      const lab = document.createElement('label');
+      lab.innerHTML = '<input type="checkbox" value="' + escapeAttr(p.key) + '">' + escapeHtml(p.label);
+      wrap.appendChild(lab);
+    });
+  }
+
+  async function initHolidayAdmin() {
+    renderCampPresets();
+    await loadCampaignOptions('holidayCampSelect');
+    if (state.holiday.campaignId) await loadHolidayAdminData();
+    else $('#holidayGridWrap').innerHTML = '<div class="class-empty">请选择上方收集任务查看完成度</div>';
+  }
+
+  async function createCampaign() {
+    const name = $('#campName').value.trim();
+    if (!name) return toast('请填写任务名称', true);
+    const period = $('#campPeriod').value.trim() || null;
+    const checked = $$('#campPresets input:checked');
+    const items = [];
+    checked.forEach(i => {
+      const v = i.value;
+      const preset = HOLIDAY_ITEM_PRESETS.find(p => p.key === v);
+      if (preset) items.push({ key: preset.key, label: preset.label, slots: preset.slots.slice() });
+      else items.push({ key: 'custom_' + Date.now() + '_' + items.length, label: v, slots: ['截图'] });
+    });
+    if (!items.length) return toast('请至少勾选或添加一个材料项', true);
+    const btn = $('#btnCreateCamp'); btn.disabled = true; const old = btn.textContent; btn.textContent = '创建中';
+    try {
+      const r = await db().from(CAMP_TABLE).insert({ name: name, period: period, items: items }).select('id');
+      if (r.error) throw r.error;
+      toast('任务已创建');
+      $('#campName').value = ''; $('#campPeriod').value = ''; $('#campCustom').value = '';
+      $$('#campPresets input').forEach(i => { i.checked = false; });
+      await loadCampaignOptions('holidayCampSelect');
+      if (r.data && r.data[0]) {
+        $('#holidayCampSelect').value = r.data[0].id;
+        state.holiday.campaignId = r.data[0].id;
+        await loadHolidayAdminData();
+      }
+    } catch (e) {
+      toast('创建失败：' + explainErr(e), true);
+    } finally { btn.disabled = false; btn.textContent = old; }
+  }
+
+  async function loadHolidayAdminData() {
+    const cid = state.holiday.campaignId;
+    const wrap = $('#holidayGridWrap');
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13.5px;padding:20px 0">加载中…</div>';
+    if (!cid) { wrap.innerHTML = '<div class="class-empty">请选择收集任务</div>'; return; }
+    try {
+      const { data, error } = await db().from(CAMP_TABLE).select('name,items').eq('id', cid).maybeSingle();
+      if (error) throw error;
+      if (!data) { wrap.innerHTML = '<div class="class-empty">任务不存在</div>'; return; }
+      state.holiday.campaignName = data.name || '';
+      const items = Array.isArray(data.items) ? data.items : [];
+      const r2 = await db().from(HOLIDAY_TABLE).select('grade,class_no,materials,submitter,updated_at').eq('campaign_id', cid);
+      if (r2.error) throw r2.error;
+      const subsArr = r2.data || [];
+      let ready = 0, partial = 0;
+      GRADES.forEach(g => g.classes.forEach(cls => {
+        const rec = subsArr.find(s => s.class_no === cls && s.grade === g.name);
+        const m = rec ? (rec.materials || {}) : {};
+        let all = true, any = false;
+        for (const it of items) { const c = it.slots.every(s => m[it.key] && m[it.key][s]); if (c) any = true; else all = false; }
+        if (items.length === 0) all = false;
+        if (all) ready++; else if (any) partial++;
+      }));
+      $('#hStatReady').innerHTML = ready + '<small>/' + TOTAL_CLASSES + '</small>';
+      $('#hStatPart').textContent = partial;
+      wrap.innerHTML = '';
+      GRADES.forEach(g => {
+        const block = document.createElement('div'); block.className = 'grade-block';
+        const gDone = g.classes.filter(cls => {
+          const rec = subsArr.find(s => s.class_no === cls && s.grade === g.name);
+          const m = rec ? (rec.materials || {}) : {};
+          return items.length > 0 && items.every(it => it.slots.every(s => m[it.key] && m[it.key][s]));
+        }).length;
+        const head = document.createElement('div'); head.className = 'gb-head';
+        head.innerHTML = '<span>' + g.name + '</span><span class="cnt">' + (gDone === g.classes.length ? '<span style="color:var(--ok)">✓ 齐了 ' : '') + gDone + '/' + g.classes.length + (gDone === g.classes.length ? '</span>' : '') + '</span>';
+        block.appendChild(head);
+        const grid = document.createElement('div'); grid.className = 'adm-grid';
+        g.classes.forEach(cls => {
+          const rec = subsArr.find(s => s.class_no === cls && s.grade === g.name);
+          const m = rec ? (rec.materials || {}) : {};
+          let all = true, any = false;
+          for (const it of items) { const c = it.slots.every(s => m[it.key] && m[it.key][s]); if (c) any = true; else all = false; }
+          const cell = document.createElement('div');
+          let c2 = 'adm-cell';
+          if (items.length > 0 && all) c2 += ' done'; else if (any) c2 += ' partial';
+          cell.className = c2; cell.textContent = cls;
+          cell.addEventListener('click', () => openHolidayPhotos(g.name, cls, rec, items));
+          grid.appendChild(cell);
+        });
+        block.appendChild(grid); wrap.appendChild(block);
+      });
+      const note = document.createElement('div'); note.className = 'footnote'; note.style.paddingTop = '6px';
+      note.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2e8b62;vertical-align:middle"></span> 全齐　'
+        + '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a34f;vertical-align:middle"></span> 部分　'
+        + '灰色 = 未提交（点击查看）';
+      wrap.appendChild(note);
+    } catch (e) {
+      wrap.innerHTML = '<div style="text-align:center;color:var(--warn);font-size:13.5px;padding:20px 0">加载失败：' + escapeHtml(explainErr(e)) + '</div>';
+    }
+  }
+
+  async function openHolidayPhotos(grade, cls, rec, items) {
+    const modal = $('#modal');
+    $('#modalTitle').textContent = grade + ' ' + cls + ' 班';
+    const box = $('#modalImgs');
+    box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0">加载中…</div>';
+    modal.classList.remove('hidden');
+    const m = rec ? (rec.materials || {}) : {};
+    const help = '<div class="m-help">传错材料？让班主任<b>重新进入本班，只上传传错的那一格再提交</b>即可覆盖，其余材料自动保留。<br>管理员可在此逐项清空，或删除整条错误提交。</div>';
+    const figs = [];
+    items.forEach(it => it.slots.forEach(s => {
+      const src = (m[it.key] && m[it.key][s]) ? m[it.key][s] : null;
+      figs.push('<figure><figcaption>' + escapeHtml(it.label) + ' · ' + escapeHtml(s) + '</figcaption>'
+        + (src ? '<img src="' + src + '">' : '<div class="none">未上传</div>')
+        + '<div class="m-fig-act"><button type="button" data-clear-item="' + escapeAttr(it.key) + '" data-clear-slot="' + escapeAttr(s) + '"'
+        + (src ? '' : ' disabled') + '>清空此项</button></div></figure>');
+    }));
+    const foot = '<div class="m-foot"><span class="info">任务：' + escapeHtml(state.holiday.campaignName || '') + '</span>'
+      + '<button type="button" id="btnDelHolidaySub">删除本班本次全部提交</button></div>';
+    box.innerHTML = help + (figs.length ? figs.join('') : '<div style="grid-column:1/-1" class="none">该班尚未提交</div>') + (rec ? foot : '');
+
+    $$('#modalImgs [data-clear-item]').forEach(btn => {
+      btn.addEventListener('click', () => clearHolidaySlot(grade, cls, btn.dataset.clearItem, btn.dataset.clearSlot, m, btn));
+    });
+    const del = $('#btnDelHolidaySub');
+    if (del) del.addEventListener('click', () => deleteHolidaySub(grade, cls));
+  }
+
+  // 节假日任务：管理员清空某一格
+  async function clearHolidaySlot(grade, cls, itemKey, slot, m, btn) {
+    if (!confirm('确定清空 ' + grade + ' ' + cls + ' 班的「' + slot + '」吗？\n\n清空后该格变为未提交，需班主任重新上传；其他材料不受影响。')) return;
+    btn.disabled = true;
+    const cid = state.holiday.campaignId;
+    if (!cid) { toast('请先选择收集任务', true); btn.disabled = false; return; }
+    try {
+      const next = {};
+      Object.keys(m || {}).forEach(k => { next[k] = Object.assign({}, m[k]); });
+      if (!next[itemKey]) next[itemKey] = {};
+      next[itemKey][slot] = null;
+      const any = Object.keys(next).some(k => Object.keys(next[k] || {}).some(s => !!next[k][s]));
+      let r;
+      if (!any) {
+        r = await db().from(HOLIDAY_TABLE).delete().eq('campaign_id', cid).eq('class_no', cls);
+      } else {
+        r = await db().from(HOLIDAY_TABLE).update({ materials: next, updated_at: new Date().toISOString() })
+          .eq('campaign_id', cid).eq('class_no', cls).select('class_no');
+        if (!r.error && (!r.data || !r.data.length)) r.error = new Error('未找到该记录，请刷新后重试');
+      }
+      if (r.error) throw r.error;
+      toast(!any ? '已删除该班本次提交' : '已清空「' + slot + '」');
+      $('#modal').classList.add('hidden');
+      await loadHolidayAdminData();
+    } catch (e) {
+      toast('操作失败：' + explainErr(e), true);
+      btn.disabled = false;
+    }
+  }
+
+  // 节假日任务：管理员删除整条提交
+  async function deleteHolidaySub(grade, cls) {
+    const cid = state.holiday.campaignId;
+    if (!cid) return toast('请先选择收集任务', true);
+    if (!confirm('⚠️ 确定删除 ' + grade + ' ' + cls + ' 班在本任务下的全部提交吗？\n\n所有材料会一起删除，且不可恢复。')) return;
+    const btn = $('#btnDelHolidaySub'); if (btn) btn.disabled = true;
+    try {
+      const r = await db().from(HOLIDAY_TABLE).delete().eq('campaign_id', cid).eq('class_no', cls);
+      if (r.error) throw r.error;
+      toast('已删除该班本次提交');
+      $('#modal').classList.add('hidden');
+      await loadHolidayAdminData();
+    } catch (e) {
+      toast('删除失败：' + explainErr(e), true);
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  // 拉取节假日专项导出数据（预览与 Word 共用）
+  async function collectHolidayData(cid, scope) {
+    const grades = scope === 'all' ? GRADES : GRADES.filter(g => g.name === scope);
+    if (!grades.length) throw new Error('导出范围无效');
+    const camp = await db().from(CAMP_TABLE).select('name,items').eq('id', cid).maybeSingle();
+    const items = (camp.data && Array.isArray(camp.data.items)) ? camp.data.items : [];
+    const subsMap = {};
+    for (const g of grades) {
+      const { data } = await db().from(HOLIDAY_TABLE).select('grade,class_no,materials').eq('campaign_id', cid).eq('grade', g.name);
+      (data || []).forEach(r => { subsMap[r.grade + '|' + r.class_no] = r; });
+    }
+    return { grades: grades, items: items, subsMap: subsMap, campName: (camp.data && camp.data.name) || '' };
+  }
+
+  async function buildHolidayDocx(cid, scope, titleText, dateText, preloaded) {
+    const D = window.docx;
+    if (!D) throw new Error('文档生成组件未加载，请刷新页面重试');
+    const pre = preloaded || await collectHolidayData(cid, scope);
+    const grades = pre.grades;
+    const items = pre.items;
+    const subsMap = pre.subsMap;
+    const children = [];
+    children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 160 }, children: [new D.TextRun({ text: titleText, bold: true, size: 44, font: '黑体' })] }));
+    const dd = dateText ? new Date(dateText + 'T00:00:00') : new Date();
+    children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 260 }, children: [new D.TextRun({ text: dd.getFullYear() + '.' + (dd.getMonth() + 1) + '.' + dd.getDate(), size: 24, font: '宋体' })] }));
+
+    // 不写材料项名称，只保留班级号一列，图片按列宽尽量放大
+    for (const g of grades) {
+      children.push(new D.Paragraph({ spacing: { before: 180, after: 60 }, children: [new D.TextRun({ text: g.name + '：', bold: true, size: 24, font: '宋体' })] }));
+      for (const it of items) {
+        const ncol = it.slots.length;
+        const COL = ncol === 1 ? [900, 9300] : [900, 4650, 4650];
+        const IMG_MAX_H = ncol === 1 ? 320 : 260;
+        const rows = [];
+        for (const cls of g.classes) {
+          const rec = subsMap[g.name + '|' + cls];
+          const m = rec ? (rec.materials || {}) : {};
+          const cells = [];
+          cells.push(new D.TableCell({ width: { size: COL[0], type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, margins: { top: 40, bottom: 40, left: 40, right: 40 }, children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: cls, size: 20, font: '宋体' })] })] }));
+          for (const [si, s] of it.slots.entries()) {
+            const src = (m[it.key] && m[it.key][s]) ? m[it.key][s] : null;
+            const maxW = Math.floor((COL[si + 1] - 80) / 15);
+            let para;
+            if (src) {
+              try {
+                const bytes = dataUrlToBytes(src);
+                const mime = src.slice(5, src.indexOf(';'));
+                const imgType = mime === 'image/png' ? 'png' : 'jpg';
+                const img = await loadImageEl(src);
+                const iw = img.naturalWidth, ih = img.naturalHeight;
+                const sc = Math.min(maxW / iw, IMG_MAX_H / ih);
+                para = new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 0, after: 0 }, children: [new D.ImageRun({ data: bytes, type: imgType, transformation: { width: Math.round(iw * sc), height: Math.round(ih * sc) } })] });
+              } catch (e) {
+                para = new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: '（图片读取失败）', size: 18, color: '999999', font: '宋体' })] });
+              }
+            } else {
+              para = new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: '未提交', size: 18, color: 'BFBFBF', font: '宋体' })] });
+            }
+            cells.push(new D.TableCell({ width: { size: COL[si + 1], type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, margins: { top: 40, bottom: 40, left: 40, right: 40 }, children: [para] }));
+          }
+          rows.push(new D.TableRow({ children: cells }));
+        }
+        const bd = { style: D.BorderStyle.SINGLE, size: 4, color: '808080' };
+        children.push(new D.Table({ width: { size: COL.reduce((a, b) => a + b, 0), type: D.WidthType.DXA }, columnWidths: COL, borders: { top: bd, bottom: bd, left: bd, right: bd, insideHorizontal: bd, insideVertical: bd }, rows: rows }));
+        children.push(new D.Paragraph({ spacing: { after: 100 }, children: [] }));
+      }
+    }
+    const doc = new D.Document({ styles: { default: { document: { run: { font: '宋体', size: 24 } } } }, sections: [{ properties: { page: { size: { width: D.convertMillimetersToTwip(210), height: D.convertMillimetersToTwip(297) }, margin: { top: D.convertMillimetersToTwip(18), bottom: D.convertMillimetersToTwip(18), left: D.convertMillimetersToTwip(15), right: D.convertMillimetersToTwip(15) } } }, children: children }] });
+    return await D.Packer.toBlob(doc);
+  }
+
+  async function doHolidayExport() {
+    const cid = state.holiday.campaignId;
+    if (!cid) return toast('请选择收集任务', true);
+    const btn = $('#btnHExport'); btn.disabled = true; const old = btn.textContent; btn.textContent = '正在生成'; btn.classList.add('loading-dots');
+    try {
+      const title = $('#hDocTitle').value.trim() || (state.holiday.campaignName || '金田三中节假日安全材料');
+      const dateText = $('#hDocDate').value || ymd(new Date());
+      const scope = $('#hDocScope').value;
+      const chk = await db().from(HOLIDAY_TABLE).select('class_no').eq('campaign_id', cid).limit(1);
+      if (chk.error) throw chk.error;
+      if (!chk.data || !chk.data.length) { toast('该任务还没有任何提交记录', true); return; }
+      const blob = await buildHolidayDocx(cid, scope, title, dateText);
+      downloadBlob(blob, title + '.docx');
+      toast('文档已生成，请查看下载文件夹');
+    } catch (e) {
+      toast('生成失败：' + (e.message || e), true);
+      console.error(e);
+    } finally { btn.disabled = false; btn.textContent = old; btn.classList.remove('loading-dots'); }
+  }
+
+  /* =========================================================
+     6. 事件绑定
+     ========================================================= */
+  function bindEvents() {
+    $('#btnAdmin').addEventListener('click', () => {
+      if ($('#viewAdmin').classList.contains('hidden')) openAdmin(); else closeAdmin();
+    });
+
+    $('#weekSelectTeacher').addEventListener('change', async function () {
+      state.weekStart = this.value;
+      state.existing = null;
+      renderWeekBanner();
+      renderClasses();
+      updateStatusLine();
+      await loadWeekRows();
+      if (state.classNo) await checkExisting();
+    });
+
+    $('#btnRefreshWs').addEventListener('click', async function () {
+      this.disabled = true;
+      this.textContent = '刷新中';
+      await loadWeekRows();
+      if (state.classNo) await checkExisting();
+      this.disabled = false;
+      this.textContent = '刷新';
+      if (state.weekRowsError) toast('云服务暂时没响应，请稍后再点刷新', true);
+      else if (state.weekRowsStaleAt) toast('云服务暂时没响应，显示的是上次缓存', true);
+      else toast('已刷新最新提交情况');
+    });
+
+    $('#btnSubmit').addEventListener('click', submit);
+
+    $('#btnPw').addEventListener('click', () => {
+      if ($('#pwInput').value === ADMIN_PASSWORD) {
+        sessionStorage.setItem('jtsz_admin', '1');
+        $('#adminGate').classList.add('hidden');
+        $('#adminBody').classList.remove('hidden');
+        initAdmin();
+      } else {
+        toast('密码不正确', true);
+        $('#pwInput').value = '';
+      }
+    });
+    $('#pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnPw').click(); });
+
+    $('#weekSelect').addEventListener('change', function () {
+      state.adminWeek = this.value;
+      applyAutoDocTitle();          // 名称里带周次，切周自动同步
+      loadAdminData();
+    });
+    $('#docTitle').addEventListener('input', function () { this.dataset.touched = '1'; });
+    $('#btnRefresh').addEventListener('click', () => { loadWeekList().then(loadAdminData); });
+    $('#btnExport').addEventListener('click', doExport);
+    $('#btnPreview').addEventListener('click', previewWeek);
+    $('#btnSelfCheck').addEventListener('click', runSelfCheck);
+    $('#checkClose').addEventListener('click', () => $('#checkModal').classList.add('hidden'));
+    $('#checkModal').addEventListener('click', e => { if (e.target.id === 'checkModal') $('#checkModal').classList.add('hidden'); });
+
+    // 打印预览层
+    $('#pvClose').addEventListener('click', closePreview);
+    $('#pvPrint').addEventListener('click', printPreview);
+    $('#pvDownload').addEventListener('click', previewDownload);
+    let pvResizeT = 0;
+    window.addEventListener('resize', () => {
+      if ($('#previewOverlay').classList.contains('hidden')) return;
+      clearTimeout(pvResizeT);
+      pvResizeT = setTimeout(fitPreview, 120);
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !$('#previewOverlay').classList.contains('hidden')) closePreview();
+    });
+
+    // 提交端：周次 / 节假日 切换
+    $$('#submitModeSeg button').forEach(b => b.addEventListener('click', () => setSubmitMode(b.dataset.mode)));
+    $('#holidayCampaignSelect').addEventListener('change', e => { if (e.target.value) loadHolidayCampaign(e.target.value); else { state.holiday.campaignId = ''; renderHolidayItems(); renderClasses(); } });
+
+    // 后台：周次 / 节假日 切换
+    $$('#adminModeSeg button').forEach(b => b.addEventListener('click', () => setAdminMode(b.dataset.mode)));
+
+    // 后台：新建节假日任务
+    $('#btnAddCustom').addEventListener('click', () => {
+      const v = $('#campCustom').value.trim();
+      if (!v) return toast('请先输入自定义项名称', true);
+      const dup = $$('#campPresets label').some(l => l.textContent.replace(/^×?/, '').trim() === v);
+      if (dup) { $('#campCustom').value = ''; return toast('该材料项已存在'); }
+      const lab = document.createElement('label');
+      lab.innerHTML = '<input type="checkbox" value="' + escapeAttr(v) + '" checked>' + escapeHtml(v);
+      $('#campPresets').appendChild(lab);
+      $('#campCustom').value = '';
+    });
+    $('#btnCreateCamp').addEventListener('click', createCampaign);
+
+    // 后台：节假日任务列表与导出
+    $('#holidayCampSelect').addEventListener('change', e => {
+      state.holiday.campaignId = e.target.value;
+      if (e.target.value) loadHolidayAdminData(); else $('#holidayGridWrap').innerHTML = '<div class="class-empty">请选择上方收集任务查看完成度</div>';
+    });
+    $('#btnRefreshH').addEventListener('click', () => { if (state.holiday.campaignId) loadHolidayAdminData(); else toast('请先选择收集任务', true); });
+    $('#btnHExport').addEventListener('click', doHolidayExport);
+    $('#btnHPreview').addEventListener('click', previewHoliday);
+
+    $('#modalClose').addEventListener('click', () => $('#modal').classList.add('hidden'));
+    $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); });
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !$('#viewSubmit').classList.contains('hidden')) {
+        loadWeekRows();
+      }
+    });
+  }
+
+  /* =========================================================
+     7. 启动
+     ========================================================= */
+  async function boot() {
+    renderWeekBanner();
+    buildTeacherWeekOptions();
+    renderGrades();
+    renderClasses();
+    $('#wsGrades').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:14px 0">加载中…</div>';
+    bindUpload();
+    bindEvents();
+
+    const saved = localStorage.getItem('jtsz_submitter');
+    if (saved) $('#submitter').value = saved;
+
+    renderDraftBar();   // 上次没传成功的材料，进页面就提示补传
+
+    // 先渲染界面，再等云端就绪（SDK 本地加载，正常瞬间完成）
+    const cloudOk = await waitCloud(8000);
+    if (!cloudOk) toast('云服务未就绪，请检查网络后刷新页面', true);
+
+    await loadWeekRows();
+
+    // 记住上次提交的班级
+    const lastCls = localStorage.getItem('jtsz_last_class');
+    if (lastCls) {
+      for (const g of GRADES) {
+        if (g.classes.indexOf(lastCls) >= 0) {
+          state.grade = g.name;
+          state.classNo = lastCls;
+          renderGrades();
+          renderClasses();
+          updateStatusLine();
+          checkExisting();
+          break;
+        }
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
+<script>
+/* 微信直接打开 / 添加到桌面 / 静态资源缓存 */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var isWx = /MicroMessenger/i.test(navigator.userAgent);
+  var standalone = (window.navigator.standalone === true) ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  var TIP_KEY = 'jtsz_wxtip_ts';
+
+  function tipDismissed() {
+    try {
+      var t = parseInt(localStorage.getItem(TIP_KEY) || '0', 10);
+      return !!t && (Date.now() - t) < 7 * 86400000;
+    } catch (e) { return false; }
+  }
+  function dismissTip() {
+    try { localStorage.setItem(TIP_KEY, String(Date.now())); } catch (e) {}
+    var tip = $('wxTip'); if (tip) tip.classList.add('hidden');
+  }
+  function openGuide() {
+    var m = $('wxGuideModal'); if (m) m.classList.remove('hidden');
+  }
+  function closeGuide() {
+    var m = $('wxGuideModal'); if (m) m.classList.add('hidden');
+  }
+
+  function initGuide() {
+    var tip = $('wxTip');
+    if (isWx && !standalone && tip && !tipDismissed()) tip.classList.remove('hidden');
+
+    var more = $('wxTipMore'); if (more) more.addEventListener('click', openGuide);
+    var close = $('wxTipClose'); if (close) close.addEventListener('click', dismissTip);
+    var gClose = $('wxGuideClose'); if (gClose) gClose.addEventListener('click', closeGuide);
+    var gOk = $('wxGuideOk');
+    if (gOk) gOk.addEventListener('click', function () { closeGuide(); dismissTip(); });
+    var gm = $('wxGuideModal');
+    if (gm) gm.addEventListener('click', function (e) { if (e.target === gm) closeGuide(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.keyCode === 27) closeGuide();
+    });
+
+    // Chrome / 安卓浏览器原生“安装应用”提示（微信内不会出现）
+    var deferred = null;
+    var btn = $('btnInstall');
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault(); deferred = e;
+      if (btn && !standalone) btn.classList.remove('hidden');
+    });
+    if (btn) btn.addEventListener('click', function () {
+      if (!deferred) { openGuide(); return; }
+      deferred.prompt();
+      deferred.userChoice.then(function () {
+        deferred = null; btn.classList.add('hidden');
+      });
+    });
+  }
+
+  function initWorker() {
+    if (!('serviceWorker' in navigator) || location.protocol.indexOf('http') !== 0) return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js', { scope: './' }).then(function (reg) {
+        var send = function () {
+          var ctrl = reg.active || navigator.serviceWorker.controller;
+          if (ctrl) ctrl.postMessage({ type: 'sharecode', q: location.search || '' });
+        };
+        send();
+        navigator.serviceWorker.addEventListener('controllerchange', send);
+      }).catch(function () {});
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { initGuide(); });
+  } else { initGuide(); }
+  initWorker();
+})();
+</script>
+
+
+</body></html>
