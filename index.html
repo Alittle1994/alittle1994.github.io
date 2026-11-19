@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.23</title>
+<title>金田三中安全隐患排查整改系统 v6.4.24</title>
+<!-- v6.4.24: 审核汇报历史记录弹窗新增「清空今天生成的历史记录」按钮 — 只清 localStorage 里的汇报历史，不动隐患数据和已上报标记 -->
 <!-- v6.4.23: 审核汇报候选列表整改 — 默认只显示「待审核上报」隐患(未上报汇总/未整改/非检修填报)，历史已整改、检修填报独立记录、已上报记录改为分组标签一键切换查看，不删除任何数据；解决候选列表堆满一大堆无关记录的问题 -->
 <!-- v6.4.22: 检修填报候选范围修复 — 从"仅已上报汇总"扩大到所有未整改隐患(待处理/处理中)，刚填报未上报的也能匹配上；已上报的加1分优先；勾选确认制与门牌号校验保持不变 -->
 <!-- v6.4.21: 检修填报勾选确认制 — 系统只给"建议匹配"，符合就勾选才并入闭环，不勾一律单独记录；输入变化自动清除勾选；下拉换选即视为确认 -->
@@ -299,7 +300,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.23</div>
+    <div class="sidebar-footer">v6.4.24</div>
   </div>
 </div>
 
@@ -842,7 +843,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.23</div>
+<div class="version-badge">v6.4.24</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -4162,6 +4163,24 @@ function deleteReviewHistory(id) {
   } catch (e) {}
 }
 
+// v6.4.24: 一键清空今天生成的审核汇报历史 — 只清 localStorage 里的汇报历史，不影响隐患数据与已上报标记
+function clearTodayReviewHistory() {
+  const now = new Date();
+  const todayKey = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+  const list = getReviewHistoryList();
+  const kept = list.filter(function(e){
+    const d = new Date(e.savedAt);
+    const ek = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+    return ek !== todayKey;
+  });
+  const removed = list.length - kept.length;
+  if (!removed) { showToast('今天没有可清空的汇报历史记录'); return; }
+  if (!confirm('确定删除今天生成的 ' + removed + ' 条审核汇报历史记录吗？此操作不可恢复，隐患记录不受影响。')) return;
+  localStorage.setItem(REVIEW_HISTORY_KEY, JSON.stringify(kept));
+  showReviewHistoryModal();
+  showToast('已清空今天 ' + removed + ' 条汇报历史记录');
+}
+
 function showReviewHistoryModal() {
   const list = getReviewHistoryList();
   let bodyHtml = '';
@@ -4203,7 +4222,8 @@ function showReviewHistoryModal() {
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">最多保存最近 ${REVIEW_HISTORY_MAX} 次打印记录，可随时重新打印或编辑后再打印</div>
         <div id="reviewHistoryBody" style="max-height:460px;overflow-y:auto"></div>
         <div style="margin-top:16px">
-          <button class="btn btn-outline btn-block" onclick="closeModal('reviewHistoryModal')">关闭</button>
+          <button class="btn btn-outline-red btn-block" onclick="clearTodayReviewHistory()">🗑 清空今天生成的历史记录</button>
+          <button class="btn btn-outline btn-block" onclick="closeModal('reviewHistoryModal')" style="margin-top:8px">关闭</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
