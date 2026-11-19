@@ -95,6 +95,44 @@
   .note svg{width:18px;height:18px;flex:none;margin-top:1px;color:var(--brand)}
   .note b{color:var(--ink);font-weight:600}
 
+  /* 分享二维码区 */
+  .share{
+    margin:34px auto 0;max-width:430px;text-align:center;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px 26px 20px;box-shadow:var(--shadow);
+  }
+  .share h3{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
+  .share .st{margin:0 0 16px;font-size:12px;color:var(--ink3)}
+  .share .qrbox{
+    display:inline-block;position:relative;cursor:zoom-in;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);background:#fff;line-height:0;
+    transition:transform .18s,box-shadow .18s;
+  }
+  .share .qrbox:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(20,60,45,.14)}
+  .share .qrbox img{width:200px;height:250px;object-fit:cover;object-position:top;display:block}
+  .share .actions{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .share a.btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    font-size:12.5px;font-weight:600;color:var(--brand);background:var(--accent-bg,#e6f4ec);
+    border:1px solid rgba(31,122,77,.18);padding:8px 15px;border-radius:20px;
+    transition:background .16s;
+  }
+  .share a.btn:hover{background:#d5ecdc}
+  .share a.btn svg{width:14px;height:14px}
+
+  /* 二维码放大遮罩 */
+  .lightbox{
+    position:fixed;inset:0;background:rgba(9,20,15,.72);z-index:100;
+    display:none;align-items:center;justify-content:center;padding:24px;
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  }
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:88vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .lightbox .close{
+    position:absolute;top:20px;right:24px;width:40px;height:40px;border-radius:50%;
+    background:rgba(255,255,255,.9);border:0;cursor:pointer;font-size:24px;line-height:1;color:#333;
+  }
+
   footer{margin-top:auto;padding:34px 0 26px;text-align:center;font-size:12px;color:var(--ink3);line-height:1.8}
   footer .v{display:inline-block;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace}
 </style>
@@ -169,6 +207,21 @@
         </svg>
         <span><b>使用提示：</b>三个系统相互独立，任一系统维护不影响其他系统访问。手机、电脑浏览器均可直接打开，无需安装软件。若后续新增应用，将在此页添加入口。</span>
       </div>
+
+      <!-- 分享二维码 -->
+      <section class="share">
+        <h3>扫码访问本平台</h3>
+        <p class="st">把二维码发给老师或打印张贴，扫码即可进入</p>
+        <span class="qrbox" id="qrbox" title="点击放大">
+          <img src="./平台二维码.png" alt="金田三中数字化管理平台二维码">
+        </span>
+        <div class="actions">
+          <a class="btn" href="./平台二维码.png" download="金田三中数字化管理平台二维码.png">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            下载二维码
+          </a>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -176,5 +229,22 @@
       <span class="v">Portal v1.0</span>
     </footer>
   </div>
+
+  <div class="lightbox" id="lightbox">
+    <button class="close" id="lbClose" aria-label="关闭">&times;</button>
+    <img src="./平台二维码.png" alt="二维码大图">
+  </div>
+
+  <script>
+    (function () {
+      var box = document.getElementById('qrbox');
+      var lb = document.getElementById('lightbox');
+      var close = document.getElementById('lbClose');
+      if (box) box.addEventListener('click', function () { lb.classList.add('show'); });
+      if (close) close.addEventListener('click', function () { lb.classList.remove('show'); });
+      if (lb) lb.addEventListener('click', function (e) { if (e.target === lb) lb.classList.remove('show'); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('show'); });
+    })();
+  </script>
 </body>
 </html>
