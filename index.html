@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.24</title>
+<title>金田三中安全隐患排查整改系统 v6.4.25</title>
+<!-- v6.4.25: 闭环台账排版重做 — 标题居中、深蓝表头+完整边框+斑马纹、colgroup固定列宽防中文竖排、A4打印优化；同步修复 printLedger 打印窗口样式缺失 -->
 <!-- v6.4.24: 审核汇报历史记录弹窗新增「清空今天生成的历史记录」按钮 — 只清 localStorage 里的汇报历史，不动隐患数据和已上报标记 -->
 <!-- v6.4.23: 审核汇报候选列表整改 — 默认只显示「待审核上报」隐患(未上报汇总/未整改/非检修填报)，历史已整改、检修填报独立记录、已上报记录改为分组标签一键切换查看，不删除任何数据；解决候选列表堆满一大堆无关记录的问题 -->
 <!-- v6.4.22: 检修填报候选范围修复 — 从"仅已上报汇总"扩大到所有未整改隐患(待处理/处理中)，刚填报未上报的也能匹配上；已上报的加1分优先；勾选确认制与门牌号校验保持不变 -->
@@ -165,6 +166,37 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   .ledger-photo-table th{background:#1e3a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
+/* v6.4.25: 闭环台账整体排版 — 标题居中、深蓝表头、固定列宽防竖排 */
+.ledger-doc{font-family:"Microsoft YaHei","PingFang SC",sans-serif}
+.ledger-title{text-align:center !important;font-size:22px !important;font-weight:800 !important;color:#1e3a8a !important;letter-spacing:3px;margin:0 0 6px !important;line-height:1.4 !important}
+.ledger-subtitle{text-align:center !important;color:#64748b !important;font-size:12px !important;line-height:1.8 !important;margin:0 0 20px !important}
+.ledger-sec-title{font-size:15px !important;font-weight:700;margin:24px 0 12px !important;padding:8px 12px !important;border-radius:6px;border-left:none !important;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ledger-sec-blue{color:#1e3a8a !important;background:linear-gradient(90deg,#dbeafe,#f8fafc)}
+.ledger-sec-green{color:#047857 !important;background:linear-gradient(90deg,#d1fae5,#f8fafc)}
+.ledger-main-table{width:100%;border-collapse:collapse;margin:10px 0 22px;font-size:11.5px;table-layout:fixed;background:#fff}
+.ledger-main-table th{background:linear-gradient(135deg,#1e3a8a,#3b82f6) !important;color:#fff !important;font-weight:600;padding:10px 4px;text-align:center;border:1px solid #1e40af;line-height:1.4;word-break:keep-all}
+.ledger-main-table td{border:1px solid #cbd5e1;padding:8px 6px;vertical-align:middle;line-height:1.55;word-break:break-word;overflow-wrap:break-word;color:var(--text)}
+.ledger-main-table tbody tr:nth-child(even) td{background:#f8fafc}
+.ledger-main-table tbody tr:hover td{background:#eff6ff}
+.ledger-main-table .lc-num{text-align:center;font-weight:700;color:#64748b}
+.ledger-main-table .lc-name{text-align:center;white-space:nowrap}
+.ledger-main-table .lc-date{text-align:center;white-space:nowrap;font-size:10.5px;color:#475569}
+.ledger-main-table .lc-loc{text-align:left}
+.ledger-main-table .lc-loc b{color:#1e3a8a}
+.ledger-main-table .lc-result{text-align:left;color:#065f46}
+@page{size:A4;margin:12mm 10mm}
+@media print{
+  .ledger-doc{font-size:10.5pt}
+  .ledger-title{font-size:17pt !important;color:#1e3a8a !important}
+  .ledger-subtitle{font-size:10pt !important}
+  .ledger-sec-title{padding:6px 10px !important;margin:14px 0 8px !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ledger-main-table{font-size:9pt}
+  .ledger-main-table thead{display:table-header-group}
+  .ledger-main-table tr{page-break-inside:avoid;break-inside:avoid}
+  .ledger-main-table th{background:#1e3a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ledger-main-table tbody tr:nth-child(even) td{background:#f8fafc !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
 /* Worker Bar */
 .worker-bar{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);border:1px solid var(--border)}.worker-bar .avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--primary-mid),var(--primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:700;flex-shrink:0}.worker-bar .info{flex:1}.worker-bar .name{font-size:15px;font-weight:700}.worker-bar .role{font-size:12px;color:var(--text-sub)}.worker-bar .status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:#ecfdf5;color:#059669;border-radius:20px;font-size:11px;font-weight:700;border:1px solid #a7f3d0}
 
@@ -300,7 +332,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.24</div>
+    <div class="sidebar-footer">v6.4.25</div>
   </div>
 </div>
 
@@ -843,7 +875,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.24</div>
+<div class="version-badge">v6.4.25</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3542,28 +3574,35 @@ function showLedgerModal() {
     return h.afterPhotos && h.afterPhotos.length > 0;
   });
 
-  var html = '<h2>金田三中安全隐患排查整改台账</h2>' +
-    '<p style="text-align:center;color:#666;margin-bottom:20px">桂平市金田镇第三初级中学 · 安全管理办公室<br>统计学期：' + semLabel + '</p>';
+  var html = '<div class="ledger-doc">' +
+    '<h2 class="ledger-title">金田三中安全隐患排查整改台账</h2>' +
+    '<p class="ledger-subtitle">桂平市金田镇第三初级中学 · 安全管理办公室<br>统计学期：' + semLabel + '</p>';
 
   // 一、文字台账（全部记录）
-  html += '<h3 style="margin:24px 0 12px;font-size:15px;border-left:3px solid var(--primary-light);padding-left:10px">一、隐患整改记录</h3>' +
-    '<table><tr><th>序号</th><th>隐患位置及描述</th><th>上报人</th><th>上报时间</th><th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th></tr>' +
+  html += '<h3 class="ledger-sec-title ledger-sec-blue">一、隐患整改记录</h3>' +
+    '<table class="ledger-main-table"><colgroup>' +
+      '<col style="width:4%"><col style="width:24%"><col style="width:7%"><col style="width:8%">' +
+      '<col style="width:9%"><col style="width:7%"><col style="width:9%"><col style="width:32%">' +
+    '</colgroup><thead><tr>' +
+      '<th>序号</th><th>隐患位置及描述</th><th>上报人</th><th>上报时间</th>' +
+      '<th>整改措施</th><th>整改人</th><th>整改时间</th><th>整改结果</th>' +
+    '</tr></thead><tbody>' +
     (view.length ? view.map(function(h, i) {
       var loc = locText(h);
       var desc = h.description || '';
-      return '<tr><td>' + (i + 1) + '</td>' +
-      '<td><b>' + loc + '</b><br>' + desc + '</td>' +
-      '<td>' + h.reporter + '</td>' +
-      '<td>' + h.reportDate + '</td>' +
+      return '<tr><td class="lc-num">' + (i + 1) + '</td>' +
+      '<td class="lc-loc"><b>' + loc + '</b><br>' + desc + '</td>' +
+      '<td class="lc-name">' + (h.reporter || '-') + '</td>' +
+      '<td class="lc-date">' + (h.reportDate || '-') + '</td>' +
       '<td>' + (h.status === '已整改' ? '已维修整改' : h.status === '无法整改' ? '上报学校处理' : '待处理') + '</td>' +
-      '<td>' + (h.handler || '-') + '</td>' +
-      '<td>' + (h.status === '已整改' ? (h.updatedAt ? h.updatedAt.slice(0, 10) : '-') : '-') + '</td>' +
-      '<td>' + ((h.rectificationNote && h.rectificationNote.trim()) ? h.rectificationNote : h.status) + '</td></tr>';
+      '<td class="lc-name">' + (h.handler || '-') + '</td>' +
+      '<td class="lc-date">' + (h.status === '已整改' ? (h.updatedAt ? h.updatedAt.slice(0, 10) : '-') : '-') + '</td>' +
+      '<td class="lc-result">' + ((h.rectificationNote && h.rectificationNote.trim()) ? h.rectificationNote : h.status) + '</td></tr>';
     }).join('') : '<tr><td colspan="8" style="text-align:center">暂无记录</td></tr>') +
-    '</table>';
+    '</tbody></table>';
 
   // 二、整改前后照片对比（仅含 afterPhotos 的记录）
-  html += '<h3 style="margin:28px 0 12px;font-size:15px;border-left:3px solid var(--success);padding-left:10px">二、整改前后对比（共 ' + hasAfter.length + ' 项）</h3>';
+  html += '<h3 class="ledger-sec-title ledger-sec-green">二、整改前后对比（共 ' + hasAfter.length + ' 项）</h3>';
   
   if (hasAfter.length > 0) {
     html += '<table class="ledger-photo-table"><thead><tr>' +
@@ -3617,6 +3656,7 @@ function showLedgerModal() {
   }
 
     
+  html += '</div>'; // v6.4.25: 闭合 ledger-doc 容器
   document.getElementById('ledgerContent').innerHTML = html;
   document.getElementById('ledgerModal').classList.add('show');
 }
@@ -3687,7 +3727,31 @@ function printReport() {
 }
 function printLedger() {
   const w = window.open('', '_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>整改台账</title><style>body{font-family:"Microsoft YaHei",sans-serif;padding:20px;max-width:950px;margin:0 auto;color:#333;font-size:12px}table{font-size:11px}@media print{body{padding:10px}}</style></head><body>' + document.getElementById('ledgerContent').innerHTML + '</body></html>');
+  // v6.4.25: 打印窗口内置完整台账样式（原先只有一句 table{font-size:11px}，导致无边框/标题不齐/中文竖排）
+  const ledgerPrintCSS = ''
+    + '@page{size:A4;margin:12mm 10mm}'
+    + '*{box-sizing:border-box}'
+    + 'body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#1e293b;font-size:10.5pt;line-height:1.55;margin:0}'
+    + '.ledger-title{text-align:center;font-size:17pt;font-weight:800;color:#1e3a8a;letter-spacing:3px;margin:0 0 6px}'
+    + '.ledger-subtitle{text-align:center;color:#64748b;font-size:10pt;line-height:1.8;margin:0 0 16px}'
+    + '.ledger-sec-title{font-size:12pt;font-weight:700;margin:16px 0 8px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.ledger-sec-blue{color:#1e3a8a;background:linear-gradient(90deg,#dbeafe,#f8fafc)}'
+    + '.ledger-sec-green{color:#047857;background:linear-gradient(90deg,#d1fae5,#f8fafc)}'
+    + 'table{width:100%;border-collapse:collapse;margin:8px 0 18px;font-size:9pt;table-layout:fixed}'
+    + 'thead{display:table-header-group}'
+    + 'tr{page-break-inside:avoid;break-inside:avoid}'
+    + 'th{background:#1e3a8a !important;color:#fff !important;font-weight:600;padding:7px 3px;border:1px solid #1e40af;text-align:center;word-break:keep-all;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + 'td{border:1px solid #cbd5e1;padding:6px 5px;vertical-align:middle;line-height:1.5;word-break:break-word;overflow-wrap:break-word;color:#1e293b}'
+    + 'tbody tr:nth-child(even) td{background:#f8fafc !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.lc-num{text-align:center;font-weight:700;color:#64748b}'
+    + '.lc-name{text-align:center;white-space:nowrap}'
+    + '.lc-date{text-align:center;white-space:nowrap;font-size:8.5pt;color:#475569}'
+    + '.lc-loc{text-align:left}.lc-loc b{color:#1e3a8a}'
+    + '.lc-result{text-align:left;color:#065f46}'
+    + '.ledger-photo-table th{background:#1e3a8a !important;color:#fff !important}'
+    + '.ledger-photo-table td{text-align:center;vertical-align:top}'
+    + '.ledger-photo-table img{max-width:100%;height:auto;max-height:45mm;border:1px solid #cbd5e1;border-radius:3px}';
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>金田三中安全隐患排查整改台账</title><style>' + ledgerPrintCSS + '</style></head><body>' + document.getElementById('ledgerContent').innerHTML + '</body></html>');
   w.document.close();
   setTimeout(() => w.print(), 500);
 }
