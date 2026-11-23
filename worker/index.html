@@ -1511,10 +1511,13 @@ async function initGitHubBackend() {
     updateSyncUI();
     startSyncTimer();
     
-    console.log('[Sync] 开始首次同步: 本地 ' + hazards.length + ' 条');
-    await cloudPushAll(true);
+    console.log('[维修版] 首次同步: 先拉云端最新数据（本地 ' + hazards.length + ' 条）');
     await cloudPullAll(true);
-    console.log('[Sync] 首次同步完成');
+    // 拉取后重绘工作台，确保一打开看到的就是云端最新数据
+    try { if (typeof renderCurrentPage === 'function') renderCurrentPage(); else if (typeof renderWorker === 'function') renderWorker(); updateSyncUI(); updateDataInfo(); } catch (e) { console.warn('[维修版] 刷新界面失败', e.message); }
+    // 拉取完成后再把本地的增量（若有）推上去，避免旧数据覆盖云端
+    await cloudPushAll(true);
+    console.log('[维修版] 首次同步完成，已以云端数据为准');
     return true;
   } catch (e) {
     console.error('[Sync] GitHub 初始化失败:', e.message);
@@ -1536,7 +1539,7 @@ function startSyncTimer() {
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(function() {
     if (cloudConnected && navigator.onLine) {
-      cloudPushAll(true).then(function() { return cloudPullAll(true); });
+      cloudPullAll(true).then(function() { try { if (typeof renderCurrentPage === 'function') renderCurrentPage(); } catch(e){} return cloudPushAll(true); });
     }
   }, 3600000);
 }
