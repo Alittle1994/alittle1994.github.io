@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.28</title>
+<title>金田三中安全隐患排查整改系统 v6.4.29</title>
+<!-- v6.4.29: 新增「从云端完全重建本地数据」核弹级修复 — 读云端全量→清空本地IndexedDB→逐条写回→重载；解决本地数据只有几条/增量同步拉不全的问题；云同步弹窗显示本地/云端条数诊断 -->
 <!-- v6.4.28: CSV导出前自动全量同步云端 — 解决本地IndexedDB数据未拉全导致导出条数偏少(如只导出5条)；导出提示显示本地库总数便于自查 -->
 <!-- v6.4.27: 新增「闭环照片台账」— 单独提取前后对比都有照片的17条记录，独立打印页(只列照片对比、强制前后都有图)、等图片加载完再打印、支持导出Word -->
 <!-- v6.4.26: 闭环台账支持打印前编辑 — 弹窗加「✏️编辑」(contentEditable，像审核汇报)、「📄导出Word」(用WPS/Word改完再打印)；打印时自动退出编辑态 -->
@@ -339,7 +340,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.28</div>
+    <div class="sidebar-footer">v6.4.29</div>
   </div>
 </div>
 
@@ -846,6 +847,10 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
         <button class="btn btn-primary" onclick="forceFullSync();closeModal('cloudModal')" style="flex:1;min-width:120px;background:linear-gradient(135deg,#7c3aed,#a855f7)">&#128260; 强制全量同步</button>
         <button class="btn btn-outline-red" onclick="disconnectCloud();closeModal('cloudModal')" style="flex:1;min-width:120px">&#9888; 断开同步</button>
       </div>
+      <!-- v6.4.29: 数据诊断 + 一键重建 -->
+      <div id="cloudDiagBox" style="margin-top:14px;padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text-sub);line-height:1.7"></div>
+      <button class="btn btn-outline-red btn-block" style="margin-top:10px" onclick="rebuildFromCloud()">&#128295; 从云端完全重建本地数据（数据不全时用这个）</button>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">会把云端全部记录重新下载到本地，覆盖当前本地数据。本地尚未同步的新记录请先备份JSON。</div>
     </div>
   </div>
 </div>
@@ -905,7 +910,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.28</div>
+<div class="version-badge">v6.4.29</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -1588,6 +1593,80 @@ function disconnectCloud() {
   showToast('已断开云同步，数据仅保存在本地');
 }
 
+// ===== v6.4.29: 数据诊断 =====
+async function refreshCloudDiag() {
+  const box = document.getElementById('cloudDiagBox');
+  if (!box) return;
+  const localCount = hazards.length;
+  box.innerHTML = '🔍 正在检测云端数据...';
+  if (!cloudConnected) {
+    box.innerHTML = '⚠️ 云端未连接。本地数据 <strong>' + localCount + '</strong> 条。请先点上方「连接GitHub云端」。';
+    return;
+  }
+  try {
+    const result = await gitHubRead();
+    const cloudCount = Object.keys(result.data.records || {}).length;
+    const ok = cloudCount === localCount;
+    box.innerHTML = '📊 数据诊断：本地 <strong style="color:' + (ok ? '#059669' : '#dc2626') + '">' + localCount
+      + '</strong> 条 / 云端 <strong>' + cloudCount + '</strong> 条。'
+      + (ok ? ' ✅ 一致，数据完整。'
+            : ' ⚠️ <strong style="color:#dc2626">不一致！本地数据不全，请点下方「从云端完全重建」。</strong>');
+  } catch (e) {
+    box.innerHTML = '❌ 读取云端失败：' + (e.message || '未知错误') + '。请检查网络后重试。';
+  }
+}
+
+// ===== v6.4.29: 从云端完全重建本地数据（核弹级修复）=====
+async function rebuildFromCloud() {
+  if (!cloudConnected) { showToast('⚠️ 云端未连接，请先连接'); return; }
+  if (!confirm('确定从云端完全重建本地数据吗？\n\n将清空本地全部记录，重新下载云端数据。\n本地尚未同步的新记录会丢失，建议先「备份JSON」。')) return;
+
+  showToast('⏳ 正在读取云端全部数据...');
+  try {
+    const result = await gitHubRead();
+    const records = result.data.records || {};
+    const cloudIds = Object.keys(records);
+    if (cloudIds.length === 0) { showToast('❌ 云端没有数据，无法重建'); return; }
+
+    // 解析所有云端记录（处理照片格式 + UTF-8）
+    const list = [];
+    for (let i = 0; i < cloudIds.length; i++) {
+      const row = records[cloudIds[i]];
+      const h = row.data;
+      if (!h || !h.id) continue;
+      if (Array.isArray(h.photos)) {
+        h.photos = h.photos.map(p => (typeof p === 'object' && p.url) ? p : (typeof p === 'string' && p.indexOf('http') === 0 ? { url: p, thumb: p } : p));
+      }
+      if (Array.isArray(h.afterPhotos)) {
+        h.afterPhotos = h.afterPhotos.map(p => (typeof p === 'object' && p.url) ? p : (typeof p === 'string' && p.indexOf('http') === 0 ? { url: p, thumb: p } : p));
+      }
+      list.push(h);
+    }
+
+    // 清空本地 → 逐条写回
+    showToast('⏳ 正在重建本地数据（共 ' + list.length + ' 条）...');
+    await dbClearAll();
+    for (let i = 0; i < list.length; i++) {
+      await dbPut(list[i]);
+    }
+    hazards = list;
+    hazards.sort((a, b) => String(a.id) > String(b.id) ? -1 : 1);
+
+    // 重置同步时间戳，确保下次同步用全量
+    localStorage.removeItem('jt3_last_sync_ts');
+
+    renderCurrentPage();
+    updateDataInfo();
+    updateSyncUI();
+    refreshCloudDiag();
+    closeModal('cloudModal');
+    showToast('✅ 重建完成！本地现有 ' + hazards.length + ' 条记录（与云端一致）');
+  } catch (e) {
+    console.error('[Rebuild] 失败:', e);
+    showToast('❌ 重建失败: ' + (e.message || '未知错误'));
+  }
+}
+
 function startSyncTimer() {
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(function() {
@@ -1938,6 +2017,7 @@ function showCloudModal() {
     document.getElementById('cloudConnectedArea').style.display = 'none';
   }
   m.classList.add('show');
+  if (cloudConnected) refreshCloudDiag(); // v6.4.29: 打开时自动检测本地/云端条数
 }
 
 async function doConnectCloud() {
