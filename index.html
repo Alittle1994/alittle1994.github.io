@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.26</title>
+<title>金田三中安全隐患排查整改系统 v6.4.27</title>
+<!-- v6.4.27: 新增「闭环照片台账」— 单独提取前后对比都有照片的17条记录，独立打印页(只列照片对比、强制前后都有图)、等图片加载完再打印、支持导出Word -->
 <!-- v6.4.26: 闭环台账支持打印前编辑 — 弹窗加「✏️编辑」(contentEditable，像审核汇报)、「📄导出Word」(用WPS/Word改完再打印)；打印时自动退出编辑态 -->
 <!-- v6.4.25: 闭环台账排版重做 — 标题居中、深蓝表头+完整边框+斑马纹、colgroup固定列宽防中文竖排、A4打印优化；同步修复 printLedger 打印窗口样式缺失 -->
 <!-- v6.4.24: 审核汇报历史记录弹窗新增「清空今天生成的历史记录」按钮 — 只清 localStorage 里的汇报历史，不动隐患数据和已上报标记 -->
@@ -337,7 +338,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.26</div>
+    <div class="sidebar-footer">v6.4.27</div>
   </div>
 </div>
 
@@ -571,6 +572,27 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <button class="btn btn-outline" style="flex:1;min-width:120px" id="btn-word-ledger" onclick="exportLedgerWord()">&#128196; 导出Word</button>
       <button class="btn btn-primary" style="flex:1;min-width:120px" id="btn-print-ledger" onclick="printLedger()">&#128424; 打印台账</button>
       <button class="btn btn-outline" style="flex:1;min-width:80px" onclick="closeModal('ledgerModal')">关闭</button>
+    </div>
+    <div style="margin-top:10px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="flex:1;font-size:12px;color:#1e40af">&#128247; 只打印<strong>整改前后都有照片</strong>的闭环记录（自动过滤无图/单侧图）</span>
+      <button class="btn btn-green btn-sm" onclick="showPhotoLedger()" id="btn-photo-ledger">&#128247; 闭环照片台账</button>
+    </div>
+  </div>
+</div>
+
+<!-- v6.4.27: 闭环照片台账弹窗（仅前后都有图） -->
+<div class="modal" id="photoLedgerModal">
+  <div class="modal-box" style="max-width:960px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 class="modal-title" style="margin:0">&#128247; 闭环照片台账（前后都有图）</h3>
+      <button class="modal-close" onclick="closeModal('photoLedgerModal')">&times;</button>
+    </div>
+    <div style="font-size:12px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;margin-bottom:12px" id="photoLedgerInfo"></div>
+    <div class="report-preview" id="photoLedgerContent"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="flex:1;min-width:130px" onclick="printPhotoLedger()">&#128424; 打印照片台账</button>
+      <button class="btn btn-outline" style="flex:1;min-width:130px" onclick="exportPhotoLedgerWord()">&#128196; 导出Word</button>
+      <button class="btn btn-outline" style="flex:1;min-width:80px" onclick="closeModal('photoLedgerModal')">关闭</button>
     </div>
   </div>
 </div>
@@ -882,7 +904,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.26</div>
+<div class="version-badge">v6.4.27</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -3710,6 +3732,116 @@ function exportLedgerWord() {
   const filename = '金田三中安全隐患排查整改台账_' + semLabel + '_' + now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + '.doc';
   downloadFile('\ufeff' + wordHTML, filename, 'application/msword;charset=utf-8');
   showToast('✅ 已导出 Word 文档，可用 WPS/Word 编辑后再打印');
+}
+
+// ===== v6.4.27: 闭环照片台账（仅前后对比都有照片的记录）=====
+let photoLedgerRecords = [];
+
+// 筛选：整改前(photos)和整改后(afterPhotos)都有照片
+function getPhotoLedgerRecords() {
+  const view = semHazards(); // 遵循当前学期视图
+  return view.filter(function(h){
+    const before = h.photos && h.photos.length > 0;
+    const after = h.afterPhotos && h.afterPhotos.length > 0;
+    return before && after;
+  }).sort(function(a, b){
+    return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
+  });
+}
+
+// 生成照片台账 HTML（前后照片并排 + 说明）
+function buildPhotoLedgerHTML(list) {
+  const semLabel = semesterView === 'all' ? '全部学期' : semesterView;
+  let html = '<div class="ledger-doc">'
+    + '<h2 class="ledger-title">金田三中安全隐患整改前后照片台账</h2>'
+    + '<p class="ledger-subtitle">桂平市金田镇第三初级中学 · 安全管理办公室<br>统计学期：' + semLabel + ' · 共 ' + list.length + ' 项（仅列整改前后均有照片的闭环记录）</p>';
+
+  html += '<table class="ledger-photo-table" style="font-size:12px"><colgroup>'
+    + '<col style="width:5%"><col style="width:33%"><col style="width:33%"><col style="width:29%">'
+    + '</colgroup><thead><tr>'
+    + '<th>序号</th><th>整改前</th><th>整改后</th><th>隐患说明</th>'
+    + '</tr></thead><tbody>';
+
+  list.forEach(function(h, idx){
+    // 整改前照片
+    const beforeHtml = (h.photos || []).map(function(p){
+      const src = photoUrl(p);
+      return src ? '<img src="' + src + '" style="display:block;width:100%;max-width:230px;height:auto;max-height:165px;object-fit:cover;margin:3px auto;border-radius:6px;border:1px solid #cbd5e1" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="整改前">' : '';
+    }).join('');
+    // 整改后照片
+    const afterHtml = (h.afterPhotos || []).map(function(p){
+      const src = photoUrl(p);
+      return src ? '<img src="' + src + '" style="display:block;width:100%;max-width:230px;height:auto;max-height:165px;object-fit:cover;margin:3px auto;border-radius:6px;border:1px solid #a7f3d0" onclick="viewPhoto(this.src)" onerror="this.style.display=\'none\'" alt="整改后">' : '';
+    }).join('');
+
+    const note = (h.rectificationNote || '').trim();
+    const fixDate = h.updatedAt ? h.updatedAt.slice(0, 10) : '';
+    html += '<tr>'
+      + '<td class="lc-num" style="text-align:center;vertical-align:middle;font-weight:700">' + (idx + 1) + '</td>'
+      + '<td style="text-align:center;vertical-align:top;padding:8px">' + beforeHtml + '</td>'
+      + '<td style="text-align:center;vertical-align:top;padding:8px">' + afterHtml + '</td>'
+      + '<td style="vertical-align:top;padding:8px;font-size:12px;line-height:1.6">'
+        + '<div style="font-weight:700;color:#1e3a8a;margin-bottom:3px">' + locText(h) + '</div>'
+        + '<div style="color:#334155;margin-bottom:4px">' + (h.description || '') + '</div>'
+        + (note ? '<div style="color:#047857;margin-bottom:3px">✅ ' + note + '</div>' : '')
+        + '<div style="color:#64748b;font-size:11px">上报：' + (h.reporter || '-') + ' · ' + (h.reportDate || '') + '</div>'
+        + (fixDate ? '<div style="color:#64748b;font-size:11px">整改：' + fixDate + (h.handler ? ' · ' + h.handler : '') + '</div>' : '')
+      + '</td>'
+      + '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// 显示闭环照片台账弹窗
+function showPhotoLedger() {
+  photoLedgerRecords = getPhotoLedgerRecords();
+  const info = document.getElementById('photoLedgerInfo');
+  if (info) {
+    if (photoLedgerRecords.length > 0) {
+      info.innerHTML = '&#10004; 已筛出 <strong>' + photoLedgerRecords.length + '</strong> 条「整改前后都有照片」的闭环记录（已自动排除无图或只有单侧照片的记录）。';
+    } else {
+      info.innerHTML = '&#9888; 当前学期视图下没有「整改前后都有照片」的记录。可到侧边栏切换到「全部学期」再试。';
+    }
+  }
+  document.getElementById('photoLedgerContent').innerHTML = buildPhotoLedgerHTML(photoLedgerRecords);
+  document.getElementById('photoLedgerModal').classList.add('show');
+}
+
+// 打印照片台账（等所有图片加载完成后再打印，避免校园网图片慢导致空白）
+function printPhotoLedger() {
+  if (photoLedgerRecords.length === 0) { showToast('没有可打印的记录'); return; }
+  const w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>金田三中安全隐患整改前后照片台账</title><style>' + LEDGER_PRINT_CSS + '</style></head><body>' + document.getElementById('photoLedgerContent').innerHTML + '</body></html>');
+  w.document.close();
+  const printWhenReady = () => {
+    const imgs = Array.prototype.slice.call(w.document.images || []);
+    let finished = false, loaded = 0;
+    const go = () => { try { w.focus(); w.print(); } catch (e) { console.warn('[Print] 打印失败:', e); } };
+    if (imgs.length === 0) { setTimeout(go, 300); return; }
+    const one = () => { loaded++; if (!finished && loaded >= imgs.length) { finished = true; setTimeout(go, 500); } };
+    imgs.forEach(im => {
+      if (im.complete) one();
+      else { im.addEventListener('load', one); im.addEventListener('error', one); }
+    });
+    setTimeout(() => { if (!finished) go(); }, 25000);
+  };
+  printWhenReady();
+}
+
+// 导出照片台账为 Word
+function exportPhotoLedgerWord() {
+  if (photoLedgerRecords.length === 0) { showToast('没有可导出的记录'); return; }
+  const content = document.getElementById('photoLedgerContent').innerHTML;
+  const semLabel = semesterView === 'all' ? '全部学期' : semesterView;
+  const now = new Date();
+  const wordHTML = '<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">'
+    + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom></w:WordDocument></xml><![endif]-->'
+    + '<title>金田三中安全隐患整改前后照片台账</title><style>' + LEDGER_PRINT_CSS + '</style></head><body>' + content + '</body></html>';
+  const filename = '金田三中隐患整改前后照片台账_' + semLabel + '_' + now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + '.doc';
+  downloadFile('\ufeff' + wordHTML, filename, 'application/msword;charset=utf-8');
+  showToast('✅ 已导出照片台账 Word 文档');
 }
 
 // ===== 数据信息 =====
