@@ -2,7 +2,7 @@
    策略：页面外壳 network-first（保证拿到最新版本），
         数据请求(api.github.com 等)完全不缓存，始终走网络，
         确保维修改状态、隐患清单永远是实时数据。 */
-const CACHE = 'jtsz-worker-v1';
+const CACHE = 'jtsz-worker-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
