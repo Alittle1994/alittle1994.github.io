@@ -6,7 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>金田三中安全隐患排查整改系统 v6.4.29</title>
+<title>金田三中安全隐患排查整改系统 v6.4.30</title>
+<!-- v6.4.30: 审核汇报默认范围改为「未上报」— 合并待审核+已整改待报，一次看全所有未上报隐患；修复用户误以为只显示3条的问题 -->
 <!-- v6.4.29: 新增「从云端完全重建本地数据」核弹级修复 — 读云端全量→清空本地IndexedDB→逐条写回→重载；解决本地数据只有几条/增量同步拉不全的问题；云同步弹窗显示本地/云端条数诊断 -->
 <!-- v6.4.28: CSV导出前自动全量同步云端 — 解决本地IndexedDB数据未拉全导致导出条数偏少(如只导出5条)；导出提示显示本地库总数便于自查 -->
 <!-- v6.4.27: 新增「闭环照片台账」— 单独提取前后对比都有照片的17条记录，独立打印页(只列照片对比、强制前后都有图)、等图片加载完再打印、支持导出Word -->
@@ -340,7 +341,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
       <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:1px">&#128197; 学期视图</div>
       <select id="s-semester" onchange="setSemesterView(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:#fff;font-size:13px;outline:none"></select>
     </div>
-    <div class="sidebar-footer">v6.4.29</div>
+    <div class="sidebar-footer">v6.4.30</div>
   </div>
 </div>
 
@@ -910,7 +911,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <!-- Version -->
-<div class="version-badge">v6.4.29</div>
+<div class="version-badge">v6.4.30</div>
 
 <!-- ========== JAVASCRIPT ========== -->
 <script>
@@ -4034,7 +4035,7 @@ function printLedger() {
 // v6.4.3: 自由勾选分批上报 — 候选记录逐条勾选，只有勾选的进入汇报并被标记已上报
 let rvCandidates = [];   // 当前筛选条件下的候选记录
 let rvSelectedIds = {};  // 已勾选的记录 id
-let rvScope = 'pending'; // v6.4.23: 候选范围分组（默认只显示待审核隐患）
+let rvScope = 'unreported'; // v6.4.30: 候选范围分组（默认显示所有未上报隐患）
 
 function showReviewReport() {
   // 默认日期：当日
@@ -4042,7 +4043,7 @@ function showReviewReport() {
   const ds = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
   document.getElementById('rv-date-from').value = '';
   document.getElementById('rv-date-to').value = ds;
-  rvScope = 'pending'; // v6.4.23: 默认只显示待审核隐患，避免历史已整改记录堆满列表
+  rvScope = 'unreported'; // v6.4.30: 默认显示所有未上报隐患（含已整改），一次看全
   reviewEditMode = false;
   rvSelectedIds = {}; // v6.4.3: 每次打开默认不勾选，由用户自由挑选
   refreshReviewCandidates();
@@ -4057,11 +4058,12 @@ function showReviewReport() {
 
 // v6.4.23: 候选范围分组 — 「待审核」只列未上报、未整改、非检修填报的隐患（rvScope 声明见上方）
 const RV_SCOPES = [
-  { key: 'pending',  label: '待审核',     tip: '未上报汇总、且还没整改的隐患（默认）' },
-  { key: 'fixed',    label: '已整改待报', tip: '已经整改但还没上报汇总的隐患' },
-  { key: 'fixfill',  label: '检修填报',   tip: '维修人员单独填报的检修完成记录' },
-  { key: 'reported', label: '已上报',     tip: '已标记为上报汇总的记录' },
-  { key: 'all',      label: '全部',       tip: '范围内所有记录' }
+  { key: 'unreported', label: '未上报',     tip: '所有未上报汇总的隐患（含待审核+已整改），默认看这个' },
+  { key: 'pending',    label: '待审核',     tip: '未上报汇总、且还没整改的隐患' },
+  { key: 'fixed',      label: '已整改待报', tip: '已经整改但还没上报汇总的隐患' },
+  { key: 'fixfill',    label: '检修填报',   tip: '维修人员单独填报的检修完成记录' },
+  { key: 'reported',   label: '已上报',     tip: '已标记为上报汇总的记录' },
+  { key: 'all',        label: '全部',       tip: '范围内所有记录' }
 ];
 
 // 判断某条记录是否属于某个候选范围
@@ -4070,12 +4072,13 @@ function rvScopeMatch(h, scope) {
   const reported = !!h.reviewReportedAt;
   const fixed = isFixedHazard(h);
   switch (scope) {
+    case 'unreported': return !reported && !isFix; // v6.4.30: 所有未上报隐患（待审核+已整改），不含检修填报单
     case 'pending':  return !reported && !isFix && !fixed;
     case 'fixed':    return !reported && !isFix && fixed;
     case 'fixfill':  return isFix;
     case 'reported': return reported;
     case 'all':      return true;
-    default:         return !reported && !isFix && !fixed;
+    default:         return !reported && !isFix;
   }
 }
 
